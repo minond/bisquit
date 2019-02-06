@@ -25,6 +25,7 @@ func-app = id , "(" [ expr { "," expr } ] ")" ;
 scalar = id | number | bool ;
 bool = "true" | "false" ;
 id = letter , { letter | digit | "_" } ;
+string = '"' { ? } '"' ;
 
 number = [ "-" ] ( number-dec | number-bin | number-hex ) ;
 number-dec = digit , [ "." ] , { digit } ;
