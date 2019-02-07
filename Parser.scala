@@ -15,27 +15,47 @@ object Parser {
         }
 
   def parseCond(start: Token, tail: Iterator[Token]): Expr = {
-    val cond = parse(tail).next
-    if (!eat(Identifier.word("then"), tail)) {
-      return InvalidExpr(List(cond), List(Identifier.word("then")))
+    val cond = next(tail)
+    if (!cond.isInstanceOf[Expr]) {
+      // TODO expecting expr but no way of stating that, empty for now
+      return InvalidExpr(List.empty, List(cond))
+    }
+    eat(Identifier.word("then"), tail) match {
+      case (false, got) =>
+        return InvalidExpr(List(got), List(Identifier.word("then")))
+      case (true, _) =>
     }
 
-    val pass = parse(tail).next
-    if (!eat(Identifier.word("else"), tail)) {
-      return InvalidExpr(List(cond), List(Identifier.word("else")))
+    val pass = next(tail)
+    if (!cond.isInstanceOf[Expr]) {
+      // TODO expecting expr but no way of stating that, empty for now
+      return InvalidExpr(List.empty, List(pass))
+    }
+    eat(Identifier.word("else"), tail) match {
+      case (false, got) =>
+        return InvalidExpr(List(got), List(Identifier.word("else")))
+      case (true, _) =>
     }
 
     val fail = parse(tail).next
+    if (!cond.isInstanceOf[Expr]) {
+      // TODO expecting expr but no way of stating that, empty for now
+      return InvalidExpr(List.empty, List(fail))
+    }
     Cond(cond, pass, fail, start.getPos)
   }
 
-  def eat(expecting: Token, toks: Iterator[Token]): Boolean =
+  def next(toks: Iterator[Token]): Expr =
     if (!toks.hasNext)
-      // TODO return EOF
-      false
-    else if (Lexer.eq(toks.next, expecting))
-      true
+      InvalidExpr(List(EOF(-1, "")), List.empty)
     else
-      // TODO return got
-      false
+      parse(toks).next
+
+  def eat(expecting: Token, toks: Iterator[Token]): (Boolean, Token) =
+    if (!toks.hasNext)
+      (false, EOF(-1, ""))
+    else {
+      val got = toks.next
+      (Lexer.eq(got, expecting), got)
+    }
 }
