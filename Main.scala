@@ -18,5 +18,5 @@ object Main {
   }
 
   def run(source: String) =
-    println(Lexer.lex(source, "cli").toList)
+    println(Parser.parse(Lexer.lex(source, "cli")).toList)
 }

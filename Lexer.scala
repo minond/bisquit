@@ -91,4 +91,13 @@ object Lexer {
 
   def not[T](f: Predicate[T]): Predicate[T] =
     (x: T) => !f(x)
+
+  def eq(lhs: Token, rhs: Token): Boolean =
+    (lhs, rhs) match {
+      case (Identifier(lexeme1, _, _), Identifier(lexeme2, _, _))
+          if lexeme1 == lexeme2 =>
+        true
+      // TODO rest of tokens
+      case _ => false
+    }
 }
