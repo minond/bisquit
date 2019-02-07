@@ -27,7 +27,7 @@ object Parser {
     }
 
     val pass = next(tail)
-    if (!cond.isInstanceOf[Expr]) {
+    if (!pass.isInstanceOf[Expr]) {
       // TODO expecting expr but no way of stating that, empty for now
       return InvalidExpr(List.empty, List(pass))
     }
@@ -38,7 +38,7 @@ object Parser {
     }
 
     val fail = parse(tail).next
-    if (!cond.isInstanceOf[Expr]) {
+    if (!fail.isInstanceOf[Expr]) {
       // TODO expecting expr but no way of stating that, empty for now
       return InvalidExpr(List.empty, List(fail))
     }
