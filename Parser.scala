@@ -37,7 +37,7 @@ object Parser {
       case (true, _) =>
     }
 
-    val fail = parse(tail).next
+    val fail = next(tail)
     if (!fail.isInstanceOf[Expr]) {
       // TODO expecting expr but no way of stating that, empty for now
       return InvalidExpr(List.empty, List(fail))
