@@ -55,8 +55,8 @@ object Lexer {
   }
 
   def consumeWhile[T](
-    src: BufferedIterator[(T, Int)],
-    predicate: Predicate[T]
+      src: BufferedIterator[(T, Int)],
+      predicate: Predicate[T]
   ): Iterator[T] = {
     def aux(buff: List[T]): List[T] =
       if (src.hasNext && predicate(src.head._1)) {

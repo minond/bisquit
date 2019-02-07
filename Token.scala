@@ -5,43 +5,50 @@ sealed trait Token {
   def getFile: String
 }
 
-abstract class PositionedToken(pos: Int, file: String) extends Token {
+abstract class Positioned(pos: Int, file: String) extends Token {
   def getPos = pos
   def getFile = file
 }
 
 case class InvalidToken(lexeme: String, pos: Int, file: String)
-  extends PositionedToken(pos, file)
+    extends Positioned(pos, file)
 
-case class SingleQuote(pos: Int, file: String)
-  extends PositionedToken(pos, file)
-case class OpenParen(pos: Int, file: String) extends PositionedToken(pos, file)
-case class CloseParen(pos: Int, file: String) extends PositionedToken(pos, file)
-case class Colon(pos: Int, file: String) extends PositionedToken(pos, file)
-case class Eq(pos: Int, file: String) extends PositionedToken(pos, file)
-case class Pipe(pos: Int, file: String) extends PositionedToken(pos, file)
-case class Underscore(pos: Int, file: String) extends PositionedToken(pos, file)
-case class Arrow(pos: Int, file: String) extends PositionedToken(pos, file)
+case class EOF(pos: Int, file: String) extends Positioned(pos, file)
+case class SingleQuote(pos: Int, file: String) extends Positioned(pos, file)
+case class OpenParen(pos: Int, file: String) extends Positioned(pos, file)
+case class CloseParen(pos: Int, file: String) extends Positioned(pos, file)
+case class Colon(pos: Int, file: String) extends Positioned(pos, file)
+case class Eq(pos: Int, file: String) extends Positioned(pos, file)
+case class Pipe(pos: Int, file: String) extends Positioned(pos, file)
+case class Underscore(pos: Int, file: String) extends Positioned(pos, file)
+case class Arrow(pos: Int, file: String) extends Positioned(pos, file)
 
-sealed trait Expr
+sealed trait Expr extends Token
 
-sealed trait Scalar extends Token with Expr
+case class InvalidExpr(got: List[Token], expected: List[Token])
+    extends Positioned(got.head.getPos, got.head.getFile)
+    with Expr
+
+sealed trait Scalar extends Expr
 
 case class Number(lexeme: String, pos: Int, file: String)
-  extends PositionedToken(pos, file)
-  with Scalar
+    extends Positioned(pos, file)
+    with Scalar
 case class Str(lexeme: String, pos: Int, file: String)
-  extends PositionedToken(pos, file)
-  with Scalar
-case class Identifier(lexeme: String, pos: Int, file: String)
-  extends PositionedToken(pos, file)
-  with Scalar
+    extends Positioned(pos, file)
+    with Scalar
+case class Identifier(lexeme: String, pos: Int = -1, file: String = "?")
+    extends Positioned(pos, file)
+    with Scalar
 
-sealed trait Bool extends Token with Scalar
-case class True(pos: Int, file: String)
-  extends PositionedToken(pos, file)
-  with Bool
-case class False(pos: Int, file: String)
-  extends PositionedToken(pos, file)
-  with Bool
+object Identifier {
+  def word(lexeme: String) = Identifier(lexeme, -1, "?")
+}
 
+sealed trait Bool extends Scalar
+case class True(pos: Int, file: String) extends Positioned(pos, file) with Bool
+case class False(pos: Int, file: String) extends Positioned(pos, file) with Bool
+
+case class Cond(cond: Expr, pass: Expr, fail: Expr, pos: Int)
+    extends Positioned(pos, cond.getFile)
+    with Expr
