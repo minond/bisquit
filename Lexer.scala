@@ -1,78 +1,111 @@
 package bisquit
 
-sealed trait Token
+sealed trait Token {
+  def getPos: Int
+  def getFile: String
+}
 
-case class InvalidToken(lexeme: String) extends Token
+abstract class PositionedToken(pos: Int, file: String) extends Token {
+  def getPos = pos
+  def getFile = file
+}
 
-case object SingleQuote extends Token
-case object OpenParen extends Token
-case object CloseParen extends Token
-case object Colon extends Token
-case object Eq extends Token
-case object Pipe extends Token
-case object Underscore extends Token
-case object Arrow extends Token
+case class InvalidToken(lexeme: String, pos: Int, file: String)
+  extends PositionedToken(pos, file)
 
-sealed trait Expr extends Token
+case class SingleQuote(pos: Int, file: String)
+  extends PositionedToken(pos, file)
+case class OpenParen(pos: Int, file: String) extends PositionedToken(pos, file)
+case class CloseParen(pos: Int, file: String) extends PositionedToken(pos, file)
+case class Colon(pos: Int, file: String) extends PositionedToken(pos, file)
+case class Eq(pos: Int, file: String) extends PositionedToken(pos, file)
+case class Pipe(pos: Int, file: String) extends PositionedToken(pos, file)
+case class Underscore(pos: Int, file: String) extends PositionedToken(pos, file)
+case class Arrow(pos: Int, file: String) extends PositionedToken(pos, file)
 
-sealed trait Scalar extends Expr
+sealed trait Expr
 
-case class Number(lexeme: String) extends Scalar
-case class Str(lexeme: String) extends Scalar
-case class Identifier(lexeme: String) extends Scalar
+sealed trait Scalar extends Token with Expr
 
-sealed trait Bool extends Scalar
-case object True extends Bool
-case object False extends Bool
+case class Number(lexeme: String, pos: Int, file: String)
+  extends PositionedToken(pos, file)
+  with Scalar
+case class Str(lexeme: String, pos: Int, file: String)
+  extends PositionedToken(pos, file)
+  with Scalar
+case class Identifier(lexeme: String, pos: Int, file: String)
+  extends PositionedToken(pos, file)
+  with Scalar
+
+sealed trait Bool extends Token with Scalar
+case class True(pos: Int, file: String)
+  extends PositionedToken(pos, file)
+  with Bool
+case class False(pos: Int, file: String)
+  extends PositionedToken(pos, file)
+  with Bool
 
 object Lexer {
   type Predicate[T] = T => Boolean
 
   val op = Set('+', '-', '*', '&', '^', '%', '!', '\\', '|', '>', '<')
 
-  def lex(str: String): Iterator[Token] = {
-    val src = str.toList.toIterator.buffered
-    for (c <- src if !c.isWhitespace)
+  def lex(str: String, file: String): Iterator[Token] = {
+    val src = str.toList.toIterator.zipWithIndex.buffered
+    for ((c, pos) <- src if !c.isWhitespace)
       yield
         c match {
-          case '(' => OpenParen
-          case ')' => CloseParen
-          case ':' => Colon
-          case '|' => Pipe
-          case '_' => Underscore
+          case '(' => OpenParen(pos, file)
+          case ')' => CloseParen(pos, file)
+          case ':' => Colon(pos, file)
+          case '|' => Pipe(pos, file)
+          case '_' => Underscore(pos, file)
 
           // TODO handle escaped quotes
           case '"' =>
-            Str(src.takeWhile(not(is('"'))).mkString)
+            Str(
+              src
+                .takeWhile({ c =>
+                  not(is('"'))(c._1)
+                })
+                .mkString,
+              pos,
+              file
+            )
 
           // TODO implement nicer peek method
           case '=' =>
             src.headOption match {
-              case Some('>') => src.next; Arrow
-              case _         => Eq
+              case Some(('>', _)) => src.next; Arrow(pos, file)
+              case _              => Eq(pos, file)
             }
 
           // TODO handle other number types
           case n
               if isDigit(n) || (is('-')(n) &&
                 src.hasNext &&
-                isDigit(src.head)) =>
-            Number((n + consumeWhile(src, isDigit).mkString))
+                isDigit(src.head._1)) =>
+            Number((n + consumeWhile(src, isDigit).mkString), pos, file)
 
           case c if isLetter(c) =>
-            Identifier(c + consumeWhile(src, isIdentifierTail).mkString)
+            Identifier(
+              c + consumeWhile(src, isIdentifierTail).mkString,
+              pos,
+              file
+            )
 
-          case c => InvalidToken(c + consumeWhile(src, isWord).mkString)
+          case c =>
+            InvalidToken(c + consumeWhile(src, isWord).mkString, pos, file)
         }
   }
 
   def consumeWhile[T](
-    src: BufferedIterator[T],
+    src: BufferedIterator[(T, Int)],
     predicate: Predicate[T]
   ): Iterator[T] = {
     def aux(buff: List[T]): List[T] =
-      if (src.hasNext && predicate(src.head)) {
-        val curr = src.head
+      if (src.hasNext && predicate(src.head._1)) {
+        val curr = src.head._1
         src.next
         aux(buff :+ curr)
       } else buff

@@ -12,12 +12,11 @@ object Main {
 
       reader.readLine() match {
         case "exit" => return
-        case code => run(code)
+        case code   => run(code)
       }
     }
   }
 
-  def run(source: String) = {
-    println(Lexer.lex(source).toList)
-  }
+  def run(source: String) =
+    println(Lexer.lex(source, "cli").toList)
 }
