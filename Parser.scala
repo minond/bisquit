@@ -5,9 +5,9 @@ object Parser {
     for (t <- toks)
       yield
         t match {
-          case Identifier("true", pos, file)  => True(pos, file)
-          case Identifier("false", pos, file) => False(pos, file)
-          case scalar: Scalar                 => scalar
+          case Identifier("true", file, start)  => True(file, start)
+          case Identifier("false", file, start) => False(file, start)
+          case scalar: Scalar                   => scalar
 
           case start @ Identifier("if", _, _) => parseCond(start, toks)
 
@@ -42,18 +42,19 @@ object Parser {
       // TODO expecting expr but no way of stating that, empty for now
       return InvalidExpr(List.empty, List(fail))
     }
-    Cond(cond, pass, fail, start.getPos)
+
+    Cond(cond, pass, fail, start.getStart)
   }
 
   def next(toks: Iterator[Token]): Expr =
     if (!toks.hasNext)
-      InvalidExpr(List(EOF(-1, "")), List.empty)
+      InvalidExpr(List(EOF("", -1)), List.empty)
     else
       parse(toks).next
 
   def eat(expecting: Token, toks: Iterator[Token]): (Boolean, Token) =
     if (!toks.hasNext)
-      (false, EOF(-1, ""))
+      (false, EOF("", -1))
     else {
       val got = toks.next
       (Lexer.eq(got, expecting), got)

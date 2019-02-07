@@ -10,11 +10,11 @@ object Lexer {
     for ((c, pos) <- src if !c.isWhitespace)
       yield
         c match {
-          case '(' => OpenParen(pos, file)
-          case ')' => CloseParen(pos, file)
-          case ':' => Colon(pos, file)
-          case '|' => Pipe(pos, file)
-          case '_' => Underscore(pos, file)
+          case '(' => OpenParen(file, pos)
+          case ')' => CloseParen(file, pos)
+          case ':' => Colon(file, pos)
+          case '|' => Pipe(file, pos)
+          case '_' => Underscore(file, pos)
 
           // TODO handle escaped quotes
           case '"' =>
@@ -24,15 +24,15 @@ object Lexer {
                   not(is('"'))(c._1)
                 })
                 .mkString,
-              pos,
-              file
+              file,
+              pos
             )
 
           // TODO implement nicer peek method
           case '=' =>
             src.headOption match {
-              case Some(('>', _)) => src.next; Arrow(pos, file)
-              case _              => Eq(pos, file)
+              case Some(('>', _)) => src.next; Arrow(file, pos)
+              case _              => Eq(file, pos)
             }
 
           // TODO handle other number types
@@ -40,17 +40,17 @@ object Lexer {
               if isDigit(n) || (is('-')(n) &&
                 src.hasNext &&
                 isDigit(src.head._1)) =>
-            Number((n + consumeWhile(src, isDigit).mkString), pos, file)
+            Number((n + consumeWhile(src, isDigit).mkString), file, pos)
 
           case c if isLetter(c) =>
             Identifier(
               c + consumeWhile(src, isIdentifierTail).mkString,
-              pos,
-              file
+              file,
+              pos
             )
 
           case c =>
-            InvalidToken(c + consumeWhile(src, isWord).mkString, pos, file)
+            InvalidToken(c + consumeWhile(src, isWord).mkString, file, pos)
         }
   }
 
