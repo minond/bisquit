@@ -12,6 +12,8 @@ abstract class Positioned(file: String, start: Int, end: Int) {
   def getEnd = end
 }
 
+// TODO also need a way to identify what we actually needed, maybe add an
+// MissingToken type?
 case class InvalidToken(lexeme: String, file: String, start: Int)
     extends Positioned(file, start, start + lexeme.length)
     with Token
@@ -46,6 +48,8 @@ case class Arrow(file: String, start: Int)
 
 sealed trait Expr extends Token
 
+// TODO also need a way to quickly way unexpected EOF, maybe add
+// UnexpectedEOF type?
 case class InvalidExpr(got: List[Token], expected: List[Token])
     extends Positioned(got.head.getFile, got.head.getStart, got.head.getEnd)
     with Expr

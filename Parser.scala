@@ -11,6 +11,8 @@ object Parser {
 
           case start @ Identifier("if", _, _) => parseCond(start, toks)
 
+          case err: InvalidToken => InvalidExpr(List(err), List.empty)
+
           // TODO finish rest of expressions
         }
 

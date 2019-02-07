@@ -18,15 +18,14 @@ object Lexer {
 
           // TODO handle escaped quotes
           case '"' =>
-            Str(
-              src
-                .takeWhile({ c =>
-                  not(is('"'))(c._1)
-                })
-                .mkString,
-              file,
-              pos
-            )
+            val str = consumeWhile(src, not(is('"'))).mkString
+            if (!src.hasNext)
+              InvalidToken(str, file, pos)
+            else
+              src.next match {
+                case ('"', _) => Str(str, file, pos)
+                case (err, _) => InvalidToken(err.toString, file, pos)
+              }
 
           // TODO implement nicer peek method
           case '=' =>
