@@ -1,21 +1,20 @@
 package bisquit
 
 object Parser {
-  type Tokens = Iterator[Token]
-
-  def parse(toks: Tokens): Iterator[Expr] =
+  def parse(toks: Iterator[Token]): Iterator[Expr] =
     for (t <- toks)
       yield
         t match {
           case Identifier("true", pos, file)  => True(pos, file)
           case Identifier("false", pos, file) => False(pos, file)
-          case start @ Identifier("if", _, _) => parseCond(start, toks)
           case scalar: Scalar                 => scalar
-          // TODO rest of exprs
-          case tok => InvalidExpr(List(tok), List.empty)
+
+          case start @ Identifier("if", _, _) => parseCond(start, toks)
+
+          // TODO finish rest of expressions
         }
 
-  def parseCond(start: Token, tail: Tokens): Expr = {
+  def parseCond(start: Token, tail: Iterator[Token]): Expr = {
     val cond = parse(tail).next
     if (!eat(Identifier.word("then"), tail)) {
       return InvalidExpr(List(cond), List(Identifier.word("then")))
@@ -30,7 +29,7 @@ object Parser {
     Cond(cond, pass, fail, start.getPos)
   }
 
-  def eat(expecting: Token, toks: Tokens): Boolean =
+  def eat(expecting: Token, toks: Iterator[Token]): Boolean =
     if (!toks.hasNext)
       // TODO return EOF
       false

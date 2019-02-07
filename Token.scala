@@ -37,17 +37,18 @@ case class Number(lexeme: String, pos: Int, file: String)
 case class Str(lexeme: String, pos: Int, file: String)
     extends Positioned(pos, file)
     with Scalar
-case class Identifier(lexeme: String, pos: Int = -1, file: String = "?")
-    extends Positioned(pos, file)
-    with Scalar
-
-object Identifier {
-  def word(lexeme: String) = Identifier(lexeme, -1, "?")
-}
 
 sealed trait Bool extends Scalar
 case class True(pos: Int, file: String) extends Positioned(pos, file) with Bool
 case class False(pos: Int, file: String) extends Positioned(pos, file) with Bool
+
+case class Identifier(lexeme: String, pos: Int = -1, file: String = "?")
+    extends Positioned(pos, file)
+    with Expr
+
+object Identifier {
+  def word(lexeme: String) = Identifier(lexeme, -1, "?")
+}
 
 case class Cond(cond: Expr, pass: Expr, fail: Expr, pos: Int)
     extends Positioned(pos, cond.getFile)

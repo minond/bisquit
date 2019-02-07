@@ -7,6 +7,7 @@ expr = unary-expr
      | bind-expr
      | let-expr
      | scalar
+     | id
      ;
 
 unary-expr = op scalar ;
@@ -22,7 +23,7 @@ type-decl = ":" id ;
 func-decl = id , "(" [ arg-decl { arg-decl } ] ")" type-decl ;
 func-app = id , "(" [ expr { "," expr } ] ")" ;
 
-scalar = id | number | bool ;
+scalar = number | bool ;
 bool = "true" | "false" ;
 id = letter , { letter | digit | "_" } ;
 string = '"' { ? } '"' ;
