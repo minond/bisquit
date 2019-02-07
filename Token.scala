@@ -5,23 +5,36 @@ sealed trait Token {
   def getFile: String
 }
 
-abstract class Positioned(pos: Int, file: String) extends Token {
+abstract class Positioned(pos: Int, file: String) {
   def getPos = pos
   def getFile = file
 }
 
 case class InvalidToken(lexeme: String, pos: Int, file: String)
     extends Positioned(pos, file)
+    with Token
 
-case class EOF(pos: Int, file: String) extends Positioned(pos, file)
-case class SingleQuote(pos: Int, file: String) extends Positioned(pos, file)
-case class OpenParen(pos: Int, file: String) extends Positioned(pos, file)
-case class CloseParen(pos: Int, file: String) extends Positioned(pos, file)
-case class Colon(pos: Int, file: String) extends Positioned(pos, file)
-case class Eq(pos: Int, file: String) extends Positioned(pos, file)
-case class Pipe(pos: Int, file: String) extends Positioned(pos, file)
-case class Underscore(pos: Int, file: String) extends Positioned(pos, file)
-case class Arrow(pos: Int, file: String) extends Positioned(pos, file)
+case class EOF(pos: Int, file: String) extends Positioned(pos, file) with Token
+case class SingleQuote(pos: Int, file: String)
+    extends Positioned(pos, file)
+    with Token
+case class OpenParen(pos: Int, file: String)
+    extends Positioned(pos, file)
+    with Token
+case class CloseParen(pos: Int, file: String)
+    extends Positioned(pos, file)
+    with Token
+case class Colon(pos: Int, file: String)
+    extends Positioned(pos, file)
+    with Token
+case class Eq(pos: Int, file: String) extends Positioned(pos, file) with Token
+case class Pipe(pos: Int, file: String) extends Positioned(pos, file) with Token
+case class Underscore(pos: Int, file: String)
+    extends Positioned(pos, file)
+    with Token
+case class Arrow(pos: Int, file: String)
+    extends Positioned(pos, file)
+    with Token
 
 sealed trait Expr extends Token
 
@@ -42,7 +55,7 @@ sealed trait Bool extends Scalar
 case class True(pos: Int, file: String) extends Positioned(pos, file) with Bool
 case class False(pos: Int, file: String) extends Positioned(pos, file) with Bool
 
-case class Identifier(lexeme: String, pos: Int = -1, file: String = "?")
+case class Identifier(lexeme: String, pos: Int, file: String)
     extends Positioned(pos, file)
     with Expr
 
