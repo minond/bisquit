@@ -1,6 +1,9 @@
 package bisquit
 
 object Parser {
+  val keywordThen = Identifier.word("then")
+  val keywordElse = Identifier.word("else")
+
   def parse(toks: Iterator[Token]): Iterator[Expr] =
     for (t <- toks)
       yield
@@ -17,20 +20,8 @@ object Parser {
         }
 
   def parseCond(start: Token, tail: Iterator[Token]): Expr = {
-    val cond = next(start, tail)(return _)
-    val keyword1 = eat(cond, Identifier.word("then"), tail) match {
-      case (false, got) =>
-        return InvalidExpr(List(got), List(Identifier.word("then")))
-      case (true, got) => got
-    }
-
-    val pass = next(keyword1, tail)(return _)
-    val keyword2 = eat(pass, Identifier.word("else"), tail) match {
-      case (false, got) =>
-        return InvalidExpr(List(got), List(Identifier.word("else")))
-      case (true, got) => got
-    }
-
+    val (cond, keyword1) = nextThenEat(start, tail, keywordThen)(return _)
+    val (pass, keyword2) = nextThenEat(keyword1, tail, keywordElse)(return _)
     val fail = next(keyword2, tail)(return _)
     Cond(cond, pass, fail, start.getStart)
   }
@@ -54,4 +45,17 @@ object Parser {
       val got = toks.next
       (Lexer.eq(got, expecting), got)
     }
+
+  def nextThenEat(last: Token, toks: Iterator[Token], expecting: Token)(
+      handler: InvalidExpr => InvalidExpr
+  ): (Expr, Token) = {
+    val coming = next(last, toks)(handler)
+    val eaten = eat(coming, expecting, toks) match {
+      case (false, got) =>
+        handler(InvalidExpr(List(got), List(expecting)))
+      case (true, got) => got
+    }
+
+    (coming, eaten)
+  }
 }
