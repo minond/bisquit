@@ -1,22 +1,23 @@
 package bisquit
 
+import java.io.{BufferedReader, InputStreamReader};
+
 object Main {
-  def main(args: Array[String]): Unit =
-    println(Lexer.lex("""
+  def main(args: Array[String]): Unit = {
+    val input = new InputStreamReader(System.in)
+    val reader = new BufferedReader(input)
 
-toString(n : int) : string =
-  n match
-    | 0 => "zero"
-    | 1 => "one"
-    | 2 => "two"
-    | 3 => "three"
-    | 4 => "four"
-    | _ => "???"
+    while (true) {
+      print("> ")
 
-yes : string =
-  if true
-  then "Yes"
-  else "No"
+      reader.readLine() match {
+        case "exit" => return
+        case code => run(code)
+      }
+    }
+  }
 
-      """).toList)
+  def run(source: String) = {
+    println(Lexer.lex(source).toList)
+  }
 }
