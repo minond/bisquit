@@ -6,17 +6,27 @@ object Main {
   def main(args: Array[String]): Unit = {
     val input = new InputStreamReader(System.in)
     val reader = new BufferedReader(input)
+    val buff = new StringBuilder
 
     while (true) {
-      print("> ")
+      if (buff.isEmpty)
+        print("> ")
+      else
+        print("  ")
 
-      reader.readLine() match {
+      buff.append(reader.readLine()).toString match {
+        case "" =>
         case "exit" => return
-        case code   => run(code)
+        case code =>
+          Parser.parse(Lexer.lex(code, "stdin")).toList match {
+            case (_: UnexpectedEOF) :: Nil =>
+              buff.append("\n")
+
+            case ast =>
+              buff.clear
+              println(ast)
+          }
       }
     }
   }
-
-  def run(source: String) =
-    println(Parser.parse(Lexer.lex(source, "cli")).toList)
 }

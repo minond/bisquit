@@ -47,12 +47,16 @@ case class Arrow(file: String, start: Int)
     with Token
 
 sealed trait Expr extends Token
+sealed trait Error extends Expr
 
-// TODO also need a way to quickly way unexpected EOF, maybe add
-// UnexpectedEOF type?
 case class InvalidExpr(got: List[Token], expected: List[Token])
     extends Positioned(got.head.getFile, got.head.getStart, got.head.getEnd)
     with Expr
+    with Error
+case class UnexpectedEOF(file: String, pos: Int)
+    extends Positioned(file, pos, pos)
+    with Expr
+    with Error
 
 sealed trait Scalar extends Expr
 

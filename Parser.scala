@@ -27,10 +27,10 @@ object Parser {
   }
 
   def next(last: Token, toks: Iterator[Token])(
-      handler: InvalidExpr => InvalidExpr
+      handler: Error => Error
   ): Expr =
     if (!toks.hasNext)
-      handler(InvalidExpr(List(EOF(last.getFile, last.getEnd)), List.empty))
+      handler(UnexpectedEOF(last.getFile, last.getEnd))
     else
       parse(toks).next
 
@@ -40,19 +40,22 @@ object Parser {
       toks: Iterator[Token]
   ): (Boolean, Token) =
     if (!toks.hasNext)
-      (false, EOF(last.getFile, last.getEnd))
+      (false, UnexpectedEOF(last.getFile, last.getEnd))
     else {
       val got = toks.next
       (Lexer.eq(got, expecting), got)
     }
 
   def nextThenEat(last: Token, toks: Iterator[Token], expecting: Token)(
-      handler: InvalidExpr => InvalidExpr
+      handler: Error => Error
   ): (Expr, Token) = {
     val coming = next(last, toks)(handler)
     val eaten = eat(coming, expecting, toks) match {
       case (false, got) =>
-        handler(InvalidExpr(List(got), List(expecting)))
+        if (got.isInstanceOf[Error])
+          handler(got.asInstanceOf[Error])
+        else
+          handler(InvalidExpr(List(got), List(expecting)))
       case (true, got) => got
     }
 
