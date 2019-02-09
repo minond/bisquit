@@ -1,6 +1,8 @@
-package bisquit
+package xyz.minond.bisquit
 
 import java.io.{BufferedReader, InputStreamReader};
+
+import xyz.minond.bisquit.node._
 
 object Main {
   def main(args: Array[String]): Unit = {

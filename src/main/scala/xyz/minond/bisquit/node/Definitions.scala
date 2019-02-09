@@ -1,4 +1,4 @@
-package bisquit
+package xyz.minond.bisquit.node
 
 sealed trait Token {
   def getFile: String
@@ -71,7 +71,7 @@ case class UnexpectedEOF(file: String, pos: Int)
 
 sealed trait Scalar extends Expr
 
-case class Number(lexeme: String, file: String, start: Int)
+case class Num(lexeme: String, file: String, start: Int)
     extends Positioned(file, start, start + lexeme.length)
     with Scalar
 case class Str(lexeme: String, file: String, start: Int)

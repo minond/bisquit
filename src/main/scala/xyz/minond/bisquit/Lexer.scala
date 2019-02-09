@@ -1,4 +1,6 @@
-package bisquit
+package xyz.minond.bisquit
+
+import xyz.minond.bisquit.node._
 
 object Lexer {
   type Predicate[T] = T => Boolean
@@ -39,7 +41,7 @@ object Lexer {
               if isDigit(n) || (is('-')(n) &&
                 src.hasNext &&
                 isDigit(src.head._1)) =>
-            Number((n + consumeWhile(src, isDigit).mkString), file, pos)
+            Num((n + consumeWhile(src, isDigit).mkString), file, pos)
 
           case c if isLetter(c) =>
             Identifier(

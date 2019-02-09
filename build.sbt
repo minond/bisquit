@@ -6,5 +6,5 @@ scalacOptions := Seq("-deprecation",
                      "-Ywarn-dead-code",
                      "-Ywarn-numeric-widen")
 
-mainClass in (Compile, packageBin) := Some("bisquit.Main")
-mainClass in (Compile, run) := Some("bisquit.Main")
+mainClass in (Compile, packageBin) := Some("xyz.minond.bisquit.Main")
+mainClass in (Compile, run) := Some("xyz.minond.bisquit.Main")
