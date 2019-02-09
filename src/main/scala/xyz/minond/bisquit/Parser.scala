@@ -51,9 +51,9 @@ object Parser {
     Binding(Varible(name, typ), body, start.getStart)
   }
 
-  def withHandlerParseOptionalType(
-      toks: Iterator[Token]
-  )(handler: Error => Error): Either[Error, Option[Type]] =
+  def maybeTyp(toks: Iterator[Token])(
+      handler: Error => Error
+  ): Either[Error, Option[Type]] =
     peek(toks) match {
       case Some(colon: Colon) =>
         toks.next

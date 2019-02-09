@@ -13,7 +13,7 @@ sealed trait Token extends Positioned {
 }
 
 object Token {
-  def eq(lhs: Token, rhs: Token): Boolean =
+  def eqv(lhs: Token, rhs: Token): Boolean =
     (lhs, rhs) match {
       case (Identifier(lexeme1, _, _), Identifier(lexeme2, _, _))
           if lexeme1 == lexeme2 =>
