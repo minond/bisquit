@@ -12,9 +12,9 @@ object Main {
 
     while (true) {
       if (buff.isEmpty)
-        print("> ")
+        print("bisquit> ")
       else
-        print("  ")
+        print("       | ")
 
       buff.append(reader.readLine()).toString match {
         case ""     =>
