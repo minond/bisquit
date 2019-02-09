@@ -1,6 +1,4 @@
-package xyz.minond.bisquit
-
-import xyz.minond.bisquit.node._
+package xyz.minond.bisquit.node
 
 object Lexer {
   type Predicate[T] = T => Boolean

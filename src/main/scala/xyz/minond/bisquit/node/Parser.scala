@@ -1,6 +1,4 @@
-package xyz.minond.bisquit
-
-import xyz.minond.bisquit.node._
+package xyz.minond.bisquit.node
 
 object Parser {
   val wordThen = Identifier.word("then")
