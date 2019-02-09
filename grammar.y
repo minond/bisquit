@@ -1,10 +1,12 @@
-main = { expr } ;
+main = { expr | stmt } ;
+
+stmt = binding
+     ;
 
 expr = unary-expr
      | binary-expr
      | match-expr
      | cond-expr
-     | bind-expr
      | let-expr
      | scalar
      | id
@@ -15,9 +17,9 @@ binary-expr = scalar op scalar ;
 match-expr = expr "match" match-case { match-case } ;
 match-case = "|" expr "=>" expr ;
 cond-expr = "if" expr "then" expr "else" expr ;
-bind-expr = ( var-decl | fun-decl ) "=" expr ;
-let-expr = "let" { bind-expr } "in" expr ;
+let-expr = "let" binding { binding } "in" expr ;
 
+binding = ( var-decl | fun-decl ) "=" expr ;
 var-decl = "val" arg-decl
 arg-decl = id [ typ-decl ] ;
 typ-decl = ":" id ;
