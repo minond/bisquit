@@ -15,7 +15,7 @@ object Main {
         print("  ")
 
       buff.append(reader.readLine()).toString match {
-        case "" =>
+        case ""     =>
         case "exit" => return
         case code =>
           Parser.parse(Lexer.lex(code, "stdin")).toList match {

@@ -6,6 +6,17 @@ sealed trait Token {
   def getEnd: Int
 }
 
+object Token {
+  def eq(lhs: Token, rhs: Token): Boolean =
+    (lhs, rhs) match {
+      case (Identifier(lexeme1, _, _), Identifier(lexeme2, _, _))
+          if lexeme1 == lexeme2 =>
+        true
+
+      case _ => false
+    }
+}
+
 abstract class Positioned(file: String, start: Int, end: Int) {
   def getFile = file
   def getStart = start

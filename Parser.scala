@@ -43,7 +43,7 @@ object Parser {
       (false, UnexpectedEOF(last.getFile, last.getEnd))
     else {
       val got = toks.next
-      (Lexer.eq(got, expecting), got)
+      (Token.eq(got, expecting), got)
     }
 
   def nextThenEat(last: Token, toks: Iterator[Token], expecting: Token)(
