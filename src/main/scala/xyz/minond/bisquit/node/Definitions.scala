@@ -109,7 +109,7 @@ case class Argument(name: Identifier, typ: Option[Type])
     extends Positioned(name.getFile, name.getStart, typ.getOrElse(name).getEnd)
 
 sealed trait Declaration extends Positioned
-case class Varible(name: Identifier, typ: Option[Type])
+case class Variable(name: Identifier, typ: Option[Type])
     extends Positioned(name.getFile, name.getStart, typ.getOrElse(name).getEnd)
     with Declaration
 case class Function(name: Identifier, args: List[Argument], typ: Option[Type])

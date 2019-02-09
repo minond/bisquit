@@ -48,7 +48,7 @@ object Parser {
     val eqSign = expect[Eq](beforeEq, toks)(return _)
 
     val body = next(eqSign, toks)(return _)
-    Binding(Varible(name, typ), body, start.getStart)
+    Binding(Variable(name, typ), body, start.getStart)
   }
 
   def maybeTyp(toks: Iterator[Token])(
