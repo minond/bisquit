@@ -97,3 +97,20 @@ object Identifier {
 case class Cond(cond: Expr, pass: Expr, fail: Expr, start: Int)
     extends Positioned(cond.getFile, start, fail.getEnd)
     with Expr
+
+case class Type(name: Identifier)
+    extends Positioned(name.getFile, name.getStart, name.getEnd)
+case class Argument(name: Identifier, typ: Option[Type])
+    extends Positioned(name.getFile, name.getStart, typ.getOrElse(name).getEnd)
+
+sealed trait Declaration extends Positioned
+case class Varible(name: Identifier, typ: Option[Type])
+    extends Positioned(name.getFile, name.getStart, typ.getOrElse(name).getEnd)
+    with Declaration
+case class Function(name: Identifier, args: List[Argument], typ: Option[Type])
+    extends Positioned(name.getFile, name.getStart, typ.getOrElse(name).getEnd)
+    with Declaration
+
+case class Binding(decl: Declaration, body: Expr, start: Int)
+    extends Positioned(decl.getFile, decl.getStart, body.getEnd)
+    with Expr

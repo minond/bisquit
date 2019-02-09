@@ -15,13 +15,14 @@ binary-expr = scalar op scalar ;
 match-expr = expr "match" match-case { match-case } ;
 match-case = "|" expr "=>" expr ;
 cond-expr = "if" expr "then" expr "else" expr ;
-bind-expr = ( arg-decl | func-decl ) "=" expr ;
+bind-expr = ( var-decl | fun-decl ) "=" expr ;
 let-expr = "let" { bind-expr } "in" expr ;
 
-arg-decl = id [ type-decl ] ;
-type-decl = ":" id ;
-func-decl = id , "(" [ arg-decl { arg-decl } ] ")" type-decl ;
-func-app = id , "(" [ expr { "," expr } ] ")" ;
+var-decl = "val" arg-decl
+arg-decl = id [ typ-decl ] ;
+typ-decl = ":" id ;
+fun-decl = "fun" id "(" [ arg-decl { arg-decl } ] ")" typ-decl ;
+fun-app = id , "(" [ expr { "," expr } ] ")" ;
 
 scalar = number | bool ;
 bool = "true" | "false" ;
