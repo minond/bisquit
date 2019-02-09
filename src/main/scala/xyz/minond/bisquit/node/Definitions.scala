@@ -1,6 +1,12 @@
 package xyz.minond.bisquit.node
 
-sealed trait Token {
+abstract class Positioned(file: String, start: Int, end: Int) {
+  def getFile = file
+  def getStart = start
+  def getEnd = end
+}
+
+sealed trait Token extends Positioned {
   def getFile: String
   def getStart: Int
   def getEnd: Int
@@ -13,20 +19,13 @@ object Token {
           if lexeme1 == lexeme2 =>
         true
 
-      case (_: Eq, _: Eq) => true
+      case (_: Eq, _: Eq)       => true
+      case (_: Colon, _: Colon) => true
 
       case _ => false
     }
 }
 
-abstract class Positioned(file: String, start: Int, end: Int) {
-  def getFile = file
-  def getStart = start
-  def getEnd = end
-}
-
-// TODO also need a way to identify what we actually needed, maybe add an
-// MissingToken type?
 case class InvalidToken(lexeme: String, file: String, start: Int)
     extends Positioned(file, start, start + lexeme.length)
     with Token
@@ -59,15 +58,19 @@ case class Arrow(file: String, start: Int)
     extends Positioned(file, start, start + 2)
     with Token
 
-sealed trait Expr extends Token
+sealed trait Expr extends Positioned with Token
 sealed trait Error extends Expr
 
-case class InvalidExpr(got: List[Token], expected: List[Token])
+case class InvalidExpr(got: List[Token], expected: List[Token] = List.empty)
     extends Positioned(got.head.getFile, got.head.getStart, got.head.getEnd)
     with Expr
     with Error
 case class UnexpectedEOF(file: String, pos: Int)
     extends Positioned(file, pos, pos)
+    with Expr
+    with Error
+case class UnexpectedExpr(token: Token, msg: String)
+    extends Positioned(token.getFile, token.getStart, token.getEnd)
     with Expr
     with Error
 

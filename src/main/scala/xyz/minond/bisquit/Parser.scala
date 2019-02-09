@@ -15,12 +15,12 @@ object Parser {
           case Identifier("false", file, start) => False(file, start)
 
           case start @ Identifier("if", _, _)  => parseCond(start, toks)
-          case start @ Identifier("val", _, _) => parseValBinding(start, toks)
+          case start @ Identifier("val", _, _) => parseVal(start, toks.buffered)
 
           case scalar: Scalar => scalar
           case id: Identifier => id
 
-          case err: InvalidToken => InvalidExpr(List(err), List.empty)
+          case err: InvalidToken => InvalidExpr(List(err))
 
           // TODO finish rest of expressions
         }
@@ -34,23 +34,46 @@ object Parser {
     Cond(cond, pass, fail, start.getStart)
   }
 
-  def parseValBinding(start: Token, toks: Iterator[Token]): Expr = {
-    val name = next(start, toks)(return _)
-    val key1 = expect(name, wordEq, toks)(return _)
-    val typ = None
-    name match {
-      case name: Identifier =>
-        val body = next(key1, toks)(return _)
-        Binding(Varible(name, typ), body, start.getStart)
-
-      case got => InvalidExpr(List(got), List.empty)
+  def parseVal(start: Token, toks: BufferedIterator[Token]): Expr = {
+    val name: Identifier = next(start, toks)(return _) match {
+      case name: Identifier => name
+      case err              => return UnexpectedExpr(err, "identifier")
     }
+
+    val (typ, beforeEq) = withHandlerParseOptionalType(toks)(return _) match {
+      case Left(err)              => return err
+      case Right(typ @ Some(tok)) => (typ, tok)
+      case Right(typ @ None)      => (typ, name)
+    }
+
+    val eqSign = expect(beforeEq, wordEq, toks)(return _)
+
+    val body = next(eqSign, toks)(return _)
+    Binding(Varible(name, typ), body, start.getStart)
   }
+
+  def withHandlerParseOptionalType(
+      toks: Iterator[Token]
+  )(handler: Error => Error): Either[Error, Option[Type]] =
+    peek(toks) match {
+      case Some(colon: Colon) =>
+        toks.next
+        next(colon, toks)(handler) match {
+          case typ: Identifier => Right(Some(Type(typ)))
+          case err             => Left(handler(UnexpectedExpr(err, "type annotation")))
+        }
+
+      case _ => Right(None)
+    }
+
+  // Peeks at the next token, if any, without moving forward.
+  def peek(toks: Iterator[Token]): Option[Token] =
+    toks.buffered.headOption
 
   // Safely returns the next expression and propagates errors to the error
   // handler. The error handler is also triggered with an EOF error when there
   // are no more tokens in the buffer.
-  def next(last: Token, toks: Iterator[Token])(
+  def next(last: Positioned, toks: Iterator[Token])(
       handler: Error => Error
   ): Expr =
     if (!toks.hasNext)
@@ -64,7 +87,7 @@ object Parser {
   // Safely returns the next token from the tokens buffer. If the buffer is
   // empty an EOF error is returned.
   def eat(
-      last: Token,
+      last: Positioned,
       toks: Iterator[Token]
   ): Token =
     if (!toks.hasNext)
@@ -77,7 +100,7 @@ object Parser {
   // assertion fails. Errors from processing the token buffer are propagated to
   // the handler as well.
   def expect(
-      last: Token,
+      last: Positioned,
       expecting: Token,
       toks: Iterator[Token]
   )(
