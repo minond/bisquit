@@ -13,6 +13,8 @@ object Token {
           if lexeme1 == lexeme2 =>
         true
 
+      case (_: Eq, _: Eq) => true
+
       case _ => false
     }
 }
@@ -111,6 +113,12 @@ case class Function(name: Identifier, args: List[Argument], typ: Option[Type])
     extends Positioned(name.getFile, name.getStart, typ.getOrElse(name).getEnd)
     with Declaration
 
+sealed trait Stmt extends Expr
+
 case class Binding(decl: Declaration, body: Expr, start: Int)
     extends Positioned(decl.getFile, decl.getStart, body.getEnd)
+    with Stmt
+
+case class Let(bindings: List[Binding], body: Expr, start: Int)
+    extends Positioned(body.getFile, start, body.getEnd)
     with Expr
