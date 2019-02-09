@@ -5,7 +5,6 @@ import xyz.minond.bisquit.node._
 object Parser {
   val wordThen = Identifier.word("then")
   val wordElse = Identifier.word("else")
-  val wordEq = Eq("", -1)
 
   def parse(toks: Iterator[Token]): Iterator[Expr] =
     for (t <- toks)
@@ -40,13 +39,13 @@ object Parser {
       case err              => return UnexpectedExpr(err, "identifier")
     }
 
-    val (typ, beforeEq) = withHandlerParseOptionalType(toks)(return _) match {
+    val (typ, beforeEq) = maybeTyp(toks)(return _) match {
       case Left(err)              => return err
       case Right(typ @ Some(tok)) => (typ, tok)
       case Right(typ @ None)      => (typ, name)
     }
 
-    val eqSign = expect(beforeEq, wordEq, toks)(return _)
+    val eqSign = expect[Eq](beforeEq, toks)(return _)
 
     val body = next(eqSign, toks)(return _)
     Binding(Varible(name, typ), body, start.getStart)
@@ -99,18 +98,23 @@ object Parser {
   // to the expected value. The error handler is triggered when the equality
   // assertion fails. Errors from processing the token buffer are propagated to
   // the handler as well.
-  def expect(
-      last: Positioned,
-      expecting: Token,
-      toks: Iterator[Token]
-  )(
+  def expect(last: Positioned, expecting: Token, toks: Iterator[Token])(
       handler: Error => Error
   ): Token =
     eat(last, toks) match {
       case got: Error =>
         handler(got)
-      case got if !Token.eq(got, expecting) =>
+      case got if !Token.eqv(got, expecting) =>
         handler(InvalidExpr(List(got), List(expecting)))
       case got => got
+    }
+
+  def expect[Expecting](last: Positioned, toks: Iterator[Token])(
+      handler: Error => Error
+  ): Token =
+    eat(last, toks) match {
+      case got: Error     => handler(got)
+      case got: Expecting => got
+      case got            => handler(InvalidExpr(List(got)))
     }
 }
