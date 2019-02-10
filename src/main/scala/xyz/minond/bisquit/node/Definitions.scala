@@ -61,8 +61,8 @@ case class Arrow(file: String, start: Int)
 sealed trait Expr extends Positioned with Token
 sealed trait Error extends Expr
 
-case class InvalidExpr(got: List[Token], expected: List[Token] = List.empty)
-    extends Positioned(got.head.getFile, got.head.getStart, got.head.getEnd)
+case class InvalidExpr(got: Token, expected: Option[Token] = None)
+    extends Positioned(got.getFile, got.getStart, got.getEnd)
     with Expr
     with Error
 case class UnexpectedEOF(file: String, pos: Int)

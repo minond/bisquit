@@ -4,52 +4,56 @@ object Parser {
   val wordThen = Identifier.word("then")
   val wordElse = Identifier.word("else")
 
-  def parse(toks: Iterator[Token]): Iterator[Expr] =
+  def parse(toks: Iterator[Token]): Iterator[Either[Error, Expr]] =
     for (t <- toks)
       yield
         t match {
-          case Identifier("true", file, start)  => True(file, start)
-          case Identifier("false", file, start) => False(file, start)
+          case Identifier("true", file, start)  => Right(True(file, start))
+          case Identifier("false", file, start) => Right(False(file, start))
 
           case start @ Identifier("if", _, _)  => parseCond(start, toks)
           case start @ Identifier("val", _, _) => parseVal(start, toks.buffered)
 
-          case scalar: Scalar => scalar
-          case id: Identifier => id
+          case scalar: Scalar => Right(scalar)
+          case id: Identifier => Right(id)
 
-          case err: InvalidToken => InvalidExpr(List(err))
+          case err: InvalidToken => Left(InvalidExpr(err))
 
           // TODO finish rest of expressions
         }
 
-  def parseCond(start: Token, toks: Iterator[Token]): Expr = {
-    val cond = next(start, toks)(return _)
-    val key1 = expect(cond, wordThen, toks)(return _)
-    val pass = next(key1, toks)(return _)
-    val key2 = expect(pass, wordElse, toks)(return _)
-    val fail = next(key2, toks)(return _)
-    Cond(cond, pass, fail, start.getStart)
+  def parseCond(start: Token, toks: Iterator[Token]): Either[Error, Expr] = {
+    val cond = next(start, toks)(err => return Left(err))
+    val key1 = expect(cond, wordThen, toks)(err => return Left(err))
+    val pass = next(key1, toks)(err => return Left(err))
+    val key2 = expect(pass, wordElse, toks)(err => return Left(err))
+    val fail = next(key2, toks)(err => return Left(err))
+    Right(Cond(cond, pass, fail, start.getStart))
   }
 
-  def parseVal(start: Token, toks: BufferedIterator[Token]): Expr = {
-    val name: Identifier = next(start, toks)(return _) match {
+  def parseVal(
+      start: Token,
+      toks: BufferedIterator[Token]
+  ): Either[Error, Expr] = {
+    val name: Identifier = next(start, toks)(err => return Left(err)) match {
       case name: Identifier => name
-      case err              => return UnexpectedExpr(err, "identifier")
+      case err              => return Left(UnexpectedExpr(err, "identifier"))
     }
 
-    val (typ, beforeEq) = maybeTyp(toks)(return _) match {
-      case Left(err)              => return err
-      case Right(typ @ Some(tok)) => (typ, tok)
-      case Right(typ @ None)      => (typ, name)
-    }
+    val (typ, beforeEq) =
+      parseOptionalType(toks)(err => return Left(err)) match {
+        case Left(err)              => return Left(err)
+        case Right(typ @ Some(tok)) => (typ, tok)
+        case Right(typ @ None)      => (typ, name)
+      }
 
-    val eqSign = expect[Eq](beforeEq, toks)(return _)
+    val eqSign = expect[Eq](beforeEq, toks)(err => return Left(err))
 
-    val body = next(eqSign, toks)(return _)
-    Binding(Variable(name, typ), body, start.getStart)
+    val body = next(eqSign, toks)(err => return Left(err))
+    Right(Binding(Variable(name, typ), body, start.getStart))
   }
 
-  def maybeTyp(toks: Iterator[Token])(
+  def parseOptionalType(toks: Iterator[Token])(
       errHandler: Error => Error
   ): Either[Error, Option[Type]] =
     peek(toks) match {
@@ -79,8 +83,8 @@ object Parser {
       errHandler(UnexpectedEOF(last.getFile, last.getEnd))
     else
       parse(toks).next match {
-        case err: Error => errHandler(err)
-        case ok         => ok
+        case Left(err) => errHandler(err)
+        case Right(ok) => ok
       }
 
   /** Safely returns the next token from the tokens buffer. If the buffer is
@@ -104,7 +108,7 @@ object Parser {
       case got: Error =>
         errHandler(got)
       case got if !Token.eqv(got, expecting) =>
-        errHandler(InvalidExpr(List(got), List(expecting)))
+        errHandler(InvalidExpr(got, Some(expecting)))
       case got => got
     }
 
@@ -116,6 +120,6 @@ object Parser {
     eat(last, toks) match {
       case got: Error     => errHandler(got)
       case got: Expecting => got
-      case got            => errHandler(InvalidExpr(List(got)))
+      case got            => errHandler(InvalidExpr(got))
     }
 }

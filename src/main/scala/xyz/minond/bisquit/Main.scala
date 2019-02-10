@@ -21,13 +21,18 @@ object Main {
         case ""     =>
         case "exit" => return
         case code =>
-          Parser.parse(Lexer.lex(code, "stdin")).toList match {
-            case (_: UnexpectedEOF) :: Nil =>
+          Parser.parse(Lexer.lex(code, "<stdin>")).toList match {
+            case Left(_: UnexpectedEOF) :: Nil =>
               buff.append("\n")
 
             case ast =>
               buff.clear
-              println(ast)
+              ast.foreach {
+                _.fold(
+                  err => println(Printer.error(err)),
+                  ok => println(ok)
+                )
+              }
           }
       }
     }
