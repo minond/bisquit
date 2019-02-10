@@ -5,16 +5,17 @@ import java.io.{BufferedReader, InputStreamReader};
 import xyz.minond.bisquit.node._
 
 object Main {
+  val promptPrefix = "bisquit"
+  val promptStart = s"${promptPrefix}> "
+  val promptCont = s"${" " * promptPrefix.size}| "
+
   def main(args: Array[String]): Unit = {
     val input = new InputStreamReader(System.in)
     val reader = new BufferedReader(input)
     val buff = new StringBuilder
 
     while (true) {
-      if (buff.isEmpty)
-        print("bisquit> ")
-      else
-        print("       | ")
+      print(if (buff.isEmpty) promptStart else promptCont)
 
       buff.append(reader.readLine()).toString match {
         case ""     =>
