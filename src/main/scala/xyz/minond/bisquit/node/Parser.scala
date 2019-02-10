@@ -50,69 +50,72 @@ object Parser {
   }
 
   def maybeTyp(toks: Iterator[Token])(
-      handler: Error => Error
+      errHandler: Error => Error
   ): Either[Error, Option[Type]] =
     peek(toks) match {
       case Some(colon: Colon) =>
         toks.next
-        next(colon, toks)(handler) match {
+        next(colon, toks)(errHandler) match {
           case typ: Identifier => Right(Some(Type(typ)))
-          case err             => Left(handler(UnexpectedExpr(err, "type annotation")))
+          case err             => Left(errHandler(UnexpectedExpr(err, "type annotation")))
         }
 
       case _ => Right(None)
     }
 
-  // Peeks at the next token, if any, without moving forward.
+  /** Peeks at the next token, if any, without moving forward.
+    */
   def peek(toks: Iterator[Token]): Option[Token] =
     toks.buffered.headOption
 
-  // Safely returns the next expression and propagates errors to the error
-  // handler. The error handler is also triggered with an EOF error when there
-  // are no more tokens in the buffer.
+  /** Safely returns the next expression and propagates errors to the error
+    * handler. The error handler is also triggered with an EOF error when there
+    * are no more tokens in the buffer.
+    */
   def next(last: Positioned, toks: Iterator[Token])(
-      handler: Error => Error
+      errHandler: Error => Error
   ): Expr =
     if (!toks.hasNext)
-      handler(UnexpectedEOF(last.getFile, last.getEnd))
+      errHandler(UnexpectedEOF(last.getFile, last.getEnd))
     else
       parse(toks).next match {
-        case err: Error => handler(err)
+        case err: Error => errHandler(err)
         case ok         => ok
       }
 
-  // Safely returns the next token from the tokens buffer. If the buffer is
-  // empty an EOF error is returned.
-  def eat(
-      last: Positioned,
-      toks: Iterator[Token]
-  ): Token =
+  /** Safely returns the next token from the tokens buffer. If the buffer is
+    * empty an EOF error is returned.
+    */
+  def eat(last: Positioned, toks: Iterator[Token]): Token =
     if (!toks.hasNext)
       UnexpectedEOF(last.getFile, last.getEnd)
     else
       toks.next
 
-  // Safely returns and asserts the next token from the tokens buffer is equal
-  // to the expected value. The error handler is triggered when the equality
-  // assertion fails. Errors from processing the token buffer are propagated to
-  // the handler as well.
+  /** Safely returns and asserts the next token from the tokens buffer is equal
+    * to the expected value. The error handler is triggered when the equality
+    * assertion fails. Errors from processing the token buffer are propagated
+    * to the handler as well.
+    */
   def expect(last: Positioned, expecting: Token, toks: Iterator[Token])(
-      handler: Error => Error
+      errHandler: Error => Error
   ): Token =
     eat(last, toks) match {
       case got: Error =>
-        handler(got)
+        errHandler(got)
       case got if !Token.eqv(got, expecting) =>
-        handler(InvalidExpr(List(got), List(expecting)))
+        errHandler(InvalidExpr(List(got), List(expecting)))
       case got => got
     }
 
+  /** Overloaded [[expect]] with type check instead of equivalence check.
+    */
   def expect[Expecting](last: Positioned, toks: Iterator[Token])(
-      handler: Error => Error
+      errHandler: Error => Error
   ): Token =
     eat(last, toks) match {
-      case got: Error     => handler(got)
+      case got: Error     => errHandler(got)
       case got: Expecting => got
-      case got            => handler(InvalidExpr(List(got)))
+      case got            => errHandler(InvalidExpr(List(got)))
     }
 }
