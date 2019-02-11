@@ -14,7 +14,6 @@ object Lexer {
           case ')' => CloseParen(file, pos)
           case ':' => Colon(file, pos)
           case '|' => Pipe(file, pos)
-          case '_' => Underscore(file, pos)
 
           // TODO handle escaped quotes
           case '"' =>
