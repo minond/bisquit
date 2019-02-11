@@ -17,7 +17,8 @@ object Parser {
           case scalar: Scalar => Right(scalar)
           case id: Identifier => Right(id)
 
-          case err: InvalidToken => Left(InvalidExpr(err))
+          case ExpectedMoreInput(file, pos) => Left(UnexpectedEOF(file, pos))
+          case err: LexerError => Left(InvalidExpr(err))
 
           // TODO finish rest of expressions
         }

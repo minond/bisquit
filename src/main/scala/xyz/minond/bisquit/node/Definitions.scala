@@ -26,16 +26,25 @@ object Token {
     }
 }
 
+sealed trait LexerError
+
 case class InvalidToken(lexeme: String, file: String, start: Int)
     extends Positioned(file, start, start + lexeme.length)
     with Token
-
-case class EOF(file: String, pos: Int)
+    with LexerError
+case class ExpectedMoreInput(file: String, pos: Int)
     extends Positioned(file, pos, pos)
     with Token
-case class SingleQuote(file: String, start: Int)
-    extends Positioned(file, start, start + 1)
+    with LexerError
+case class UnexpectedToken(
+    lexeme: String,
+    msg: String,
+    file: String,
+    start: Int
+) extends Positioned(file, start, start + lexeme.size)
     with Token
+    with LexerError
+
 case class OpenParen(file: String, start: Int)
     extends Positioned(file, start, start + 1)
     with Token

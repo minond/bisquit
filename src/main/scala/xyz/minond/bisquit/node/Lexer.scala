@@ -51,11 +51,17 @@ object Lexer {
   ): Token = {
     val str = consumeWhile(src, not(is(end))).mkString
     if (!src.hasNext)
-      InvalidToken(str, file, pos)
+      ExpectedMoreInput(file, str.size + pos)
     else
       src.next match {
         case (_end, _) if _end == end => Str(str, file, pos)
-        case (bad, _)                 => InvalidToken(bad.toString, file, pos)
+        case (bad, _) =>
+          UnexpectedToken(
+            bad.toString,
+            s"expecting ${end} at end of string",
+            file,
+            pos
+          )
       }
   }
 
