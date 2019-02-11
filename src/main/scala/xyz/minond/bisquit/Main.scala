@@ -1,6 +1,6 @@
 package xyz.minond.bisquit
 
-import java.io.{BufferedReader, InputStreamReader};
+import java.io.{BufferedReader, InputStreamReader}
 
 import xyz.minond.bisquit.node._
 

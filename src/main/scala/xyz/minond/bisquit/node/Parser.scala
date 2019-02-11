@@ -36,36 +36,29 @@ object Parser {
   def parseVal(
       start: Token,
       toks: BufferedIterator[Token]
-  ): Either[Error, Expr] = {
-    val name =
-      expect[Identifier](start, toks).fold(err => return Left(err), pass)
+  ): Either[Error, Expr] =
+    for {
+      name <- expect[Identifier](start, toks).right
+      typ <- parseOptionalType(toks, name).right
+      sign <- expect[Eq](typ._2, toks).right
+      body <- next(sign, toks).right
+    } yield Binding(Variable(name, typ._1), body, start.getStart)
 
-    val (typ, beforeEq) =
-      parseOptionalType(toks) match {
-        case Left(err)              => return Left(err)
-        case Right(typ @ Some(tok)) => (typ, tok)
-        case Right(typ @ None)      => (typ, name)
-      }
-
-    val eqSign =
-      expect[Eq](beforeEq, toks).fold(err => return Left(err), pass)
-
-    val body = next(eqSign, toks).fold(err => return Left(err), pass)
-    Right(Binding(Variable(name, typ), body, start.getStart))
-  }
-
-  def parseOptionalType(toks: Iterator[Token]): Either[Error, Option[Type]] =
+  def parseOptionalType(
+      toks: Iterator[Token],
+      last: Token
+  ): Either[Error, (Option[Type], Token)] =
     peek(toks) match {
       case Some(colon: Colon) =>
         toks.next
         next(colon, toks).flatMap { expr =>
           expr match {
-            case typ: Identifier => Right(Some(Type(typ)))
+            case typ: Identifier => Right((Some(Type(typ)), typ))
             case err             => Left(UnexpectedExpr(err, "type annotation"))
           }
         }
 
-      case _ => Right(None)
+      case _ => Right((None, last))
     }
 
   /** Simple identification function used to clean up [[Either]] folding done
