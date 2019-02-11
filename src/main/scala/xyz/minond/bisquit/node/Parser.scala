@@ -18,75 +18,64 @@ object Parser {
           case id: Identifier => Right(id)
 
           case ExpectedMoreInput(file, pos) => Left(UnexpectedEOF(file, pos))
-          case err: LexerError => Left(InvalidExpr(err))
+          case err: LexerError              => Left(InvalidExpr(err))
 
           // TODO finish rest of expressions
         }
 
-  def parseCond(start: Token, toks: Iterator[Token]): Either[Error, Expr] = {
-    val cond = next(start, toks)(err => return Left(err))
-    val key1 = expect(cond, wordThen, toks)(err => return Left(err))
-    val pass = next(key1, toks)(err => return Left(err))
-    val key2 = expect(pass, wordElse, toks)(err => return Left(err))
-    val fail = next(key2, toks)(err => return Left(err))
-    Right(Cond(cond, pass, fail, start.getStart))
-  }
+  def parseCond(start: Token, toks: Iterator[Token]): Either[Error, Expr] =
+    for {
+      cond <- next(start, toks).right
+      key1 <- expect(cond, wordThen, toks).right
+      pass <- next(key1, toks).right
+      key2 <- expect(pass, wordElse, toks).right
+      fail <- next(key2, toks).right
+    } yield Cond(cond, pass, fail, start.getStart)
 
   def parseVal(
       start: Token,
       toks: BufferedIterator[Token]
   ): Either[Error, Expr] = {
-    val name: Identifier = next(start, toks)(err => return Left(err)) match {
-      case name: Identifier => name
-      case err              => return Left(UnexpectedExpr(err, "identifier"))
-    }
+    val name =
+      expect[Identifier](start, toks).fold(err => return Left(err), pass)
 
     val (typ, beforeEq) =
-      parseOptionalType(toks)(err => return Left(err)) match {
+      parseOptionalType(toks) match {
         case Left(err)              => return Left(err)
         case Right(typ @ Some(tok)) => (typ, tok)
         case Right(typ @ None)      => (typ, name)
       }
 
-    val eqSign = expect[Eq](beforeEq, toks)(err => return Left(err))
+    val eqSign =
+      expect[Eq](beforeEq, toks).fold(err => return Left(err), pass)
 
-    val body = next(eqSign, toks)(err => return Left(err))
+    val body = next(eqSign, toks).fold(err => return Left(err), pass)
     Right(Binding(Variable(name, typ), body, start.getStart))
   }
 
-  def parseOptionalType(toks: Iterator[Token])(
-      errHandler: Error => Error
-  ): Either[Error, Option[Type]] =
+  def parseOptionalType(toks: Iterator[Token]): Either[Error, Option[Type]] =
     peek(toks) match {
       case Some(colon: Colon) =>
         toks.next
-        next(colon, toks)(errHandler) match {
-          case typ: Identifier => Right(Some(Type(typ)))
-          case err             => Left(errHandler(UnexpectedExpr(err, "type annotation")))
+        next(colon, toks).flatMap { expr =>
+          expr match {
+            case typ: Identifier => Right(Some(Type(typ)))
+            case err             => Left(UnexpectedExpr(err, "type annotation"))
+          }
         }
 
       case _ => Right(None)
     }
 
+  /** Simple identification function used to clean up [[Either]] folding done
+    * during parsing expressions.
+    */
+  def pass[X](x: X): X = x
+
   /** Peeks at the next token, if any, without moving forward.
     */
   def peek(toks: Iterator[Token]): Option[Token] =
     toks.buffered.headOption
-
-  /** Safely returns the next expression and propagates errors to the error
-    * handler. The error handler is also triggered with an EOF error when there
-    * are no more tokens in the buffer.
-    */
-  def next(last: Positioned, toks: Iterator[Token])(
-      errHandler: Error => Error
-  ): Expr =
-    if (!toks.hasNext)
-      errHandler(UnexpectedEOF(last.getFile, last.getEnd))
-    else
-      parse(toks).next match {
-        case Left(err) => errHandler(err)
-        case Right(ok) => ok
-      }
 
   /** Safely returns the next token from the tokens buffer. If the buffer is
     * empty an EOF error is returned.
@@ -97,30 +86,49 @@ object Parser {
     else
       toks.next
 
-  /** Safely returns and asserts the next token from the tokens buffer is equal
-    * to the expected value. The error handler is triggered when the equality
-    * assertion fails. Errors from processing the token buffer are propagated
-    * to the handler as well.
+  /** Safely returns the next parsable expression. A [[Left[Error]] is returned
+    * if the token buffer is empty ro when an [[Error]] propagates from parsing
+    * the next expression.
     */
-  def expect(last: Positioned, expecting: Token, toks: Iterator[Token])(
-      errHandler: Error => Error
-  ): Token =
+  def next(last: Positioned, toks: Iterator[Token]): Either[Error, Expr] =
+    if (!toks.hasNext)
+      Left(UnexpectedEOF(last.getFile, last.getEnd))
+    else
+      parse(toks).next match {
+        case Left(err) => Left(err)
+        case Right(ok) => Right(ok)
+      }
+
+  /** Safely returns and asserts the next token from the tokens buffer is equal
+    * to the expected value. A [[Left[Error]]] is returned when the equality
+    * assertion fails or when an [[Error]] propagates from the token buffer
+    * processing.
+    */
+  def expect(
+      last: Positioned,
+      expecting: Token,
+      toks: Iterator[Token]
+  ): Either[Error, Token] =
     eat(last, toks) match {
-      case got: Error =>
-        errHandler(got)
+      case got: Error => Left(got)
       case got if !Token.eqv(got, expecting) =>
-        errHandler(InvalidExpr(got, Some(expecting)))
-      case got => got
+        Left(InvalidExpr(got, Some(expecting)))
+      case got => Right(got)
     }
 
   /** Overloaded [[expect]] with type check instead of equivalence check.
+    *
+    * TODO Abstract type pattern Expecting is unchecked since it is eliminated
+    * by erasure. This results in a runtime error when a [[Token]] cannot be
+    * cast to [[Expecting]].
     */
-  def expect[Expecting](last: Positioned, toks: Iterator[Token])(
-      errHandler: Error => Error
-  ): Token =
+  def expect[Expecting](
+      last: Positioned,
+      toks: Iterator[Token]
+  ): Either[Error, Expecting] =
     eat(last, toks) match {
-      case got: Error     => errHandler(got)
-      case got: Expecting => got
-      case got            => errHandler(InvalidExpr(got))
+      case got: Error     => Left(got)
+      case got: Expecting => Right(got)
+      case got            => Left(InvalidExpr(got))
     }
 }
