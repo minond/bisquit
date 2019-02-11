@@ -11,8 +11,13 @@ object Printer {
         s"error: invalid token `${lexeme}` in ${position(err)}"
       case InvalidExpr(got, None) =>
         s"error: invalid expression `${got}` in ${position(err)}"
+      case InvalidExpr(
+          Identifier(got, _, _),
+          Some(Identifier(expected, _, _))
+          ) =>
+        s"error: invalid expression `${got}` in ${position(err)}, expected `${expected}`"
       case InvalidExpr(got, Some(expected)) =>
-        s"error: invalid expression `${got}`, expected `${expected} in ${position(err)}"
+        s"error: invalid expression `${got}` in ${position(err)}, expected `${expected}`"
     }
 
   def position(err: Positioned) =
