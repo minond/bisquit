@@ -88,10 +88,7 @@ object Parser {
     if (!toks.hasNext)
       Left(UnexpectedEOF(last.getFile, last.getEnd))
     else
-      parse(toks).next match {
-        case Left(err) => Left(err)
-        case Right(ok) => Right(ok)
-      }
+      parse(toks).next
 
   /** Safely returns and asserts the next token from the tokens buffer is equal
     * to the expected value. A [[Left[Error]]] is returned when the equality
