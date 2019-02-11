@@ -15,18 +15,9 @@ object Lexer {
           case ':' => Colon(file, pos)
           case '|' => Pipe(file, pos)
 
-          // TODO handle escaped quotes
-          case '"' =>
-            val str = consumeWhile(src, not(is('"'))).mkString
-            if (!src.hasNext)
-              InvalidToken(str, file, pos)
-            else
-              src.next match {
-                case ('"', _) => Str(str, file, pos)
-                case (err, _) => InvalidToken(err.toString, file, pos)
-              }
+          case '"' => lexStr('"', src, file, pos)
+          case '`' => lexStr('`', src, file, pos)
 
-          // TODO implement nicer peek method
           case '=' =>
             src.headOption match {
               case Some(('>', _)) => src.next; Arrow(file, pos)
@@ -50,6 +41,22 @@ object Lexer {
           case c =>
             InvalidToken(c + consumeWhile(src, isWord).mkString, file, pos)
         }
+  }
+
+  def lexStr(
+      end: Char,
+      src: BufferedIterator[(Char, Int)],
+      file: String,
+      pos: Int
+  ): Token = {
+    val str = consumeWhile(src, not(is(end))).mkString
+    if (!src.hasNext)
+      InvalidToken(str, file, pos)
+    else
+      src.next match {
+        case (_end, _) if _end == end => Str(str, file, pos)
+        case (bad, _)                 => InvalidToken(bad.toString, file, pos)
+      }
   }
 
   def consumeWhile[T](
