@@ -57,12 +57,6 @@ case class Colon(file: String, start: Int)
 case class Eq(file: String, start: Int)
     extends Positioned(file, start, start + 1)
     with Token
-case class Pipe(file: String, start: Int)
-    extends Positioned(file, start, start + 1)
-    with Token
-case class Arrow(file: String, start: Int)
-    extends Positioned(file, start, start + 2)
-    with Token
 
 sealed trait Expr extends Positioned with Token
 sealed trait Error extends Expr

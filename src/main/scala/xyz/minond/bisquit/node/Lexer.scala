@@ -13,16 +13,10 @@ object Lexer {
           case '(' => OpenParen(file, pos)
           case ')' => CloseParen(file, pos)
           case ':' => Colon(file, pos)
-          case '|' => Pipe(file, pos)
+          case '=' => Eq(file, pos)
 
           case '"' => lexStr('"', src, file, pos)
           case '`' => lexStr('`', src, file, pos)
-
-          case '=' =>
-            src.headOption match {
-              case Some(('>', _)) => src.next; Arrow(file, pos)
-              case _              => Eq(file, pos)
-            }
 
           // TODO handle other number types
           case n
