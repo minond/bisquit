@@ -26,16 +26,16 @@ object Token {
     }
 }
 
-sealed trait LexerError
+sealed trait Error extends Positioned
 
-case class InvalidToken(lexeme: String, file: String, start: Int)
+case class UnknownToken(lexeme: String, file: String, start: Int)
     extends Positioned(file, start, start + lexeme.length)
     with Token
-    with LexerError
+    with Error
 case class ExpectedMoreInput(file: String, pos: Int)
     extends Positioned(file, pos, pos)
     with Token
-    with LexerError
+    with Error
 case class UnexpectedToken(
     lexeme: String,
     msg: String,
@@ -43,7 +43,7 @@ case class UnexpectedToken(
     start: Int
 ) extends Positioned(file, start, start + lexeme.size)
     with Token
-    with LexerError
+    with Error
 
 case class OpenParen(file: String, start: Int)
     extends Positioned(file, start, start + 1)
@@ -59,7 +59,6 @@ case class Eq(file: String, start: Int)
     with Token
 
 sealed trait Expr extends Positioned with Token
-sealed trait Error extends Expr
 
 case class InvalidExpr(got: Token, expected: Option[Token] = None)
     extends Positioned(got.getFile, got.getStart, got.getEnd)

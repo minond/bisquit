@@ -33,7 +33,7 @@ object Lexer {
             )
 
           case c =>
-            InvalidToken(c + consumeWhile(src, isWord).mkString, file, pos)
+            UnknownToken(c + consumeWhile(src, isWord).mkString, file, pos)
         }
   }
 

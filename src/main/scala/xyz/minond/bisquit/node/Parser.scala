@@ -18,7 +18,8 @@ object Parser {
           case id: Identifier => Right(id)
 
           case ExpectedMoreInput(file, pos) => Left(UnexpectedEOF(file, pos))
-          case err: LexerError              => Left(InvalidExpr(err))
+          case err: UnknownToken            => Left(InvalidExpr(err))
+          case err: UnexpectedToken         => Left(InvalidExpr(err))
 
           // TODO finish rest of expressions
         }

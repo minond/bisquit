@@ -7,7 +7,7 @@ object Printer {
         s"error: unexpected end of input in ${position(err)}"
       case UnexpectedExpr(token, msg) =>
         s"error: unexpected ${token}, expecting ${msg} in ${position(err)}"
-      case InvalidExpr(InvalidToken(lexeme, _, _), None) =>
+      case InvalidExpr(UnknownToken(lexeme, _, _), None) =>
         s"error: invalid token `${lexeme}` in ${position(err)}"
       case InvalidExpr(got, None) =>
         s"error: invalid expression `${got}` in ${position(err)}"
