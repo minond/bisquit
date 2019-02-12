@@ -1,5 +1,7 @@
 package xyz.minond.bisquit.node
 
+import scala.reflect.{classTag, ClassTag}
+
 object Parser {
   val wordThen = Identifier.word("then")
   val wordElse = Identifier.word("else")
@@ -108,18 +110,15 @@ object Parser {
     }
 
   /** Overloaded [[expect]] with type check instead of equivalence check.
-    *
-    * TODO Abstract type pattern Expecting is unchecked since it is eliminated
-    * by erasure. This results in a runtime error when a [[Token]] cannot be
-    * cast to [[Expecting]].
     */
-  def expect[Expecting](
+  def expect[Expecting: ClassTag](
       last: Positioned,
       toks: Iterator[Token]
   ): Either[Error, Expecting] =
     eat(last, toks) match {
-      case got: Error     => Left(got)
-      case got: Expecting => Right(got)
-      case got            => Left(InvalidExpr(got))
+      case got: Error => Left(got)
+      case got if classTag[Expecting].runtimeClass.isInstance(got) =>
+        Right(got.asInstanceOf[Expecting])
+      case got => Left(InvalidExpr(got))
     }
 }
