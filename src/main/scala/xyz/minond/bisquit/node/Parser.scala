@@ -22,12 +22,11 @@ object Parser {
           case ok: Scalar     => Right(ok)
           case ok: Identifier => Right(ok)
 
-          case err: CloseParen => Left(InvalidExpr(err))
-          case err: OpenParen  => Left(InvalidExpr(err))
-          case err: Colon      => Left(InvalidExpr(err))
-          case err: Eq         => Left(InvalidExpr(err))
-
-          case err: UnexpectedEOF   => Left(err)
+          case EOF(file, pos)       => Left(UnexpectedEOF(file, pos))
+          case err: CloseParen      => Left(InvalidExpr(err))
+          case err: OpenParen       => Left(InvalidExpr(err))
+          case err: Colon           => Left(InvalidExpr(err))
+          case err: Eq              => Left(InvalidExpr(err))
           case err: UnknownToken    => Left(InvalidExpr(err))
           case err: UnexpectedToken => Left(InvalidExpr(err))
         }
@@ -82,11 +81,14 @@ object Parser {
   /** Safely returns the next token from the tokens buffer. If the buffer is
     * empty an EOF error is returned.
     */
-  def eat(last: Positioned, toks: Iterator[Token]): Token =
+  def eat(last: Positioned, toks: Iterator[Token]): Either[Error, Token] =
     if (!toks.hasNext)
-      UnexpectedEOF(last.getFile, last.getEnd)
+      Left(UnexpectedEOF(last.getFile, last.getEnd))
     else
-      toks.next
+      toks.next match {
+        case EOF(file, pos) => Left(UnexpectedEOF(file, pos))
+        case next           => Right(next)
+      }
 
   /** Safely returns the next parsable expression. A [[Left[Error]] is returned
     * if the token buffer is empty ro when an [[Error]] propagates from parsing
@@ -108,11 +110,13 @@ object Parser {
       expecting: Token,
       toks: Iterator[Token]
   ): Either[Error, Token] =
-    eat(last, toks) match {
-      case got: Error => Left(got)
-      case got if !Token.eqv(got, expecting) =>
-        Left(InvalidExpr(got, Some(expecting)))
-      case got => Right(got)
+    eat(last, toks).flatMap { tok =>
+      tok match {
+        case got: Error => Left(got)
+        case got if !Token.eqv(got, expecting) =>
+          Left(InvalidExpr(got, Some(expecting)))
+        case got => Right(got)
+      }
     }
 
   /** Overloaded [[expect]] with type check instead of equivalence check.
@@ -121,10 +125,12 @@ object Parser {
       last: Positioned,
       toks: Iterator[Token]
   ): Either[Error, Expecting] =
-    eat(last, toks) match {
-      case got: Error => Left(got)
-      case got if classTag[Expecting].runtimeClass.isInstance(got) =>
-        Right(got.asInstanceOf[Expecting])
-      case got => Left(InvalidExpr(got))
+    eat(last, toks).flatMap { tok =>
+      tok match {
+        case got: Error => Left(got)
+        case got if classTag[Expecting].runtimeClass.isInstance(got) =>
+          Right(got.asInstanceOf[Expecting])
+        case got => Left(InvalidExpr(got))
+      }
     }
 }

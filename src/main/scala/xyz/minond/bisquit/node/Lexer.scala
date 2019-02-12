@@ -45,7 +45,7 @@ object Lexer {
   ): Token = {
     val str = consumeWhile(src, not(is(end))).mkString
     if (!src.hasNext)
-      UnexpectedEOF(file, str.size + pos)
+      EOF(file, str.size + pos)
     else
       src.next match {
         case (_end, _) if _end == end => Str(str, file, pos)
