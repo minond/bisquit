@@ -16,14 +16,20 @@ object Parser {
           case start @ Identifier("if", _, _)  => parseCond(start, toks)
           case start @ Identifier("val", _, _) => parseVal(start, toks.buffered)
 
-          case scalar: Scalar => Right(scalar)
-          case id: Identifier => Right(id)
+          case ok: Binding    => Right(ok)
+          case ok: Cond       => Right(ok)
+          case ok: Let        => Right(ok)
+          case ok: Scalar     => Right(ok)
+          case ok: Identifier => Right(ok)
+
+          case err: CloseParen => Left(InvalidExpr(err))
+          case err: OpenParen  => Left(InvalidExpr(err))
+          case err: Colon      => Left(InvalidExpr(err))
+          case err: Eq         => Left(InvalidExpr(err))
 
           case err: UnexpectedEOF   => Left(err)
           case err: UnknownToken    => Left(InvalidExpr(err))
           case err: UnexpectedToken => Left(InvalidExpr(err))
-
-          // TODO finish rest of expressions
         }
 
   def parseCond(start: Token, toks: Iterator[Token]): Either[Error, Expr] =

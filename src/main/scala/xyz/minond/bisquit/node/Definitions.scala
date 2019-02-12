@@ -26,6 +26,19 @@ object Token {
     }
 }
 
+case class OpenParen(file: String, start: Int)
+    extends Positioned(file, start, start + 1)
+    with Token
+case class CloseParen(file: String, start: Int)
+    extends Positioned(file, start, start + 1)
+    with Token
+case class Colon(file: String, start: Int)
+    extends Positioned(file, start, start + 1)
+    with Token
+case class Eq(file: String, start: Int)
+    extends Positioned(file, start, start + 1)
+    with Token
+
 // Errors are not a part of an AST but they do have contextual information to
 // correctly place them in source code.
 sealed trait Error extends Positioned
@@ -47,27 +60,18 @@ case class UnexpectedToken(
     with Token
     with Error
 
-case class OpenParen(file: String, start: Int)
-    extends Positioned(file, start, start + 1)
+// Returned by the parser or lexer when an EOF or end of stream is encountered
+// before a whole expression can be completely parsed.
+case class UnexpectedEOF(file: String, pos: Int)
+    extends Positioned(file, pos, pos)
     with Token
-case class CloseParen(file: String, start: Int)
-    extends Positioned(file, start, start + 1)
-    with Token
-case class Colon(file: String, start: Int)
-    extends Positioned(file, start, start + 1)
-    with Token
-case class Eq(file: String, start: Int)
-    extends Positioned(file, start, start + 1)
-    with Token
-
-sealed trait Expr extends Positioned with Token
+    with Error
 
 // General purpose error returned by the parser. Required to include context in
 // the form on the token where the expression was identified as being invalid
 // and may optionally include information as to what was expected in its place.
 case class InvalidExpr(got: Token, expected: Option[Token] = None)
     extends Positioned(got.getFile, got.getStart, got.getEnd)
-    with Expr
     with Error
 
 // Returned by the parser when an expression is properly parsed but is it not
@@ -75,17 +79,9 @@ case class InvalidExpr(got: Token, expected: Option[Token] = None)
 // identifier is expected.
 case class UnexpectedExpr(token: Token, msg: String)
     extends Positioned(token.getFile, token.getStart, token.getEnd)
-    with Expr
     with Error
 
-// Returned by the parser or lexer when an EOF or end of stream is encountered
-// before a whole expression can be completely parsed.
-case class UnexpectedEOF(file: String, pos: Int)
-    extends Positioned(file, pos, pos)
-    with Token
-    with Expr
-    with Error
-
+sealed trait Expr extends Positioned with Token
 sealed trait Scalar extends Expr
 
 case class Num(lexeme: String, file: String, start: Int)
