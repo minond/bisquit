@@ -43,6 +43,22 @@ object Parser {
       body <- next(key1, toks).right
     } yield Let(vals, body, start.getStart)
 
+  def parseVal(
+      start: Positioned,
+      toks: BufferedIterator[Token]
+  ): Either[Error, Binding] =
+    for {
+      name <- expect[Identifier](start, toks).right
+      typ <- parseOptionalType(toks, name).right
+      sign <- expect[Eq](typ._2, toks).right
+      body <- next(sign, toks).right
+    } yield Binding(Variable(name, typ._1), body, start.getStart)
+
+  def parseBinding(
+      start: Positioned,
+      toks: BufferedIterator[Token]
+  ): Either[Error, Binding] = parseVal(start, toks)
+
   def parseBindings(
       start: Positioned,
       toks: BufferedIterator[Token]
@@ -60,31 +76,6 @@ object Parser {
         }
     }
 
-  def parseBinding(
-      start: Positioned,
-      toks: BufferedIterator[Token]
-  ): Either[Error, Binding] = parseVal(start, toks)
-
-  def parseCond(start: Token, toks: Iterator[Token]): Either[Error, Expr] =
-    for {
-      cond <- next(start, toks).right
-      key1 <- expect(cond, wordThen, toks).right
-      pass <- next(key1, toks).right
-      key2 <- expect(pass, wordElse, toks).right
-      fail <- next(key2, toks).right
-    } yield Cond(cond, pass, fail, start.getStart)
-
-  def parseVal(
-      start: Positioned,
-      toks: BufferedIterator[Token]
-  ): Either[Error, Binding] =
-    for {
-      name <- expect[Identifier](start, toks).right
-      typ <- parseOptionalType(toks, name).right
-      sign <- expect[Eq](typ._2, toks).right
-      body <- next(sign, toks).right
-    } yield Binding(Variable(name, typ._1), body, start.getStart)
-
   def parseOptionalType(
       toks: Iterator[Token],
       last: Token
@@ -101,6 +92,15 @@ object Parser {
 
       case _ => Right((None, last))
     }
+
+  def parseCond(start: Token, toks: Iterator[Token]): Either[Error, Cond] =
+    for {
+      cond <- next(start, toks).right
+      key1 <- expect(cond, wordThen, toks).right
+      pass <- next(key1, toks).right
+      key2 <- expect(pass, wordElse, toks).right
+      fail <- next(key2, toks).right
+    } yield Cond(cond, pass, fail, start.getStart)
 
   /** Simple identification function used to clean up [[Either]] folding done
     * during parsing expressions.
