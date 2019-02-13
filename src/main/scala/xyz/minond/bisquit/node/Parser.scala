@@ -5,6 +5,7 @@ import scala.reflect.{classTag, ClassTag}
 object Parser {
   val wordThen = Identifier.word("then")
   val wordElse = Identifier.word("else")
+  val wordIn = Identifier.word("in")
 
   def parse(toks: Iterator[Token]): Iterator[Either[Error, Expr]] =
     for (t <- toks)
@@ -15,6 +16,7 @@ object Parser {
 
           case start @ Identifier("if", _, _)  => parseCond(start, toks)
           case start @ Identifier("val", _, _) => parseVal(start, toks.buffered)
+          case start @ Identifier("let", _, _) => parseLet(start, toks.buffered)
 
           case ok: Binding    => Right(ok)
           case ok: Cond       => Right(ok)
@@ -31,6 +33,38 @@ object Parser {
           case err: UnexpectedToken => Left(InvalidExpr(err))
         }
 
+  def parseLet(
+      start: Token,
+      toks: BufferedIterator[Token]
+  ): Either[Error, Let] =
+    for {
+      vals <- parseBindings(start, toks).right
+      key1 <- expect(if (vals.isEmpty) start else vals.last, wordIn, toks).right
+      body <- next(key1, toks).right
+    } yield Let(vals, body, start.getStart)
+
+  def parseBindings(
+      start: Positioned,
+      toks: BufferedIterator[Token]
+  ): Either[Error, List[Binding]] =
+    peek(toks) match {
+      case None                                  => Right(Nil)
+      case Some(word) if Token.eqv(word, wordIn) => Right(Nil)
+      case _ =>
+        eat(start, toks).flatMap { tok =>
+          parseBinding(tok, toks).flatMap { h =>
+            parseBindings(Positioned.at(h), toks).flatMap { t =>
+              Right(h :: t)
+            }
+          }
+        }
+    }
+
+  def parseBinding(
+      start: Positioned,
+      toks: BufferedIterator[Token]
+  ): Either[Error, Binding] = parseVal(start, toks)
+
   def parseCond(start: Token, toks: Iterator[Token]): Either[Error, Expr] =
     for {
       cond <- next(start, toks).right
@@ -41,9 +75,9 @@ object Parser {
     } yield Cond(cond, pass, fail, start.getStart)
 
   def parseVal(
-      start: Token,
+      start: Positioned,
       toks: BufferedIterator[Token]
-  ): Either[Error, Expr] =
+  ): Either[Error, Binding] =
     for {
       name <- expect[Identifier](start, toks).right
       typ <- parseOptionalType(toks, name).right

@@ -6,6 +6,14 @@ abstract class Positioned(file: String, start: Int, end: Int) {
   def getEnd = end
 }
 
+case class Selection(file: String, start: Int, end: Int)
+    extends Positioned(file, start, end)
+
+object Positioned {
+  def at(pos: Positioned) =
+    Selection(pos.getFile, pos.getStart, pos.getEnd)
+}
+
 sealed trait Token extends Positioned {
   def getFile: String
   def getStart: Int
