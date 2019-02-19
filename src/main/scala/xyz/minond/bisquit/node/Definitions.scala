@@ -96,9 +96,16 @@ case class UnexpectedExpr(token: Token, msg: String)
 sealed trait Expr extends Positioned with Token
 sealed trait Scalar extends Expr
 
-case class Num(lexeme: String, file: String, start: Int)
+sealed trait NumKind
+case object Int extends NumKind
+case object Real extends NumKind
+case object Hex extends NumKind
+case object Bin extends NumKind
+
+case class Num(lexeme: String, kind: NumKind, file: String, start: Int)
     extends Positioned(file, start, start + lexeme.length)
     with Scalar
+
 case class Str(lexeme: String, file: String, start: Int)
     extends Positioned(file, start, start + lexeme.length + 2)
     with Scalar

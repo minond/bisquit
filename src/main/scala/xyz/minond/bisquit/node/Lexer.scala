@@ -18,12 +18,12 @@ object Lexer {
           case '"' => lexStr('"', src, file, pos)
           case '`' => lexStr('`', src, file, pos)
 
-          // TODO handle other number types
           case n
               if isDigit(n) || (is('-')(n) &&
                 src.hasNext &&
                 isDigit(src.head._1)) =>
-            Num((n + consumeWhile(src, isDigit).mkString), file, pos)
+            val num = n + consumeWhile(src, isNumeric).mkString
+            Num(num, deriveNumKind(num), file, pos)
 
           case c if isLetter(c) =>
             Identifier(
@@ -59,6 +59,12 @@ object Lexer {
       }
   }
 
+  def deriveNumKind(str: String): NumKind =
+    if (str.contains("0x")) Hex
+    else if (str.contains("0b")) Bin
+    else if (str.contains(".")) Real
+    else Int
+
   def consumeWhile[T](
       src: BufferedIterator[(T, Int)],
       predicate: Predicate[T]
@@ -75,6 +81,9 @@ object Lexer {
 
   def isIdentifierTail(c: Char): Boolean =
     isLetter(c) || isDigit(c) || c == '_'
+
+  def isNumeric(c: Char): Boolean =
+    isDigit(c) || c == 'x' || c == 'b' || c == '.'
 
   def isDigit(c: Char): Boolean =
     c >= '0' && c <= '9'

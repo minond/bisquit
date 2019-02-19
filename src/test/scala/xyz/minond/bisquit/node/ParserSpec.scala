@@ -31,10 +31,10 @@ class ParserSpec extends FlatSpec with Matchers {
   }
 
   it should "parse integer values" in {
-    parse("""0""") should be(List(Num("0", "parserspec", 0)))
-    parse("""123""") should be(List(Num("123", "parserspec", 0)))
-    parse("""-0""") should be(List(Num("-0", "parserspec", 0)))
-    parse("""-123""") should be(List(Num("-123", "parserspec", 0)))
+    parse("""0""") should be(List(Num("0", Int, "parserspec", 0)))
+    parse("""123""") should be(List(Num("123", Int, "parserspec", 0)))
+    parse("""-0""") should be(List(Num("-0", Int, "parserspec", 0)))
+    parse("""-123""") should be(List(Num("-123", Int, "parserspec", 0)))
   }
 
   it should "parse if expressions" in {
@@ -45,8 +45,8 @@ class ParserSpec extends FlatSpec with Matchers {
       List(
         Cond(
           True("parserspec", 4),
-          Num("1", "parserspec", 15),
-          Num("2", "parserspec", 23),
+          Num("1", Int, "parserspec", 15),
+          Num("2", Int, "parserspec", 23),
           1
         )
       )
@@ -69,14 +69,14 @@ class ParserSpec extends FlatSpec with Matchers {
           True("parserspec", 4),
           Cond(
             False("parserspec", 21),
-            Num("1", "parserspec", 35),
-            Num("2", "parserspec", 45),
+            Num("1", Int, "parserspec", 35),
+            Num("2", Int, "parserspec", 45),
             18
           ),
           Cond(
             True("parserspec", 59),
-            Num("3", "parserspec", 72),
-            Num("4", "parserspec", 82),
+            Num("3", Int, "parserspec", 72),
+            Num("4", Int, "parserspec", 82),
             56
           ),
           1
@@ -97,17 +97,17 @@ class ParserSpec extends FlatSpec with Matchers {
           List(
             Binding(
               Variable(Identifier("a", "parserspec", 12), None),
-              Num("1", "parserspec", 16),
+              Num("1", Int, "parserspec", 16),
               8
             ),
             Binding(
               Variable(Identifier("b", "parserspec", 25), None),
-              Num("2", "parserspec", 29),
+              Num("2", Int, "parserspec", 29),
               21
             ),
             Binding(
               Variable(Identifier("c", "parserspec", 38), None),
-              Num("3", "parserspec", 42),
+              Num("3", Int, "parserspec", 42),
               34
             )
           ),
@@ -123,7 +123,7 @@ class ParserSpec extends FlatSpec with Matchers {
       List(
         Binding(
           Variable(Identifier("a", "parserspec", 4), None),
-          Num("1", "parserspec", 8),
+          Num("1", Int, "parserspec", 8),
           0
         )
       )
@@ -138,7 +138,7 @@ class ParserSpec extends FlatSpec with Matchers {
             Identifier("a", "parserspec", 4),
             Some(Type(Identifier("int8", "parserspec", 8)))
           ),
-          Num("1", "parserspec", 15),
+          Num("1", Int, "parserspec", 15),
           0
         )
       )
