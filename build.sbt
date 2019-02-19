@@ -6,5 +6,7 @@ scalacOptions := Seq("-deprecation",
                      "-Ywarn-dead-code",
                      "-Ywarn-numeric-widen")
 
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test"
+
 mainClass in (Compile, packageBin) := Some("xyz.minond.bisquit.Main")
 mainClass in (Compile, run) := Some("xyz.minond.bisquit.Main")
