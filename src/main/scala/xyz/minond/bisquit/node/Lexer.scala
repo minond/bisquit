@@ -59,6 +59,7 @@ object Lexer {
       }
   }
 
+  // XXX This needs some work...
   def deriveNumKind(str: String): NumKind =
     if (str.contains("0x")) Hex
     else if (str.contains("0b")) Bin

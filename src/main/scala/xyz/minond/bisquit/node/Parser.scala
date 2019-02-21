@@ -102,11 +102,6 @@ object Parser {
       fail <- next(key2, toks).right
     } yield Cond(cond, pass, fail, start.getStart)
 
-  /** Simple identification function used to clean up [[Either]] folding done
-    * during parsing expressions.
-    */
-  def pass[X](x: X): X = x
-
   /** Peeks at the next token, if any, without moving forward.
     */
   def peek(toks: Iterator[Token]): Option[Token] =
