@@ -27,6 +27,7 @@ object Parser {
           case EOF(file, pos)       => Left(UnexpectedEOF(file, pos))
           case err: CloseParen      => Left(InvalidExpr(err))
           case err: OpenParen       => Left(InvalidExpr(err))
+          case err: Comma           => Left(InvalidExpr(err))
           case err: Colon           => Left(InvalidExpr(err))
           case err: Eq              => Left(InvalidExpr(err))
           case err: UnknownToken    => Left(InvalidExpr(err))

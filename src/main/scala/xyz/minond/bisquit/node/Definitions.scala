@@ -43,6 +43,9 @@ case class OpenParen(file: String, start: Int)
 case class CloseParen(file: String, start: Int)
     extends Positioned(file, start, start + 1)
     with Token
+case class Comma(file: String, start: Int)
+    extends Positioned(file, start, start + 1)
+    with Token
 case class Colon(file: String, start: Int)
     extends Positioned(file, start, start + 1)
     with Token

@@ -12,6 +12,7 @@ object Lexer {
         c match {
           case '(' => OpenParen(file, pos)
           case ')' => CloseParen(file, pos)
+          case ',' => Comma(file, pos)
           case ':' => Colon(file, pos)
           case '=' => Eq(file, pos)
 
