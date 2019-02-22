@@ -27,8 +27,11 @@ object Token {
           if lexeme1 == lexeme2 =>
         true
 
-      case (_: Eq, _: Eq)       => true
-      case (_: Colon, _: Colon) => true
+      case (_: Eq, _: Eq)                 => true
+      case (_: Colon, _: Colon)           => true
+      case (_: Comma, _: Comma)           => true
+      case (_: OpenParen, _: OpenParen)   => true
+      case (_: CloseParen, _: CloseParen) => true
 
       case _ => false
     }
@@ -125,10 +128,6 @@ case class Identifier(lexeme: String, file: String, start: Int)
     extends Positioned(file, start, start + lexeme.length)
     with Expr
 
-object Identifier {
-  def word(lexeme: String) = Identifier(lexeme, "", 0)
-}
-
 case class Cond(cond: Expr, pass: Expr, fail: Expr, start: Int)
     extends Positioned(cond.getFile, start, fail.getEnd)
     with Expr
@@ -154,4 +153,8 @@ case class Binding(decl: Declaration, body: Expr, start: Int)
 
 case class Let(bindings: List[Binding], body: Expr, start: Int)
     extends Positioned(body.getFile, start, body.getEnd)
+    with Expr
+
+case class App(fn: Identifier, args: List[Expr], closeParen: Positioned)
+    extends Positioned(fn.getFile, fn.getStart, closeParen.getEnd)
     with Expr

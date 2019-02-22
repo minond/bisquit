@@ -3,9 +3,11 @@ package xyz.minond.bisquit.node
 import scala.reflect.{classTag, ClassTag}
 
 object Parser {
-  val wordThen = Identifier.word("then")
-  val wordElse = Identifier.word("else")
-  val wordIn = Identifier.word("in")
+  val wordThen = Identifier("then", "<internal>", 0)
+  val wordElse = Identifier("else", "<internal>", 0)
+  val wordIn = Identifier("in", "<internal>", 0)
+  val charComma = Comma("<internal>", 0)
+  val charCloseParen = CloseParen("<internal>", 0)
 
   def parse(toks: Iterator[Token]): Iterator[Either[Error, Expr]] =
     for (t <- toks)
@@ -18,11 +20,17 @@ object Parser {
           case start @ Identifier("val", _, _) => parseVal(start, toks.buffered)
           case start @ Identifier("let", _, _) => parseLet(start, toks.buffered)
 
-          case ok: Binding    => Right(ok)
-          case ok: Cond       => Right(ok)
-          case ok: Let        => Right(ok)
-          case ok: Scalar     => Right(ok)
-          case ok: Identifier => Right(ok)
+          case id: Identifier =>
+            val buff = toks.buffered
+            peek(buff) match {
+              case Some(_: OpenParen) => parseApp(id, buff)
+              case _                  => Right(id)
+            }
+
+          case ok: Binding => Right(ok)
+          case ok: Cond    => Right(ok)
+          case ok: Let     => Right(ok)
+          case ok: Scalar  => Right(ok)
 
           case EOF(file, pos)       => Left(UnexpectedEOF(file, pos))
           case err: CloseParen      => Left(InvalidExpr(err))
@@ -78,7 +86,7 @@ object Parser {
     }
 
   def parseOptionalType(
-      toks: Iterator[Token],
+      toks: BufferedIterator[Token],
       last: Token
   ): Either[Error, (Option[Type], Token)] =
     peek(toks) match {
@@ -103,9 +111,47 @@ object Parser {
       fail <- next(key2, toks).right
     } yield Cond(cond, pass, fail, start.getStart)
 
+  def parseApp(
+      id: Identifier,
+      toks: BufferedIterator[Token]
+  ): Either[Error, App] =
+    for {
+      opar <- expect[OpenParen](id, toks).right
+      args <- parseArgs(opar, toks).right
+      cpar <- expect[CloseParen](args.lastOption.getOrElse(opar), toks).right
+    } yield App(id, args, cpar)
+
+  def parseArgs(
+      start: Positioned,
+      toks: BufferedIterator[Token]
+  ): Either[Error, List[Expr]] =
+    peek(toks) match {
+      case None                                          => Right(Nil)
+      case Some(word) if Token.eqv(word, charCloseParen) => Right(Nil)
+      case _ =>
+        next(start, toks).flatMap { h =>
+          peek(toks) match {
+            case None                                          => Right(Nil)
+            case Some(word) if Token.eqv(word, charCloseParen) => Right(List(h))
+
+            case Some(_) =>
+              peek(toks) match {
+                case Some(comma) if Token.eqv(comma, charComma) =>
+                  eat(h, toks)
+                  parseArgs(comma, toks).flatMap { t =>
+                    Right(h :: t)
+                  }
+
+                case Some(t: Expr) => Right(List(h, t))
+                case _ => Right(Nil)
+              }
+          }
+        }
+    }
+
   /** Peeks at the next token, if any, without moving forward.
     */
-  def peek(toks: Iterator[Token]): Option[Token] =
+  def peek(toks: BufferedIterator[Token]): Option[Token] =
     toks.buffered.headOption
 
   /** Safely returns the next token from the tokens buffer. If the buffer is
