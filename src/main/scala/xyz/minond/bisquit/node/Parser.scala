@@ -117,32 +117,36 @@ object Parser {
   ): Either[Error, App] =
     for {
       opar <- expect[OpenParen](id, toks).right
-      args <- parseArgs(opar, toks).right
+      args <- parseCommaSeparated(opar, charCloseParen, toks).right
       cpar <- expect[CloseParen](args.lastOption.getOrElse(opar), toks).right
     } yield App(id, args, cpar)
 
-  def parseArgs(
+  def parseCommaSeparated(
       start: Positioned,
+      closer: Token,
       toks: BufferedIterator[Token]
   ): Either[Error, List[Expr]] =
     peek(toks) match {
-      case None                                          => Right(Nil)
-      case Some(word) if Token.eqv(word, charCloseParen) => Right(Nil)
+      case None                                  => Right(Nil)
+      case Some(word) if Token.eqv(word, closer) => Right(Nil)
       case _ =>
         next(start, toks).flatMap { h =>
           peek(toks) match {
-            case None                                          => Right(Nil)
-            case Some(word) if Token.eqv(word, charCloseParen) => Right(List(h))
+            case None => Right(Nil)
+            case Some(word) if Token.eqv(word, closer) =>
+              Right(List(h))
 
             case Some(_) =>
               peek(toks) match {
                 case Some(comma) if Token.eqv(comma, charComma) =>
                   eat(h, toks)
-                  parseArgs(comma, toks).flatMap { t =>
+                  parseCommaSeparated(comma, closer, toks).flatMap { t =>
                     Right(h :: t)
                   }
 
-                case Some(t: Expr) => Right(List(h, t))
+                case Some(t) if t.isInstanceOf[Expr] =>
+                  Right(List(h, t.asInstanceOf[Expr]))
+
                 case _ => Right(Nil)
               }
           }

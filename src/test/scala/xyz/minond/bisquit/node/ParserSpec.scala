@@ -144,4 +144,41 @@ class ParserSpec extends FlatSpec with Matchers {
       )
     )
   }
+
+  it should "parse application" in {
+    parse("""xs()""") should be(
+      List(
+        App(
+          Identifier("xs", "parserspec", 0),
+          List.empty,
+          CloseParen("parserspec", 3)
+        )
+      )
+    )
+
+    parse("""xs(a)""") should be(
+      List(
+        App(
+          Identifier("xs", "parserspec", 0),
+          List(Identifier("a", "parserspec", 3)),
+          CloseParen("parserspec", 4)
+        )
+      )
+    )
+
+    parse("""xs(a,b,c,d)""") should be(
+      List(
+        App(
+          Identifier("xs", "parserspec", 0),
+          List(
+            Identifier("a", "parserspec", 3),
+            Identifier("b", "parserspec", 5),
+            Identifier("c", "parserspec", 7),
+            Identifier("d", "parserspec", 9)
+          ),
+          CloseParen("parserspec", 10)
+        )
+      )
+    )
+  }
 }
