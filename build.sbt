@@ -1,6 +1,7 @@
 scalaVersion := "2.12.8"
 
 scalacOptions := Seq("-deprecation",
+                     "-Xfuture",
                      "-Ywarn-unused",
                      "-Ywarn-unused-import",
                      "-Ywarn-dead-code",

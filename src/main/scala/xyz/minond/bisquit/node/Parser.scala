@@ -141,14 +141,14 @@ object Parser {
       cpar <- expect[CloseParen](args.lastOption.getOrElse(opar), toks).right
     } yield App(id, args, cpar)
 
-  def parseCommaSeparated[T <% Expr: ClassTag](
+  def parseCommaSeparated[T: ClassTag](
       start: Positioned,
       closer: Token,
       toks: BufferedIterator[Token]
   )(
       parseFn: (Positioned, BufferedIterator[Token]) => Either[Error, T] =
         next _
-  ): Either[Error, List[T]] =
+  )(implicit conv: T => Expr): Either[Error, List[T]] =
     peek(toks) match {
       case None                                  => Right(Nil)
       case Some(word) if Token.eqv(word, closer) => Right(Nil)
