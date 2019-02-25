@@ -25,11 +25,11 @@ package xyz.minond.bisquit.node
  *  let-expr = "let" binding { binding } "in" expr ;
  *  app-expr = id , "(" [ expr { "," expr } ] ")" ;
  *
- *  binding = ( var-decl | fun-decl ) "=" expr ;
+ *  binding = ( var-decl | func-decl ) "=" expr ;
  *  var-decl = "val" arg-decl
  *  arg-decl = id [ typ-decl ] ;
  *  typ-decl = ":" id ;
- *  fun-decl = "fun" id "(" [ arg-decl { arg-decl } ] ")" typ-decl ;
+ *  func-decl = "func" id "(" [ arg-decl { arg-decl } ] ")" typ-decl ;
  *
  *  scalar = number | bool ;
  *  bool = "true" | "false" ;
@@ -191,8 +191,9 @@ sealed trait Declaration extends Positioned
 case class Variable(name: Identifier, typ: Option[Type])
     extends Positioned(name.getFile, name.getStart, typ.getOrElse(name).getEnd)
     with Declaration
-case class Function(name: Identifier, args: List[Argument], typ: Option[Type])
-    extends Positioned(name.getFile, name.getStart, typ.getOrElse(name).getEnd)
+// XXX case class Function(name: Identifier, args: List[Argument], closeParen: Positioned)
+case class Function(name: Identifier, args: List[Expr], closeParen: Positioned)
+    extends Positioned(name.getFile, name.getStart, closeParen.getEnd)
     with Declaration
 
 sealed trait Stmt extends Expr

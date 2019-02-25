@@ -6,6 +6,7 @@ object Parser {
   val wordThen = Identifier("then", "<internal>", 0)
   val wordElse = Identifier("else", "<internal>", 0)
   val wordIn = Identifier("in", "<internal>", 0)
+
   val charComma = Comma("<internal>", 0)
   val charCloseParen = CloseParen("<internal>", 0)
 
@@ -16,9 +17,10 @@ object Parser {
           case Identifier("true", file, start)  => Right(True(file, start))
           case Identifier("false", file, start) => Right(False(file, start))
 
-          case start @ Identifier("if", _, _)  => parseCond(start, toks)
-          case start @ Identifier("val", _, _) => parseVal(start, toks.buffered)
-          case start @ Identifier("let", _, _) => parseLet(start, toks.buffered)
+          case p @ Identifier("if", _, _)   => parseCond(p, toks)
+          case p @ Identifier("val", _, _)  => parseVal(p, toks.buffered)
+          case p @ Identifier("func", _, _) => parseFunc(p, toks.buffered)
+          case p @ Identifier("let", _, _)  => parseLet(p, toks.buffered)
 
           case id: Identifier =>
             val buff = toks.buffered
@@ -63,10 +65,28 @@ object Parser {
       body <- next(sign, toks).right
     } yield Binding(Variable(name, typ._1), body, start.getStart)
 
-  def parseBinding(
+  def parseFunc(
       start: Positioned,
       toks: BufferedIterator[Token]
-  ): Either[Error, Binding] = parseVal(start, toks)
+  ): Either[Error, Binding] =
+    for {
+      name <- expect[Identifier](start, toks).right
+      opar <- expect[OpenParen](name, toks).right
+      args <- parseCommaSeparated(opar, charCloseParen, toks)(next).right
+      cpar <- expect[CloseParen](args.lastOption.getOrElse(opar), toks).right
+      sign <- expect[Eq](cpar, toks).right
+      body <- next(sign, toks).right
+    } yield Binding(Function(name, args, cpar), body, start.getStart)
+
+  def parseBinding(
+      tok: Token,
+      toks: BufferedIterator[Token]
+  ): Either[Error, Binding] = tok match {
+    case Identifier("val", _, _)  => parseVal(tok, toks)
+    case Identifier("func", _, _) => parseFunc(tok, toks)
+    case _ =>
+      Left(UnexpectedExpr(tok, "expecting a val or a func declaration"))
+  }
 
   def parseBindings(
       start: Positioned,
@@ -117,20 +137,23 @@ object Parser {
   ): Either[Error, App] =
     for {
       opar <- expect[OpenParen](id, toks).right
-      args <- parseCommaSeparated(opar, charCloseParen, toks).right
+      args <- parseCommaSeparated(opar, charCloseParen, toks)(next).right
       cpar <- expect[CloseParen](args.lastOption.getOrElse(opar), toks).right
     } yield App(id, args, cpar)
 
-  def parseCommaSeparated(
+  def parseCommaSeparated[T <% Expr: ClassTag](
       start: Positioned,
       closer: Token,
       toks: BufferedIterator[Token]
-  ): Either[Error, List[Expr]] =
+  )(
+      parseFn: (Positioned, BufferedIterator[Token]) => Either[Error, T] =
+        next _
+  ): Either[Error, List[T]] =
     peek(toks) match {
       case None                                  => Right(Nil)
       case Some(word) if Token.eqv(word, closer) => Right(Nil)
       case _ =>
-        next(start, toks).flatMap { h =>
+        parseFn(start, toks).flatMap { h =>
           peek(toks) match {
             case None => Right(Nil)
             case Some(word) if Token.eqv(word, closer) =>
@@ -140,12 +163,13 @@ object Parser {
               peek(toks) match {
                 case Some(comma) if Token.eqv(comma, charComma) =>
                   eat(h, toks)
-                  parseCommaSeparated(comma, closer, toks).flatMap { t =>
-                    Right(h :: t)
+                  parseCommaSeparated(comma, closer, toks)(parseFn).flatMap {
+                    t =>
+                      Right(h :: t)
                   }
 
-                case Some(t) if t.isInstanceOf[Expr] =>
-                  Right(List(h, t.asInstanceOf[Expr]))
+                case Some(t) if classTag[T].runtimeClass.isInstance(t) =>
+                  Right(List(h, t.asInstanceOf[T]))
 
                 case _ => Right(Nil)
               }
