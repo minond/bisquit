@@ -3,8 +3,6 @@ package xyz.minond.bisquit.node
 object Lexer {
   type Predicate[T] = T => Boolean
 
-  val op = Set('+', '-', '*', '&', '^', '%', '!', '\\', '|', '>', '<')
-
   def lex(str: String, file: String): Iterator[Token] = {
     val src = str.toList.toIterator.zipWithIndex.buffered
     for ((c, pos) <- src if !c.isWhitespace)
@@ -92,9 +90,6 @@ object Lexer {
 
   def isLetter(c: Char): Boolean =
     (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
-
-  def isSymbol(c: Char): Boolean =
-    op.contains(c)
 
   def isParen(c: Char): Boolean =
     c == '(' || c == ')'
