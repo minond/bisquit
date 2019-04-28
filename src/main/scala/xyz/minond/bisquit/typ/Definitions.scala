@@ -4,6 +4,7 @@ import xyz.minond.bisquit.node.Expr
 
 sealed trait Type
 
+case class Poly(label: String) extends Type
 case object Num extends Type
 case object Str extends Type
 case object Bool extends Type

@@ -106,20 +106,23 @@ case class Eq(file: String, start: Int)
     extends Positioned(file, start, start + 1)
     with Token
 
-// Errors are not a part of an AST but they do have contextual information to
-// correctly place them in source code.
+/** Errors are not a part of an AST but they do have contextual information to
+  * correctly place them in source code.
+  */
 sealed trait Error extends Positioned
 
-// Returned by the lexer when an unsupported token is encounterd. This is a
-// proper Token that should be handled by the parser.
+/** Returned by the lexer when an unsupported token is encounterd. This is a
+  * proper Token that should be handled by the parser.
+  */
 case class UnknownToken(lexeme: String, file: String, start: Int)
     extends Positioned(file, start, start + lexeme.length)
     with Token
     with Error
 
-// Returned by the lexer when a certain token was expected but another one was
-// encountered. For example, a mis-matching closing quote. This is a proper
-// Token that should be handled by the parser.
+/** Returned by the lexer when a certain token was expected but another one was
+  * encountered. For example, a mis-matching closing quote. This is a proper
+  * Token that should be handled by the parser.
+  */
 case class UnexpectedToken(
     lexeme: String,
     msg: String,
@@ -129,22 +132,25 @@ case class UnexpectedToken(
     with Token
     with Error
 
-// General purpose error returned by the parser. Required to include context in
-// the form on the token where the expression was identified as being invalid
-// and may optionally include information as to what was expected in its place.
+/** General purpose error returned by the parser. Required to include context in
+  * the form on the token where the expression was identified as being invalid
+  * and may optionally include information as to what was expected in its place.
+  */
 case class InvalidExpr(got: Token, expected: Option[Token] = None)
     extends Positioned(got.getFile, got.getStart, got.getEnd)
     with Error
 
-// Returned by the parser or lexer when an EOF or end of stream is encountered
-// before a whole expression can be completely parsed.
+/** Returned by the parser or lexer when an EOF or end of stream is encountered
+  * before a whole expression can be completely parsed.
+  */
 case class UnexpectedEOF(file: String, pos: Int)
     extends Positioned(file, pos, pos)
     with Error
 
-// Returned by the parser when an expression is properly parsed but is it not
-// of the correct type. For example, when a number is placed where an
-// identifier is expected.
+/** Returned by the parser when an expression is properly parsed but is it not
+  * of the correct type. For example, when a number is placed where an
+  * identifier is expected.
+  */
 case class UnexpectedExpr(token: Token, msg: String)
     extends Positioned(token.getFile, token.getStart, token.getEnd)
     with Error
