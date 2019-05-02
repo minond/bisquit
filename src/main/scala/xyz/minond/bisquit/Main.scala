@@ -3,7 +3,6 @@ package xyz.minond.bisquit
 import java.io.{BufferedReader, InputStreamReader}
 
 import xyz.minond.bisquit.node._
-import xyz.minond.bisquit.typ.Typechecker
 
 object Main {
   val promptPrefix = "bisquit"
@@ -14,8 +13,6 @@ object Main {
     val input = new InputStreamReader(System.in)
     val reader = new BufferedReader(input)
     val buff = new StringBuilder
-
-    val checker = new Typechecker
 
     while (true) {
       print(if (buff.isEmpty) promptStart else promptCont)
@@ -35,7 +32,6 @@ object Main {
                   err => println(Printer.error(err)),
                   ok => {
                     println(ok)
-                    println(checker.label(ok))
                   }
                 )
               }
