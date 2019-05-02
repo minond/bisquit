@@ -10,7 +10,7 @@ object Parser {
   val charComma = Comma("<internal>", 0)
   val charCloseParen = CloseParen("<internal>", 0)
 
-  def parse(toks: Iterator[Token]): Iterator[Either[Error, Expr]] =
+  def parse(toks: BufferedIterator[Token]): Iterator[Either[Error, Expr]] =
     for (t <- toks)
       yield
         t match {
@@ -18,14 +18,13 @@ object Parser {
           case Identifier("false", file, start) => Right(False(file, start))
 
           case p @ Identifier("if", _, _)   => parseCond(p, toks)
-          case p @ Identifier("val", _, _)  => parseVal(p, toks.buffered)
-          case p @ Identifier("func", _, _) => parseFunc(p, toks.buffered)
-          case p @ Identifier("let", _, _)  => parseLet(p, toks.buffered)
+          case p @ Identifier("val", _, _)  => parseVal(p, toks)
+          case p @ Identifier("func", _, _) => parseFunc(p, toks)
+          case p @ Identifier("let", _, _)  => parseLet(p, toks)
 
           case id: Identifier =>
-            val buff = toks.buffered
-            peek(buff) match {
-              case Some(_: OpenParen) => parseApp(id, buff)
+            peek(toks) match {
+              case Some(_: OpenParen) => parseApp(id, toks)
               case _                  => Right(id)
             }
 
@@ -122,7 +121,7 @@ object Parser {
       case _ => Right((None, last))
     }
 
-  def parseCond(start: Token, toks: Iterator[Token]): Either[Error, Cond] =
+  def parseCond(start: Token, toks: BufferedIterator[Token]): Either[Error, Cond] =
     for {
       cond <- next(start, toks).right
       key1 <- expect(cond, wordThen, toks).right
@@ -180,12 +179,12 @@ object Parser {
   /** Peeks at the next token, if any, without moving forward.
     */
   def peek(toks: BufferedIterator[Token]): Option[Token] =
-    toks.buffered.headOption
+    toks.headOption
 
   /** Safely returns the next token from the tokens buffer. If the buffer is
     * empty an EOF error is returned.
     */
-  def eat(last: Positioned, toks: Iterator[Token]): Either[Error, Token] =
+  def eat(last: Positioned, toks: BufferedIterator[Token]): Either[Error, Token] =
     if (!toks.hasNext)
       Left(UnexpectedEOF(last.getFile, last.getEnd))
     else
@@ -198,7 +197,7 @@ object Parser {
     * if the token buffer is empty ro when an [[Error]] propagates from parsing
     * the next expression.
     */
-  def next(last: Positioned, toks: Iterator[Token]): Either[Error, Expr] =
+  def next(last: Positioned, toks: BufferedIterator[Token]): Either[Error, Expr] =
     if (!toks.hasNext)
       Left(UnexpectedEOF(last.getFile, last.getEnd))
     else
@@ -212,7 +211,7 @@ object Parser {
   def expect(
       last: Positioned,
       expecting: Token,
-      toks: Iterator[Token]
+      toks: BufferedIterator[Token]
   ): Either[Error, Token] =
     eat(last, toks).flatMap { tok =>
       tok match {
@@ -227,7 +226,7 @@ object Parser {
     */
   def expect[Expecting: ClassTag](
       last: Positioned,
-      toks: Iterator[Token]
+      toks: BufferedIterator[Token]
   ): Either[Error, Expecting] =
     eat(last, toks).flatMap { tok =>
       tok match {

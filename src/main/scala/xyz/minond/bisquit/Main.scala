@@ -21,7 +21,7 @@ object Main {
         case ""     =>
         case "exit" => return
         case code =>
-          Parser.parse(Lexer.lex(code, "<stdin>")).toList match {
+          Parser.parse(Lexer.lex(code, "<stdin>").buffered).toList match {
             case Left(_: UnexpectedEOF) :: Nil =>
               buff.append("\n")
 

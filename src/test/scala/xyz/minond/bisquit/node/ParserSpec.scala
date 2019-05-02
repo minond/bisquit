@@ -4,7 +4,7 @@ import org.scalatest._
 
 class ParserSpec extends FlatSpec with Matchers {
   def parse(src: String) =
-    Parser.parse(Lexer.lex(src, "parserspec")).toList.collect {
+    Parser.parse(Lexer.lex(src, "parserspec").buffered).toList.collect {
       case Right(expr) => expr
       case Left(err)   => throw new Exception(Printer.error(err))
     }
