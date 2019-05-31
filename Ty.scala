@@ -18,12 +18,19 @@ sealed trait Ty {
       case (TyStr, TyStr)   => true
       case (TyBool, TyBool) => true
 
-      // All fields in `this` must exist in `that` and by a subtype as well.
+      // All fields in `this` must exist in `that` and be a subtype as well.
       // Two empty shapes are equal to each other.
       case (TyShape(f1), TyShape(f2)) =>
         f1.foldLeft[Boolean](true) {
           case (eq, (field, ty)) =>
             eq && f2.getOrElse(field, return false).sub(ty)
+        }
+
+      // All links in `this` must exist in `that` in the same location, and be
+      // a subtype as well. Two empty chains are equal to each other.
+      case (TyChain(l1), TyChain(l2)) =>
+        l1.size <= l2.size && l1.zip(l2).foldLeft[Boolean](true) {
+          case (eq, (p1, p2)) => eq && p1.sub(p2)
         }
 
       case _ => false
@@ -35,6 +42,10 @@ case object TyReal extends Ty
 case object TyStr extends Ty
 case object TyBool extends Ty
 
+// TyChain represents a type definition for a function.
+case class TyChain(links: List[Ty]) extends Ty
+
+// TyShape represents a type definition for a record.
 case class TyShape(fields: Map[String, Ty]) extends Ty
 
 sealed trait TyError
@@ -51,8 +62,6 @@ object Ty {
       case _: Bool            => Right(TyBool)
 
       case cond: Cond => equationCond(cond)
-
-      case _ => Left(UnknownTy("unimplemented"))
     }
 
   def equationCond(expr: Cond): Either[TyError, Ty] = {
