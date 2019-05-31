@@ -1,15 +1,5 @@
 package xyz.minond.bisquit
 
-// case class Environment(uni: Map[String, Ty]) {
-//   def get(name: String) =
-//     uni.get(name)
-// }
-//
-// object Environment {
-//   def create(): Environment =
-//     Environment(Map())
-// }
-
 sealed trait Ty {
   def sub(that: Ty): Boolean =
     (this, that) match {
@@ -42,6 +32,9 @@ case object TyReal extends Ty
 case object TyStr extends Ty
 case object TyBool extends Ty
 
+// TyTy represents a type type
+case class TyTy(ty: Ty) extends Ty
+
 // TyChain represents a type definition for a function.
 case class TyChain(links: List[Ty]) extends Ty
 
@@ -53,30 +46,101 @@ sealed trait TyError
 case class UnexpectedTy(expr: Expr, expecting: Ty, got: Ty) extends TyError
 case class UnknownTy(name: String) extends TyError
 
+// XXX Perhaps this should not be a type error
+case class UnknownVariableTy(name: String) extends TyError
+
 object Ty {
-  def of(expr: Expr): Either[TyError, Ty] =
+  def process(
+      expr: Expr,
+      env: Environment
+  ): Either[TyError, (Ty, Environment)] =
+    of(expr, env).fold(
+      err => Left(err),
+      ty => {
+        expr match {
+          case bind: Binding => Right((ty, env.declare(bind.name, ty)))
+          case _             => Right((ty, env))
+        }
+      }
+    )
+
+  def of(expr: Expr, env: Environment): Either[TyError, Ty] =
     expr match {
       case Num(_, Real, _, _) => Right(TyReal)
       case _: Num             => Right(TyInt)
       case _: Str             => Right(TyStr)
       case _: Bool            => Right(TyBool)
 
-      case cond: Cond => equationCond(cond)
+      case Identifier(id, _, _) => equationVariableLookup(id, env)
+      case cond: Cond           => equationCond(cond, env)
+      case _ @Binding(v @ Variable(_, _), b, _) =>
+        equationVariableBinding(v, b, env)
     }
 
-  def equationCond(expr: Cond): Either[TyError, Ty] = {
-    val cond = of(expr.cond).fold(err => return Left(err), ok => ok)
+  def equationVariableLookup(
+      id: String,
+      env: Environment
+  ): Either[TyError, Ty] =
+    env.get(id) match {
+      case None     => Left(UnknownVariableTy(id))
+      case Some(ty) => Right(ty)
+    }
+
+  def equationVariableBinding(
+      decl: Variable,
+      body: Expr,
+      env: Environment
+  ): Either[TyError, Ty] =
+    decl match {
+      case Variable(_, None) => of(body, env)
+      case Variable(_, Some(Type(Identifier(ann, _, _)))) =>
+        of(body, env) match {
+          case Left(err) => Left(err)
+          case Right(bty) =>
+            env.get(ann) match {
+              case Some(TyTy(aty)) =>
+                if (bty.sub(aty))
+                  Right(aty)
+                else
+                  Left(UnexpectedTy(body, aty, bty))
+
+              case _ => Left(UnknownTy(ann))
+            }
+        }
+    }
+
+  def equationCond(expr: Cond, env: Environment): Either[TyError, Ty] = {
+    val cond = of(expr.cond, env).fold(err => return Left(err), ok => ok)
     if (!cond.sub(TyBool)) {
       return Left(UnexpectedTy(expr.cond, TyBool, cond))
     }
-    Right(TyInt)
 
-    val pass = of(expr.pass).fold(err => return Left(err), ok => ok)
-    val fail = of(expr.fail).fold(err => return Left(err), ok => ok)
+    val pass = of(expr.pass, env).fold(err => return Left(err), ok => ok)
+    val fail = of(expr.fail, env).fold(err => return Left(err), ok => ok)
     if (!pass.sub(fail)) {
       return Left(UnexpectedTy(expr.fail, pass, fail))
     }
 
     Right(pass)
   }
+}
+
+case class Environment(uni: Map[String, Ty]) {
+  def get(name: String) =
+    uni.get(name)
+
+  def declare(name: String, ty: Ty): Environment =
+    Environment(uni ++ Map(name -> ty))
+}
+
+object Environment {
+  def create(): Environment =
+    Environment(
+      Map(
+        "int" -> TyTy(TyInt),
+        "real" -> TyTy(TyReal),
+        "string" -> TyTy(TyStr),
+        "bool" -> TyTy(TyBool)
+      )
+    )
 }

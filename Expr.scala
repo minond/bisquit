@@ -223,7 +223,6 @@ sealed trait Declaration extends Positioned
 case class Variable(name: Identifier, typ: Option[Type])
     extends Positioned(name.getFile, name.getStart, typ.getOrElse(name).getEnd)
     with Declaration
-// XXX case class Function(name: Identifier, args: List[Argument], closeParen: Positioned)
 case class Function(name: Identifier, args: List[Expr], closeParen: Positioned)
     extends Positioned(name.getFile, name.getStart, closeParen.getEnd)
     with Declaration
@@ -232,7 +231,13 @@ sealed trait Stmt extends Expr
 
 case class Binding(decl: Declaration, body: Expr, start: Int)
     extends Positioned(decl.getFile, decl.getStart, body.getEnd)
-    with Stmt
+    with Stmt {
+  def name(): String =
+    this match {
+      case Binding(Variable(Identifier(id, _, _), _), _, _)    => id
+      case Binding(Function(Identifier(id, _, _), _, _), _, _) => id
+    }
+}
 
 case class Let(bindings: List[Binding], body: Expr, start: Int)
     extends Positioned(body.getFile, start, body.getEnd)

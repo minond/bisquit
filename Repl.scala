@@ -12,6 +12,8 @@ object Repl {
     val reader = new BufferedReader(input)
     val buff = new StringBuilder
 
+    var env = Environment.create
+
     while (true) {
       print(if (buff.isEmpty) promptStart else promptCont)
 
@@ -30,7 +32,13 @@ object Repl {
                   err => println(err),
                   exp => {
                     println(exp)
-                    println(Ty.of(exp))
+
+                    Ty.process(exp, env) match {
+                      case Left(err) => println(err)
+                      case Right((ty, _env)) =>
+                        println(ty)
+                        env = _env
+                    }
                   }
                 )
               }
