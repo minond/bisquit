@@ -28,8 +28,9 @@ object Repl {
               ast.foreach {
                 _.fold(
                   err => println(err),
-                  ok => {
-                    println(ok)
+                  exp => {
+                    println(exp)
+                    println(Ty.of(exp))
                   }
                 )
               }
