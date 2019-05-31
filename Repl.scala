@@ -31,12 +31,12 @@ object Repl {
                 _.fold(
                   err => println(err),
                   exp => {
-                    println(exp)
-
                     Ty.process(exp, env) match {
-                      case Left(err) => println(err)
+                      case Left(err) =>
+                        println(exp)
+                        println(err)
                       case Right((ty, _env)) =>
-                        println(ty)
+                        println(s"t : $ty")
                         env = _env
                     }
                   }
