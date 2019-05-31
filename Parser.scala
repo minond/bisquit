@@ -124,7 +124,10 @@ object Parser {
       case _ => Right((None, last))
     }
 
-  def parseCond(start: Token, toks: BufferedIterator[Token]): Either[Error, Cond] =
+  def parseCond(
+      start: Token,
+      toks: BufferedIterator[Token]
+  ): Either[Error, Cond] =
     for {
       cond <- next(start, toks).right
       key1 <- expect(cond, wordThen, toks).right
@@ -187,7 +190,10 @@ object Parser {
   /** Safely returns the next token from the tokens buffer. If the buffer is
     * empty an EOF error is returned.
     */
-  def eat(last: Positioned, toks: BufferedIterator[Token]): Either[Error, Token] =
+  def eat(
+      last: Positioned,
+      toks: BufferedIterator[Token]
+  ): Either[Error, Token] =
     if (!toks.hasNext)
       Left(UnexpectedEOF(last.getFile, last.getEnd))
     else
@@ -200,7 +206,10 @@ object Parser {
     * if the token buffer is empty ro when an [[Error]] propagates from parsing
     * the next expression.
     */
-  def next(last: Positioned, toks: BufferedIterator[Token]): Either[Error, Expr] =
+  def next(
+      last: Positioned,
+      toks: BufferedIterator[Token]
+  ): Either[Error, Expr] =
     if (!toks.hasNext)
       Left(UnexpectedEOF(last.getFile, last.getEnd))
     else
