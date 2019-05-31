@@ -25,6 +25,25 @@ sealed trait Ty {
 
       case _ => false
     }
+
+  override def toString() =
+    this match {
+      case TyInt  => Ty.NameTyInt
+      case TyReal => Ty.NameTyReal
+      case TyStr  => Ty.NameTyStr
+      case TyBool => Ty.NameTyBool
+      case _      => this.toStringIdent(0)
+    }
+
+  def toStringIdent(level: Int): String =
+    this match {
+      case TyTy(ty) => s"type<${ty.toStringIdent(level + 2)}>"
+      case TyChain(links) =>
+        s"(${links.map(_.toStringIdent(level + 2)).mkString(" -> ")})"
+      // case TyShape(fields) => fields.map[String]{ case (name, ty) =>  }
+      case TyShape(_) => "record"
+      case _          => this.toString
+    }
 }
 
 case object TyInt extends Ty
@@ -41,7 +60,17 @@ case class TyChain(links: List[Ty]) extends Ty
 // TyShape represents a type definition for a record.
 case class TyShape(fields: Map[String, Ty]) extends Ty
 
-sealed trait TyError
+sealed trait TyError {
+  override def toString() =
+    this match {
+      case UnknownTy(name) =>
+        s"type error: unknown type `$name`"
+      case UnexpectedTy(_, expecting, got) =>
+        s"type error: expecting $expecting but got $got instead"
+      case UnknownVariableTy(name) =>
+        s"type error: unable to lookup type for `$name`"
+    }
+}
 
 case class UnexpectedTy(expr: Expr, expecting: Ty, got: Ty) extends TyError
 case class UnknownTy(name: String) extends TyError
@@ -50,6 +79,11 @@ case class UnknownTy(name: String) extends TyError
 case class UnknownVariableTy(name: String) extends TyError
 
 object Ty {
+  val NameTyInt = "int"
+  val NameTyReal = "real"
+  val NameTyStr = "string"
+  val NameTyBool = "bool"
+
   def process(
       expr: Expr,
       env: Environment
@@ -137,10 +171,10 @@ object Environment {
   def create(): Environment =
     Environment(
       Map(
-        "int" -> TyTy(TyInt),
-        "real" -> TyTy(TyReal),
-        "string" -> TyTy(TyStr),
-        "bool" -> TyTy(TyBool)
+        Ty.NameTyInt -> TyTy(TyInt),
+        Ty.NameTyReal -> TyTy(TyReal),
+        Ty.NameTyStr -> TyTy(TyStr),
+        Ty.NameTyBool -> TyTy(TyBool)
       )
     )
 }
