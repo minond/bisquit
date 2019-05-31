@@ -2,9 +2,7 @@ package xyz.minond.bisquit
 
 import java.io.{BufferedReader, InputStreamReader}
 
-import xyz.minond.bisquit.node._
-
-object Main {
+object Repl {
   val promptPrefix = "bisquit"
   val promptStart = s"${promptPrefix}> "
   val promptCont = s"${" " * promptPrefix.size}| "
@@ -21,7 +19,7 @@ object Main {
         case ""     =>
         case "exit" => return
         case code =>
-          Parser.parse(Lexer.lex(code, "<stdin>").buffered).toList match {
+          Parser.process(code, "<stdin>").toList match {
             case Left(_: UnexpectedEOF) :: Nil =>
               buff.append("\n")
 
@@ -29,7 +27,7 @@ object Main {
               buff.clear
               ast.foreach {
                 _.fold(
-                  err => println(Printer.error(err)),
+                  err => println(err),
                   ok => {
                     println(ok)
                   }

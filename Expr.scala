@@ -1,4 +1,4 @@
-package xyz.minond.bisquit.node
+package xyz.minond.bisquit
 
 /* The language grammar:
  *
@@ -109,7 +109,33 @@ case class Eq(file: String, start: Int)
 /** Errors are not a part of an AST but they do have contextual information to
   * correctly place them in source code.
   */
-sealed trait Error extends Positioned
+sealed trait Error extends Positioned {
+  override def toString() =
+    this match {
+      case UnknownToken(lexeme, _, _) =>
+        s"error: invalid token `${lexeme}` in ${position(this)}"
+      case UnexpectedToken(lexeme, msg, _, _) =>
+        s"error: unexpected token `${lexeme}`, ${msg} in ${position(this)}"
+      case _: UnexpectedEOF =>
+        s"error: unexpected end of input in ${position(this)}"
+      case UnexpectedExpr(token, msg) =>
+        s"error: unexpected ${token}, expecting ${msg} in ${position(this)}"
+      case InvalidExpr(UnknownToken(lexeme, _, _), None) =>
+        s"error: invalid token `${lexeme}` in ${position(this)}"
+      case InvalidExpr(got, None) =>
+        s"error: invalid expression `${got}` in ${position(this)}"
+      case InvalidExpr(
+          Identifier(got, _, _),
+          Some(Identifier(expected, _, _))
+          ) =>
+        s"error: invalid expression `${got}` in ${position(this)}, expected `${expected}`"
+      case InvalidExpr(got, Some(expected)) =>
+        s"error: invalid expression `${got}` in ${position(this)}, expected `${expected}`"
+    }
+
+  def position(err: Positioned) =
+    s"${err.getFile}:${err.getStart}"
+}
 
 /** Returned by the lexer when an unsupported token is encounterd. This is a
   * proper Token that should be handled by the parser.

@@ -1,15 +1,26 @@
-package xyz.minond.bisquit.node
+package xyz.minond.bisquit
 
 import org.scalatest._
 
 class ParserSpec extends FlatSpec with Matchers {
   def parse(src: String) =
-    Parser.parse(Lexer.lex(src, "parserspec").buffered).toList.collect {
+    Parser.process(src, "parserspec").toList.collect {
       case Right(expr) => expr
-      case Left(err)   => throw new Exception(Printer.error(err))
+      case Left(err)   => throw new Exception(err.toString)
     }
 
-  "The Parser" should "handle empty input" in {
+  it should "derive number types" in {
+    Parser.deriveNumKind("1321") should be(Int)
+    Parser.deriveNumKind("-1321") should be(Int)
+    Parser.deriveNumKind("13.21") should be(Real)
+    Parser.deriveNumKind("-13.21") should be(Real)
+    Parser.deriveNumKind("0x1321") should be(Hex)
+    Parser.deriveNumKind("-0x1321") should be(Hex)
+    Parser.deriveNumKind("0b0001") should be(Bin)
+    Parser.deriveNumKind("-0b001") should be(Bin)
+  }
+
+  it should "handle empty input" in {
     parse("") should be(List())
     parse(" ") should be(List())
     parse("          ") should be(List())
