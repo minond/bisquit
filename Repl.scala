@@ -1,9 +1,10 @@
 package xyz.minond.bisquit
 
 import java.io.{BufferedReader, InputStreamReader}
+import scala.util.{Failure, Success, Try}
 
 object Repl {
-  val promptPrefix = "bisquit"
+  val promptPrefix = ""
   val promptStart = s"${promptPrefix}> "
   val promptCont = s"${" " * promptPrefix.size}| "
 
@@ -31,11 +32,14 @@ object Repl {
                 _.fold(
                   err => println(err),
                   exp => {
-                    Ty.process(exp, env) match {
-                      case Left(err) =>
-                        println(exp)
+                    Try { Ty.process(exp, env) } match {
+                      case Failure(err) =>
+                        println(s"exception while typing expressiong: $err")
+                        println(s"ast: $exp")
+                      case Success(Left(err)) =>
                         println(err)
-                      case Right((ty, _env)) =>
+                        println(s"ast: $exp")
+                      case Success(Right((ty, _env))) =>
                         println(s"t : $ty")
                         env = _env
                     }
