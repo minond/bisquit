@@ -10,6 +10,8 @@ object Parser {
   val charComma = Comma("<internal>", 0)
   val charCloseParen = CloseParen("<internal>", 0)
 
+  implicit def var2expr(v: Variable): Expr = v
+
   def process(str: String, file: String): Iterator[Either[Error, Expr]] =
     parse(lex(str, file).buffered)
 
@@ -75,6 +77,20 @@ object Parser {
       typ <- parseOptionalType(toks, name).right
     } yield (Variable(name, typ._1), typ._2)
 
+  /** Helper for parsing `<var> [ ":" <ann> ]` expressions with a signature
+    * that allows the function to be used as a parser combinator. The
+    * unfortunate thing about doing this though is that we throw out the
+    * "previously parsed" token used in error messages. This could lead to
+    * parsing/type errors that don't point to the exact position of the error.
+    */
+  def parseAnnotatedVarWithoutTokenContinuations(
+      start: Positioned,
+      toks: BufferedIterator[Token]
+  ): Either[Error, Variable] =
+    for {
+      vari <- parseAnnotatedVar(start, toks).right
+    } yield vari._1
+
   def parseFunc(
       start: Positioned,
       toks: BufferedIterator[Token]
@@ -82,7 +98,9 @@ object Parser {
     for {
       name <- expect[Identifier](start, toks).right
       opar <- expect[OpenParen](name, toks).right
-      args <- parseCommaSeparated(opar, charCloseParen, toks)(next).right
+      args <- parseCommaSeparated(opar, charCloseParen, toks)(
+        parseAnnotatedVarWithoutTokenContinuations
+      ).right
       cpar <- expect[CloseParen](args.lastOption.getOrElse(opar), toks).right
       sign <- expect[Eq](cpar, toks).right
       body <- next(sign, toks).right
@@ -168,15 +186,15 @@ object Parser {
       case _ =>
         parseFn(start, toks).flatMap { h =>
           peek(toks) match {
-            case None => Right(Nil)
-            case Some(word) if Token.eqv(word, closer) =>
-              Right(List(h))
+            case None                                  => Right(Nil)
+            case Some(word) if Token.eqv(word, closer) => Right(List(h))
 
             case Some(_) =>
               peek(toks) match {
                 case Some(comma) if Token.eqv(comma, charComma) =>
-                  eat(h, toks)
-                  parseCommaSeparated(comma, closer, toks)(parseFn).flatMap {
+                  // XXX Why is eating here not moving ahead? eat(h, toks)
+                  toks.next
+                  parseCommaSeparated[T](comma, closer, toks)(parseFn).flatMap {
                     t =>
                       Right(h :: t)
                   }

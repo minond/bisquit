@@ -214,13 +214,40 @@ class ParserSpec extends FlatSpec with Matchers {
           Function(
             Identifier("xs", "parserspec", 5),
             List(
-              Identifier("a", "parserspec", 8),
-              Identifier("b", "parserspec", 11),
-              Identifier("c", "parserspec", 14)
+              Variable(Identifier("a", "parserspec", 8), None),
+              Variable(Identifier("b", "parserspec", 11), None),
+              Variable(Identifier("c", "parserspec", 14), None)
             ),
             CloseParen("parserspec", 15)
           ),
           Num("1", Int, "parserspec", 19),
+          0
+        )
+      )
+    )
+
+    parse("""func xs(a : int, b : int, c : int) = 1""") should be(
+      List(
+        Binding(
+          Function(
+            Identifier("xs", "parserspec", 5),
+            List(
+              Variable(
+                Identifier("a", "parserspec", 8),
+                Some(Type(Identifier("int", "parserspec", 12)))
+              ),
+              Variable(
+                Identifier("b", "parserspec", 17),
+                Some(Type(Identifier("int", "parserspec", 21)))
+              ),
+              Variable(
+                Identifier("c", "parserspec", 26),
+                Some(Type(Identifier("int", "parserspec", 30)))
+              )
+            ),
+            CloseParen("parserspec", 33)
+          ),
+          Num("1", Int, "parserspec", 37),
           0
         )
       )

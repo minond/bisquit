@@ -223,8 +223,11 @@ sealed trait Declaration extends Positioned
 case class Variable(name: Identifier, typ: Option[Type])
     extends Positioned(name.getFile, name.getStart, typ.getOrElse(name).getEnd)
     with Declaration
-case class Function(name: Identifier, args: List[Expr], closeParen: Positioned)
-    extends Positioned(name.getFile, name.getStart, closeParen.getEnd)
+case class Function(
+    name: Identifier,
+    args: List[Variable],
+    closeParen: Positioned
+) extends Positioned(name.getFile, name.getStart, closeParen.getEnd)
     with Declaration
 
 sealed trait Stmt extends Expr
