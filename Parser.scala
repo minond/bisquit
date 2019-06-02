@@ -61,11 +61,19 @@ object Parser {
       toks: BufferedIterator[Token]
   ): Either[Error, Binding] =
     for {
+      vari <- parseAnnotatedVar(start, toks).right
+      sign <- expect[Eq](vari._2, toks).right
+      body <- next(sign, toks).right
+    } yield Binding(vari._1, body, start.getStart)
+
+  def parseAnnotatedVar(
+      start: Positioned,
+      toks: BufferedIterator[Token]
+  ): Either[Error, (Variable, Token)] =
+    for {
       name <- expect[Identifier](start, toks).right
       typ <- parseOptionalType(toks, name).right
-      sign <- expect[Eq](typ._2, toks).right
-      body <- next(sign, toks).right
-    } yield Binding(Variable(name, typ._1), body, start.getStart)
+    } yield (Variable(name, typ._1), typ._2)
 
   def parseFunc(
       start: Positioned,
