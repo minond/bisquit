@@ -226,8 +226,9 @@ case class Variable(name: Identifier, typ: Option[Type])
 case class Function(
     name: Identifier,
     args: List[Variable],
-    closeParen: Positioned
-) extends Positioned(name.getFile, name.getStart, closeParen.getEnd)
+    rtyp: Option[Type],
+    eq: Positioned
+) extends Positioned(name.getFile, name.getStart, eq.getEnd)
     with Declaration
 
 sealed trait Stmt extends Expr
@@ -237,8 +238,8 @@ case class Binding(decl: Declaration, body: Expr, start: Int)
     with Stmt {
   def name(): String =
     this match {
-      case Binding(Variable(Identifier(id, _, _), _), _, _)    => id
-      case Binding(Function(Identifier(id, _, _), _, _), _, _) => id
+      case Binding(Variable(Identifier(id, _, _), _), _, _)       => id
+      case Binding(Function(Identifier(id, _, _), _, _, _), _, _) => id
     }
 }
 

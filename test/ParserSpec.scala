@@ -129,7 +129,7 @@ class ParserSpec extends FlatSpec with Matchers {
     )
   }
 
-  it should "parse val statements" in {
+  it should "parse val expressions" in {
     parse("""val a = 1""") should be(
       List(
         Binding(
@@ -141,7 +141,7 @@ class ParserSpec extends FlatSpec with Matchers {
     )
   }
 
-  it should "parse val statements with types" in {
+  it should "parse val expressions with types" in {
     parse("""val a : int8 = 1""") should be(
       List(
         Binding(
@@ -193,61 +193,79 @@ class ParserSpec extends FlatSpec with Matchers {
     )
   }
 
-  it should "function declaration" in {
-    parse("""func xs() = 1""") should be(
+  it should "parse function declaration" in {
+    parse("""func xs1() = 1""") should be(
       List(
         Binding(
           Function(
-            Identifier("xs", "parserspec", 5),
+            Identifier("xs1", "parserspec", 5),
             List(),
-            CloseParen("parserspec", 8)
+            None,
+            Eq("parserspec", 11)
           ),
-          Num("1", Int, "parserspec", 12),
+          Num("1", Int, "parserspec", 13),
           0
         )
       )
     )
 
-    parse("""func xs(a, b, c) = 1""") should be(
+    parse("""func xs2(a, b, c) = 1""") should be(
       List(
         Binding(
           Function(
-            Identifier("xs", "parserspec", 5),
+            Identifier("xs2", "parserspec", 5),
             List(
-              Variable(Identifier("a", "parserspec", 8), None),
-              Variable(Identifier("b", "parserspec", 11), None),
-              Variable(Identifier("c", "parserspec", 14), None)
+              Variable(Identifier("a", "parserspec", 9), None),
+              Variable(Identifier("b", "parserspec", 12), None),
+              Variable(Identifier("c", "parserspec", 15), None)
             ),
-            CloseParen("parserspec", 15)
+            None,
+            Eq("parserspec", 18)
           ),
-          Num("1", Int, "parserspec", 19),
+          Num("1", Int, "parserspec", 20),
           0
         )
       )
     )
 
-    parse("""func xs(a : int, b : int, c : int) = 1""") should be(
+    parse("""func xs3(a : int, b : int, c : int) = 1""") should be(
       List(
         Binding(
           Function(
-            Identifier("xs", "parserspec", 5),
+            Identifier("xs3", "parserspec", 5),
             List(
               Variable(
-                Identifier("a", "parserspec", 8),
-                Some(Type(Identifier("int", "parserspec", 12)))
+                Identifier("a", "parserspec", 9),
+                Some(Type(Identifier("int", "parserspec", 13)))
               ),
               Variable(
-                Identifier("b", "parserspec", 17),
-                Some(Type(Identifier("int", "parserspec", 21)))
+                Identifier("b", "parserspec", 18),
+                Some(Type(Identifier("int", "parserspec", 22)))
               ),
               Variable(
-                Identifier("c", "parserspec", 26),
-                Some(Type(Identifier("int", "parserspec", 30)))
+                Identifier("c", "parserspec", 27),
+                Some(Type(Identifier("int", "parserspec", 31)))
               )
             ),
-            CloseParen("parserspec", 33)
+            None,
+            Eq("parserspec", 36)
           ),
-          Num("1", Int, "parserspec", 37),
+          Num("1", Int, "parserspec", 38),
+          0
+        )
+      )
+    )
+
+    parse("""func xs4() : int = 1""") should be(
+      List(
+        Binding(
+          Function(
+            Identifier("xs4", "parserspec", 5),
+            List(),
+            Some(Type(Identifier("int", "parserspec", 13))),
+            Eq("parserspec", 17)
+          ),
+          Num("1", Int, "parserspec", 19),
           0
         )
       )

@@ -10,6 +10,9 @@ object Parser {
   val charComma = Comma("<internal>", 0)
   val charCloseParen = CloseParen("<internal>", 0)
 
+  /** Allows parseAnnotatedVarWithoutTokenContinuations to be used as a parsing
+    * function.
+    */
   implicit def var2expr(v: Variable): Expr = v
 
   def process(str: String, file: String): Iterator[Either[Error, Expr]] =
@@ -102,9 +105,10 @@ object Parser {
         parseAnnotatedVarWithoutTokenContinuations
       ).right
       cpar <- expect[CloseParen](args.lastOption.getOrElse(opar), toks).right
-      sign <- expect[Eq](cpar, toks).right
+      rtyp <- parseOptionalType(toks, cpar).right
+      sign <- expect[Eq](rtyp._2, toks).right
       body <- next(sign, toks).right
-    } yield Binding(Function(name, args, cpar), body, start.getStart)
+    } yield Binding(Function(name, args, rtyp._1, sign), body, start.getStart)
 
   def parseBinding(
       tok: Token,
