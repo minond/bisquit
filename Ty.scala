@@ -105,13 +105,17 @@ object Ty {
       case _: Str             => Right(TyStr)
       case _: Bool            => Right(TyBool)
 
-      case Identifier(id, _, _) => equationVariableLookup(id, env)
-      case cond: Cond           => equationCond(cond, env)
-      case _ @Binding(v @ Variable(_, _), b, _) =>
-        equationVariableBinding(v, b, env)
+      case Identifier(id, _, _)                 => ruleLookup(id, env)
+      case cond: Cond                           => ruleCond(cond, env)
+      case _ @Binding(v @ Variable(_, _), b, _) => ruleVar(v, b, env)
+      case Let(bindings, body, _)               => ruleLet(bindings, body, env)
     }
 
-  def equationVariableLookup(
+  /** x : a ∈ Γ
+    * ---------
+    * Γ ⊢ x : a
+    */
+  def ruleLookup(
       id: String,
       env: Environment
   ): Either[TyError, Ty] =
@@ -120,7 +124,26 @@ object Ty {
       case Some(ty) => Right(ty)
     }
 
-  def equationVariableBinding(
+  /** Γ ⊢ e1 : a     Γ, x : a ⊢ e2 : b
+    * --------------------------------
+    *     Γ ⊢ let x = e1 in e2 : b
+    */
+  def ruleLet(
+      bindings: List[Binding],
+      body: Expr,
+      env: Environment
+  ): Either[TyError, Ty] = {
+    val loc = bindings.foldLeft[Environment](env) { (env, binding) =>
+      env.declare(
+        binding.name,
+        Ty.of(binding, env).fold(err => return Left(err), ok => ok)
+      )
+    }
+
+    Ty.of(body, loc)
+  }
+
+  def ruleVar(
       decl: Variable,
       body: Expr,
       env: Environment
@@ -143,7 +166,11 @@ object Ty {
         }
     }
 
-  def equationCond(expr: Cond, env: Environment): Either[TyError, Ty] = {
+  /** Γ ⊢ e1 : bool     Γ ⊢ e2 : a     Γ ⊢  e3 : a
+    * --------------------------------------------
+    *      Γ ⊢ cond e1 then e2 else e3 : a
+    */
+  def ruleCond(expr: Cond, env: Environment): Either[TyError, Ty] = {
     val cond = of(expr.cond, env).fold(err => return Left(err), ok => ok)
     if (!cond.sub(TyBool)) {
       return Left(UnexpectedTy(expr.cond, TyBool, cond))
@@ -159,6 +186,8 @@ object Ty {
   }
 }
 
+/** Γ, holds the scoped environment
+  */
 case class Environment(uni: Map[String, Ty]) {
   def get(name: String) =
     uni.get(name)
