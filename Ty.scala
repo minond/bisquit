@@ -65,6 +65,8 @@ sealed trait TyError {
     this match {
       case UnknownTy(name) =>
         s"type error: unknown type `$name`"
+      case UnknownTyOf(name) =>
+        s"type error: unknown type of `$name`"
       case UnexpectedTy(_, expecting, got) =>
         s"type error: expecting $expecting but got $got instead"
       case UnknownVariableTy(name) =>
@@ -74,6 +76,7 @@ sealed trait TyError {
 
 case class UnexpectedTy(expr: Expr, expecting: Ty, got: Ty) extends TyError
 case class UnknownTy(name: String) extends TyError
+case class UnknownTyOf(name: String) extends TyError
 
 // XXX Perhaps this should not be a type error
 case class UnknownVariableTy(name: String) extends TyError
@@ -105,10 +108,11 @@ object Ty {
       case _: Str             => Right(TyStr)
       case _: Bool            => Right(TyBool)
 
-      case Identifier(id, _, _)                 => ruleLookup(id, env)
-      case cond: Cond                           => ruleCond(cond, env)
-      case _ @Binding(v @ Variable(_, _), b, _) => ruleVar(v, b, env)
-      case Let(bindings, body, _)               => ruleLet(bindings, body, env)
+      case Identifier(id, _, _)          => ruleLookup(id, env)
+      case cond: Cond                    => ruleCond(cond, env)
+      case Let(bindings, body, _)        => ruleLet(bindings, body, env)
+      case _ @Binding(v: Variable, b, _) => ruleVar(v, b, env)
+      case _ @Binding(f: Function, b, _) => ruleFunc(f, b, env)
     }
 
   /** x : a ∈ Γ
@@ -141,6 +145,46 @@ object Ty {
     }
 
     Ty.of(body, loc)
+  }
+
+  /** Γ, x : a ⊢ e : b
+    * ----------------
+    * Γ ⊢ λx.e : a → b
+    */
+  def ruleFunc(
+      decl: Function,
+      body: Expr,
+      env: Environment
+  ): Either[TyError, Ty] = {
+    val loc = decl.args.foldLeft[Environment](env) { (env, arg) =>
+      arg.typ match {
+        // TODO Once inference is complete this can go away.
+        case None => return Left(UnknownTyOf(arg.name.lexeme))
+        case Some(typ) =>
+          env.get(typ.name.lexeme) match {
+            case None     => return Left(UnknownTy(typ.name.lexeme))
+            case Some(ty) => env.declare(arg.name.lexeme, ty)
+          }
+      }
+    }
+
+    val bod = Ty.of(body, loc) match {
+      case Left(err) => return Left(err)
+      case Right(ty) => ty
+    }
+
+    decl.rtyp match {
+      case None => Right(bod)
+      case Some(typ) =>
+        env.get(typ.name.lexeme) match {
+          case None => Left(UnknownTy(typ.name.lexeme))
+          case Some(ret) =>
+            if (ret.sub(bod))
+              Right(bod)
+            else
+              Left(UnexpectedTy(body, ret, bod))
+        }
+    }
   }
 
   def ruleVar(
@@ -200,10 +244,10 @@ object Environment {
   def create(): Environment =
     Environment(
       Map(
-        Ty.NameTyInt -> TyTy(TyInt),
-        Ty.NameTyReal -> TyTy(TyReal),
-        Ty.NameTyStr -> TyTy(TyStr),
-        Ty.NameTyBool -> TyTy(TyBool)
+        Ty.NameTyInt -> TyInt,
+        Ty.NameTyReal -> TyReal,
+        Ty.NameTyStr -> TyStr,
+        Ty.NameTyBool -> TyBool
       )
     )
 }
