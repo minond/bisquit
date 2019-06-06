@@ -3,10 +3,11 @@ package xyz.minond.bisquit
 sealed trait Ty {
   def sub(that: Ty): Boolean =
     (this, that) match {
+      case (TyBool, TyBool) => true
       case (TyInt, TyInt)   => true
       case (TyReal, TyReal) => true
       case (TyStr, TyStr)   => true
-      case (TyBool, TyBool) => true
+      case (TyUnit, TyUnit) => true
 
       // All fields in `this` must exist in `that` and be a subtype as well.
       // Two empty shapes are equal to each other.
@@ -28,10 +29,11 @@ sealed trait Ty {
 
   override def toString() =
     this match {
+      case TyBool => Ty.NameTyBool
       case TyInt  => Ty.NameTyInt
       case TyReal => Ty.NameTyReal
       case TyStr  => Ty.NameTyStr
-      case TyBool => Ty.NameTyBool
+      case TyUnit => Ty.NameTyUnit
       case _      => this.toStringIdent(0)
     }
 
@@ -39,17 +41,18 @@ sealed trait Ty {
     this match {
       case TyTy(ty) => s"type<${ty.toStringIdent(level + 2)}>"
       case TyChain(links) =>
-        s"(${links.map(_.toStringIdent(level + 2)).mkString(" -> ")})"
+        s"${links.map(_.toStringIdent(level + 2)).mkString(" -> ")}"
       // case TyShape(fields) => fields.map[String]{ case (name, ty) =>  }
       case TyShape(_) => "record"
       case _          => this.toString
     }
 }
 
+case object TyBool extends Ty
 case object TyInt extends Ty
 case object TyReal extends Ty
 case object TyStr extends Ty
-case object TyBool extends Ty
+case object TyUnit extends Ty
 
 // TyTy represents a type type
 case class TyTy(ty: Ty) extends Ty
@@ -82,10 +85,11 @@ case class UnknownTyOf(name: String) extends TyError
 case class UnknownVariableTy(name: String) extends TyError
 
 object Ty {
+  val NameTyBool = "bool"
   val NameTyInt = "int"
   val NameTyReal = "real"
   val NameTyStr = "string"
-  val NameTyBool = "bool"
+  val NameTyUnit = "unit"
 
   def process(
       expr: Expr,
@@ -156,35 +160,45 @@ object Ty {
       body: Expr,
       env: Environment
   ): Either[TyError, Ty] = {
-    val loc = decl.args.foldLeft[Environment](env) { (env, arg) =>
-      arg.typ match {
-        // TODO Once inference is complete this can go away.
-        case None => return Left(UnknownTyOf(arg.name.lexeme))
-        case Some(typ) =>
-          env.get(typ.name.lexeme) match {
-            case None     => return Left(UnknownTy(typ.name.lexeme))
-            case Some(ty) => env.declare(arg.name.lexeme, ty)
+    val (loc, intys) =
+      decl.args.foldRight[(Environment, List[Ty])]((env, List.empty)) {
+        case (arg, (env, tys)) =>
+          arg.typ match {
+            // TODO Once inference is complete this can go away.
+            case None => return Left(UnknownTyOf(arg.name.lexeme))
+            case Some(typ) =>
+              env.get(typ.name.lexeme) match {
+                case None     => return Left(UnknownTy(typ.name.lexeme))
+                case Some(ty) => (env.declare(arg.name.lexeme, ty), ty :: tys)
+              }
           }
       }
-    }
 
     val bod = Ty.of(body, loc) match {
       case Left(err) => return Left(err)
       case Right(ty) => ty
     }
 
-    decl.rtyp match {
-      case None => Right(bod)
+    val outty = decl.rtyp match {
+      case None => bod
       case Some(typ) =>
         env.get(typ.name.lexeme) match {
-          case None => Left(UnknownTy(typ.name.lexeme))
+          case None => return Left(UnknownTy(typ.name.lexeme))
           case Some(ret) =>
             if (ret.sub(bod))
-              Right(bod)
+              bod
             else
-              Left(UnexpectedTy(body, ret, bod))
+              return Left(UnexpectedTy(body, ret, bod))
         }
     }
+
+    val links =
+      if (intys.isEmpty)
+        List(TyUnit, outty)
+      else
+        intys :+ outty
+
+    Right(TyChain(links))
   }
 
   def ruleVar(
@@ -244,10 +258,11 @@ object Environment {
   def create(): Environment =
     Environment(
       Map(
+        Ty.NameTyBool -> TyBool,
         Ty.NameTyInt -> TyInt,
         Ty.NameTyReal -> TyReal,
         Ty.NameTyStr -> TyStr,
-        Ty.NameTyBool -> TyBool
+        Ty.NameTyUnit -> TyUnit
       )
     )
 }
