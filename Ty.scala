@@ -70,6 +70,8 @@ case class TyTy(ty: Ty) extends Ty
 case class TyShape(fields: Map[String, Ty]) extends Ty
 
 case class TyLambda(links: List[Ty]) extends Ty {
+  def args = links.init
+
   def without(args: List[Ty]): Ty =
     if (args.size == links.size - 1)
       links.last
@@ -79,10 +81,12 @@ case class TyLambda(links: List[Ty]) extends Ty {
   def only(args: List[Ty]): Ty =
     if (args.size == 1)
       links.head
+    else if (links.size - 1 == 0)
+      TyUnit
     else if (args.size == links.size - 1)
-      TyLambda(links.init)
+      TyTuple(links.init)
     else
-      TyLambda(links.take(args.size))
+      TyTuple(links.take(args.size).init)
 }
 
 sealed trait TyError {
@@ -177,6 +181,9 @@ object Ty {
   /** Γ, x : a ⊢ e : b
     * ----------------
     * Γ ⊢ λx.e : a → b
+    *
+    * Note that there could be multiple e's as arguments and multiple a's as
+    * types. An empty e is typed as unit.
     */
   def ruleFunc(
       decl: Function,
@@ -227,6 +234,13 @@ object Ty {
   /** Γ ⊢ e1 : a → b     Γ ⊢ e2 : a
     * -----------------------------
     *        Γ ⊢ e1 e2 : b
+    *
+    * Note that there could be multiple e2's as arguments An empty e2 is also
+    * allowed and is typed as unit.
+    *
+    * TODO e1 is not really any expression but a name we lookup instead. This
+    * should be updated to handle regular expressions instead of just function
+    * lookups.
     */
   def ruleApp(
       app: App,
@@ -239,6 +253,9 @@ object Ty {
     (env.get(fn), tyargs) match {
       case (Some(TyLambda(TyUnit :: ret :: Nil)), Nil) => Right(ret)
       case (Some(TyLambda(TyUnit :: rest)), Nil)       => Right(TyLambda(rest))
+
+      case (Some(fn @ TyLambda(h :: t)), Nil) =>
+        Left(UnexpectedTy(app, TyTuple(fn.args), TyUnit))
 
       case (Some(fnargs @ TyLambda(tys)), tyargs) =>
         if (!TyLambda(tyargs).sub(fnargs))
