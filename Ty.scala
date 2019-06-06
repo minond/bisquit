@@ -19,7 +19,7 @@ sealed trait Ty {
 
       // All links in `this` must exist in `that` in the same location, and be
       // a subtype as well. Two empty chains are equal to each other.
-      case (TyChain(l1), TyChain(l2)) =>
+      case (TyLambda(l1), TyLambda(l2)) =>
         l1.size <= l2.size && l1.zip(l2).foldLeft[Boolean](true) {
           case (eq, (p1, p2)) => eq && p1.sub(p2)
         }
@@ -40,7 +40,7 @@ sealed trait Ty {
   def toStringIdent(level: Int): String =
     this match {
       case TyTy(ty) => s"type<${ty.toStringIdent(level + 2)}>"
-      case TyChain(links) =>
+      case TyLambda(links) =>
         s"${links.map(_.toStringIdent(level + 2)).mkString(" -> ")}"
       // case TyShape(fields) => fields.map[String]{ case (name, ty) =>  }
       case TyShape(_) => "record"
@@ -53,14 +53,8 @@ case object TyInt extends Ty
 case object TyReal extends Ty
 case object TyStr extends Ty
 case object TyUnit extends Ty
-
-// TyTy represents a type type
 case class TyTy(ty: Ty) extends Ty
-
-// TyChain represents a type definition for a function.
-case class TyChain(links: List[Ty]) extends Ty
-
-// TyShape represents a type definition for a record.
+case class TyLambda(links: List[Ty]) extends Ty
 case class TyShape(fields: Map[String, Ty]) extends Ty
 
 sealed trait TyError {
@@ -198,7 +192,7 @@ object Ty {
       else
         intys :+ outty
 
-    Right(TyChain(links))
+    Right(TyLambda(links))
   }
 
   def ruleVar(
