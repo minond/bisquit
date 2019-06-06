@@ -18,9 +18,10 @@ sealed trait Ty {
         }
 
       // All links in `this` must exist in `that` in the same location, and be
-      // a subtype as well. Two empty chains are equal to each other.
+      // a subtype as well. Two empty chains are equal to each other. Subtract
+      // one link from l2 since it represents the return type.
       case (TyLambda(l1), TyLambda(l2)) =>
-        l1.size <= l2.size && l1.zip(l2).foldLeft[Boolean](true) {
+        l1.size <= (l2.size - 1) && l1.zip(l2).foldLeft[Boolean](true) {
           case (eq, (p1, p2)) => eq && p1.sub(p2)
         }
 
@@ -34,15 +35,14 @@ sealed trait Ty {
       case TyReal => Ty.NameTyReal
       case TyStr  => Ty.NameTyStr
       case TyUnit => Ty.NameTyUnit
-      case _      => this.toStringIdent(0)
+      case _      => this.toStringPretty(0)
     }
 
-  def toStringIdent(level: Int): String =
+  def toStringPretty(level: Int): String =
     this match {
-      case TyTy(ty) => s"type<${ty.toStringIdent(level + 2)}>"
+      case TyTy(ty) => s"type<${ty.toStringPretty(level + 2)}>"
       case TyLambda(links) =>
-        s"${links.map(_.toStringIdent(level + 2)).mkString(" -> ")}"
-      // case TyShape(fields) => fields.map[String]{ case (name, ty) =>  }
+        s"func : ${links.map(_.toStringPretty(level + 2)).mkString(" -> ")}"
       case TyShape(_) => "record"
       case _          => this.toString
     }
@@ -54,8 +54,23 @@ case object TyReal extends Ty
 case object TyStr extends Ty
 case object TyUnit extends Ty
 case class TyTy(ty: Ty) extends Ty
-case class TyLambda(links: List[Ty]) extends Ty
 case class TyShape(fields: Map[String, Ty]) extends Ty
+
+case class TyLambda(links: List[Ty]) extends Ty {
+  def without(args: List[Ty]): Ty =
+    if (args.size == links.size - 1)
+      links.last
+    else
+      TyLambda(links.drop(args.size))
+
+  def only(args: List[Ty]): Ty =
+    if (args.size == 1)
+      links.head
+    else if (args.size == links.size - 1)
+      TyLambda(links.init)
+    else
+      TyLambda(links.take(args.size))
+}
 
 sealed trait TyError {
   override def toString() =
@@ -109,6 +124,7 @@ object Ty {
       case Identifier(id, _, _)          => ruleLookup(id, env)
       case cond: Cond                    => ruleCond(cond, env)
       case Let(bindings, body, _)        => ruleLet(bindings, body, env)
+      case app @ App(fn, args, _)        => ruleApp(app, fn.lexeme, args, env)
       case _ @Binding(v: Variable, b, _) => ruleVar(v, b, env)
       case _ @Binding(f: Function, b, _) => ruleFunc(f, b, env)
     }
@@ -195,6 +211,32 @@ object Ty {
     Right(TyLambda(links))
   }
 
+  /** Γ ⊢ e1 : a → b     Γ ⊢ e2 : a
+    * -----------------------------
+    *        Γ ⊢ e1 e2 : b
+    */
+  def ruleApp(
+      app: App,
+      fn: String,
+      args: List[Expr],
+      env: Environment
+  ): Either[TyError, Ty] = {
+    val tyargs = args.map(of(_, env).fold(err => return Left(err), ok => ok))
+
+    env.get(fn) match {
+      case Some(fnargs @ TyLambda(tys)) =>
+        if (!TyLambda(tyargs).sub(fnargs))
+          Left(UnexpectedTy(app, fnargs.only(tyargs), TyLambda(tyargs)))
+        else
+          Right(fnargs.without(tyargs))
+
+      case Some(ty) => Left(UnexpectedTy(app, TyLambda(tyargs), ty))
+      case None     => Left(UnknownVariableTy(fn))
+    }
+  }
+
+  /** See ruleLet for type rule
+    */
   def ruleVar(
       decl: Variable,
       body: Expr,
