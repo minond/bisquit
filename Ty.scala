@@ -17,8 +17,16 @@ sealed trait Ty {
             eq && f2.getOrElse(field, return false).sub(ty)
         }
 
+      // All fields in `this` must exist in `that` in the same location, and be
+      // a subtype as well. Two empty tuples are units and therefore equal to
+      // each other.
+      case (TyTuple(f1), TyTuple(f2)) =>
+        f1.size <= (f2.size - 1) && f1.zip(f2).foldLeft[Boolean](true) {
+          case (eq, (p1, p2)) => eq && p1.sub(p2)
+        }
+
       // All links in `this` must exist in `that` in the same location, and be
-      // a subtype as well. Two empty chains are equal to each other. Subtract
+      // a subtype as well. Two empty lambdas are equal to each other. Subtract
       // one link from l2 since it represents the return type.
       case (TyLambda(l1), TyLambda(l2)) =>
         l1.size <= (l2.size - 1) && l1.zip(l2).foldLeft[Boolean](true) {
@@ -43,6 +51,10 @@ sealed trait Ty {
       case TyTy(ty) => s"type<${ty.toStringPretty(level + 2)}>"
       case TyLambda(links) =>
         s"func : ${links.map(_.toStringPretty(level + 2)).mkString(" -> ")}"
+      case TyTuple(Nil) =>
+        TyUnit.toString
+      case TyTuple(fields) =>
+        s"(${fields.map(_.toStringPretty(level + 2)).mkString(" * ")})"
       case TyShape(_) => "record"
       case _          => this.toString
     }
@@ -53,6 +65,7 @@ case object TyInt extends Ty
 case object TyReal extends Ty
 case object TyStr extends Ty
 case object TyUnit extends Ty
+case class TyTuple(fields: List[Ty]) extends Ty
 case class TyTy(ty: Ty) extends Ty
 case class TyShape(fields: Map[String, Ty]) extends Ty
 
@@ -223,15 +236,18 @@ object Ty {
   ): Either[TyError, Ty] = {
     val tyargs = args.map(of(_, env).fold(err => return Left(err), ok => ok))
 
-    env.get(fn) match {
-      case Some(fnargs @ TyLambda(tys)) =>
+    (env.get(fn), tyargs) match {
+      case (Some(TyLambda(TyUnit :: ret :: Nil)), Nil) => Right(ret)
+      case (Some(TyLambda(TyUnit :: rest)), Nil)       => Right(TyLambda(rest))
+
+      case (Some(fnargs @ TyLambda(tys)), tyargs) =>
         if (!TyLambda(tyargs).sub(fnargs))
-          Left(UnexpectedTy(app, fnargs.only(tyargs), TyLambda(tyargs)))
+          Left(UnexpectedTy(app, fnargs.only(tyargs), TyTuple(tyargs)))
         else
           Right(fnargs.without(tyargs))
 
-      case Some(ty) => Left(UnexpectedTy(app, TyLambda(tyargs), ty))
-      case None     => Left(UnknownVariableTy(fn))
+      case (Some(ty), tyargs) => Left(UnexpectedTy(app, TyLambda(tyargs), ty))
+      case (None, _)          => Left(UnknownVariableTy(fn))
     }
   }
 
@@ -297,8 +313,7 @@ object Environment {
         Ty.NameTyBool -> TyBool,
         Ty.NameTyInt -> TyInt,
         Ty.NameTyReal -> TyReal,
-        Ty.NameTyStr -> TyStr,
-        Ty.NameTyUnit -> TyUnit
+        Ty.NameTyStr -> TyStr
       )
     )
 }
