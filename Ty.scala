@@ -21,15 +21,7 @@ sealed trait Ty {
       // a subtype as well. Two empty tuples are units and therefore equal to
       // each other.
       case (TyTuple(f1), TyTuple(f2)) =>
-        f1.size <= (f2.size - 1) && f1.zip(f2).foldLeft[Boolean](true) {
-          case (eq, (p1, p2)) => eq && p1.sub(p2)
-        }
-
-      // All links in `this` must exist in `that` in the same location, and be
-      // a subtype as well. Two empty lambdas are equal to each other. Subtract
-      // one link from l2 since it represents the return type.
-      case (TyLambda(l1), TyLambda(l2)) =>
-        l1.size <= (l2.size - 1) && l1.zip(l2).foldLeft[Boolean](true) {
+        f1.size == f2.size && f1.zip(f2).foldLeft[Boolean](true) {
           case (eq, (p1, p2)) => eq && p1.sub(p2)
         }
 
@@ -68,26 +60,7 @@ case object TyUnit extends Ty
 case class TyTuple(fields: List[Ty]) extends Ty
 case class TyTy(ty: Ty) extends Ty
 case class TyShape(fields: Map[String, Ty]) extends Ty
-
-case class TyLambda(links: List[Ty]) extends Ty {
-  def args = links.init
-
-  def without(args: List[Ty]): Ty =
-    if (args.size == links.size - 1)
-      links.last
-    else
-      TyLambda(links.drop(args.size))
-
-  def only(args: List[Ty]): Ty =
-    if (args.size == 1)
-      links.head
-    else if (links.size - 1 == 0)
-      TyUnit
-    else if (args.size == links.size - 1)
-      TyTuple(links.init)
-    else
-      TyTuple(links.take(args.size).init)
-}
+case class TyLambda(links: List[Ty]) extends Ty
 
 sealed trait TyError {
   override def toString() =
@@ -226,7 +199,7 @@ object Ty {
       if (intys.isEmpty)
         List(TyUnit, outty)
       else
-        intys :+ outty
+        List(TyTuple(intys), outty)
 
     Right(TyLambda(links))
   }
@@ -238,9 +211,8 @@ object Ty {
     * Note that there could be multiple e2's as arguments An empty e2 is also
     * allowed and is typed as unit.
     *
-    * TODO e1 is not really any expression but a name we lookup instead. This
-    * should be updated to handle regular expressions instead of just function
-    * lookups.
+    * TODO e1 is not really an expression but a name we lookup instead. This
+    * should be updated to handle expressions instead of just function lookups.
     */
   def ruleApp(
       app: App,
@@ -250,21 +222,16 @@ object Ty {
   ): Either[TyError, Ty] = {
     val tyargs = args.map(of(_, env).fold(err => return Left(err), ok => ok))
 
-    (env.get(fn), tyargs) match {
-      case (Some(TyLambda(TyUnit :: ret :: Nil)), Nil) => Right(ret)
-      case (Some(TyLambda(TyUnit :: rest)), Nil)       => Right(TyLambda(rest))
-
-      case (Some(fn @ TyLambda(h :: t)), Nil) =>
-        Left(UnexpectedTy(app, TyTuple(fn.args), TyUnit))
-
-      case (Some(fnargs @ TyLambda(tys)), tyargs) =>
-        if (!TyLambda(tyargs).sub(fnargs))
-          Left(UnexpectedTy(app, fnargs.only(tyargs), TyTuple(tyargs)))
+    (env.get(fn), TyTuple(tyargs)) match {
+      case (Some(TyLambda(fnargs :: ret :: Nil)), tyargs) =>
+        if (!tyargs.sub(fnargs))
+          Left(UnexpectedTy(app, fnargs, tyargs))
         else
-          Right(fnargs.without(tyargs))
+          Right(ret)
 
-      case (Some(ty), tyargs) => Left(UnexpectedTy(app, TyLambda(tyargs), ty))
-      case (None, _)          => Left(UnknownVariableTy(fn))
+      case (Some(ty), tyargs) =>
+        Left(UnexpectedTy(app, TyLambda(tyargs.fields), ty))
+      case (None, _) => Left(UnknownVariableTy(fn))
     }
   }
 
