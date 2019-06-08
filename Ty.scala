@@ -9,14 +9,6 @@ sealed trait Ty {
       case (TyStr, TyStr)   => true
       case (TyUnit, TyUnit) => true
 
-      // All fields in `this` must exist in `that` and be a subtype as well.
-      // Two empty shapes are equal to each other.
-      case (TyShape(f1), TyShape(f2)) =>
-        f1.foldLeft[Boolean](true) {
-          case (eq, (field, ty)) =>
-            eq && f2.getOrElse(field, return false).sub(ty)
-        }
-
       // All fields in `this` must exist in `that` in the same location, and be
       // a subtype as well. Two empty tuples are units and therefore equal to
       // each other.
@@ -47,7 +39,6 @@ sealed trait Ty {
         TyUnit.toString
       case TyTuple(fields) =>
         s"(${fields.map(_.toStringPretty(level + 2)).mkString(" * ")})"
-      case TyShape(_) => "record"
       case _          => this.toString
     }
 }
@@ -59,7 +50,6 @@ case object TyStr extends Ty
 case object TyUnit extends Ty
 case class TyTuple(fields: List[Ty]) extends Ty
 case class TyTy(ty: Ty) extends Ty
-case class TyShape(fields: Map[String, Ty]) extends Ty
 case class TyLambda(links: List[Ty]) extends Ty
 
 sealed trait TyError {
