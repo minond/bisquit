@@ -36,6 +36,7 @@ object Parser {
               case _                  => Right(id)
             }
 
+          case ok: App     => Right(ok)
           case ok: Binding => Right(ok)
           case ok: Cond    => Right(ok)
           case ok: Let     => Right(ok)
