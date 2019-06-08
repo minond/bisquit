@@ -39,7 +39,7 @@ sealed trait Ty {
         TyUnit.toString
       case TyTuple(fields) =>
         s"(${fields.map(_.toStringPretty(level + 2)).mkString(" * ")})"
-      case _          => this.toString
+      case _ => this.toString
     }
 }
 
@@ -58,7 +58,7 @@ sealed trait TyError {
       case UnknownTy(name) =>
         s"type error: unknown type `$name`"
       case UnknownTyOf(name) =>
-        s"type error: unknown type of `$name`"
+        s"type error: unknown type of `$name`, adding a type annotation may fix this issue"
       case UnexpectedTy(_, expecting, got) =>
         s"type error: expecting $expecting but got $got instead"
       case UnknownVariableTy(name) =>
@@ -161,8 +161,9 @@ object Ty {
             case None => return Left(UnknownTyOf(arg.name.lexeme))
             case Some(typ) =>
               env.get(typ.name.lexeme) match {
-                case None     => return Left(UnknownTy(typ.name.lexeme))
-                case Some(ty) => (env.declare(arg.name.lexeme, ty), ty :: tys)
+                case Some(TyTy(ty)) =>
+                  (env.declare(arg.name.lexeme, ty), ty :: tys)
+                case _ => return Left(UnknownTy(typ.name.lexeme))
               }
           }
       }
@@ -284,10 +285,10 @@ object Environment {
   def create(): Environment =
     Environment(
       Map(
-        Ty.NameTyBool -> TyBool,
-        Ty.NameTyInt -> TyInt,
-        Ty.NameTyReal -> TyReal,
-        Ty.NameTyStr -> TyStr
+        Ty.NameTyBool -> TyTy(TyBool),
+        Ty.NameTyInt -> TyTy(TyInt),
+        Ty.NameTyReal -> TyTy(TyReal),
+        Ty.NameTyStr -> TyTy(TyStr)
       )
     )
 }
