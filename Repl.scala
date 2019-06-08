@@ -13,7 +13,7 @@ object Repl {
     val reader = new BufferedReader(input)
     val buff = new StringBuilder
 
-    var env = Environment.create
+    var env = TypeEnvironment.create
 
     while (true) {
       print(if (buff.isEmpty) promptStart else promptCont)

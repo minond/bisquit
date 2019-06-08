@@ -82,8 +82,8 @@ object Ty {
 
   def process(
       expr: Expr,
-      env: Environment
-  ): Either[TyError, (Ty, Environment)] =
+      env: TypeEnvironment
+  ): Either[TyError, (Ty, TypeEnvironment)] =
     of(expr, env).fold(
       err => Left(err),
       ty => {
@@ -94,7 +94,7 @@ object Ty {
       }
     )
 
-  def of(expr: Expr, env: Environment): Either[TyError, Ty] =
+  def of(expr: Expr, env: TypeEnvironment): Either[TyError, Ty] =
     expr match {
       case Num(_, Real, _, _) => Right(TyReal)
       case _: Num             => Right(TyInt)
@@ -115,7 +115,7 @@ object Ty {
     */
   def ruleLookup(
       id: String,
-      env: Environment
+      env: TypeEnvironment
   ): Either[TyError, Ty] =
     env.get(id) match {
       case None     => Left(UnknownVariableTy(id))
@@ -129,9 +129,9 @@ object Ty {
   def ruleLet(
       bindings: List[Binding],
       body: Expr,
-      env: Environment
+      env: TypeEnvironment
   ): Either[TyError, Ty] = {
-    val loc = bindings.foldLeft[Environment](env) { (env, binding) =>
+    val loc = bindings.foldLeft[TypeEnvironment](env) { (env, binding) =>
       env.declare(
         binding.name,
         Ty.of(binding, env).fold(err => return Left(err), ok => ok)
@@ -151,10 +151,10 @@ object Ty {
   def ruleFunc(
       decl: Function,
       body: Expr,
-      env: Environment
+      env: TypeEnvironment
   ): Either[TyError, Ty] = {
     val (loc, intys) =
-      decl.args.foldRight[(Environment, List[Ty])]((env, List.empty)) {
+      decl.args.foldRight[(TypeEnvironment, List[Ty])]((env, List.empty)) {
         case (arg, (env, tys)) =>
           arg.typ match {
             // TODO Once inference is complete this can go away.
@@ -210,7 +210,7 @@ object Ty {
       app: App,
       fn: String,
       args: List[Expr],
-      env: Environment
+      env: TypeEnvironment
   ): Either[TyError, Ty] = {
     val tyargs = args.map(of(_, env).fold(err => return Left(err), ok => ok))
 
@@ -232,7 +232,7 @@ object Ty {
   def ruleVar(
       decl: Variable,
       body: Expr,
-      env: Environment
+      env: TypeEnvironment
   ): Either[TyError, Ty] =
     decl match {
       case Variable(_, None) => of(body, env)
@@ -256,7 +256,7 @@ object Ty {
     * --------------------------------------------
     *      Γ ⊢ cond e1 then e2 else e3 : a
     */
-  def ruleCond(expr: Cond, env: Environment): Either[TyError, Ty] = {
+  def ruleCond(expr: Cond, env: TypeEnvironment): Either[TyError, Ty] = {
     val cond = of(expr.cond, env).fold(err => return Left(err), ok => ok)
     if (!cond.sub(TyBool)) {
       return Left(UnexpectedTy(expr.cond, TyBool, cond))
@@ -272,19 +272,19 @@ object Ty {
   }
 }
 
-/** Γ, holds the scoped environment
+/** Γ, holds the scoped TypeEnvironment
   */
-case class Environment(uni: Map[String, Ty]) {
+case class TypeEnvironment(uni: Map[String, Ty]) {
   def get(name: String) =
     uni.get(name)
 
-  def declare(name: String, ty: Ty): Environment =
-    Environment(uni ++ Map(name -> ty))
+  def declare(name: String, ty: Ty): TypeEnvironment =
+    TypeEnvironment(uni ++ Map(name -> ty))
 }
 
-object Environment {
-  def create(): Environment =
-    Environment(
+object TypeEnvironment {
+  def create(): TypeEnvironment =
+    TypeEnvironment(
       Map(
         Ty.NameTyBool -> TyTy(TyBool),
         Ty.NameTyInt -> TyTy(TyInt),
