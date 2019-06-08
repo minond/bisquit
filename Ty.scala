@@ -177,12 +177,13 @@ object Ty {
       case None => bod
       case Some(typ) =>
         env.get(typ.name.lexeme) match {
-          case None => return Left(UnknownTy(typ.name.lexeme))
-          case Some(ret) =>
+          case Some(TyTy(ret)) =>
             if (ret.sub(bod))
               bod
             else
               return Left(UnexpectedTy(body, ret, bod))
+
+          case _ => return Left(UnknownTy(typ.name.lexeme))
         }
     }
 
