@@ -34,7 +34,7 @@ sealed trait Ty {
     this match {
       case TyTy(ty) => s"type<${ty.toStringPretty(level + 2)}>"
       case TyLambda(links) =>
-        s"func : ${links.map(_.toStringPretty(level + 2)).mkString(" -> ")}"
+        s"${links.map(_.toStringPretty(level + 2)).mkString(" -> ")}"
       case TyTuple(Nil) =>
         TyUnit.toString
       case TyTuple(fields) =>
