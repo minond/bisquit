@@ -87,6 +87,10 @@ object Token {
     }
 }
 
+sealed trait Expr extends Positioned with Token
+sealed trait Stmt extends Expr
+sealed trait Value
+
 case class EOF(file: String, start: Int)
     extends Positioned(file, start, start)
     with Token
@@ -181,8 +185,7 @@ case class UnexpectedExpr(token: Token, msg: String)
     extends Positioned(token.getFile, token.getStart, token.getEnd)
     with Error
 
-sealed trait Expr extends Positioned with Token
-sealed trait Scalar extends Expr
+sealed trait Scalar extends Expr with Value
 
 sealed trait NumKind
 case object Int extends NumKind
@@ -209,10 +212,12 @@ case class False(file: String, start: Int)
 case class Identifier(lexeme: String, file: String, start: Int)
     extends Positioned(file, start, start + lexeme.length)
     with Expr
+    with Value
 
 case class Cond(cond: Expr, pass: Expr, fail: Expr, start: Int)
     extends Positioned(cond.getFile, start, fail.getEnd)
     with Expr
+    with Value
 
 case class Type(name: Identifier)
     extends Positioned(name.getFile, name.getStart, name.getEnd)
@@ -231,8 +236,6 @@ case class Function(
 ) extends Positioned(name.getFile, name.getStart, eq.getEnd)
     with Declaration
 
-sealed trait Stmt extends Expr
-
 case class Binding(decl: Declaration, body: Expr, start: Int)
     extends Positioned(decl.getFile, decl.getStart, body.getEnd)
     with Stmt {
@@ -246,7 +249,11 @@ case class Binding(decl: Declaration, body: Expr, start: Int)
 case class Let(bindings: List[Binding], body: Expr, start: Int)
     extends Positioned(body.getFile, start, body.getEnd)
     with Expr
+    with Value
 
 case class App(fn: Identifier, args: List[Expr], closeParen: Positioned)
     extends Positioned(fn.getFile, fn.getStart, closeParen.getEnd)
     with Expr
+    with Value
+
+case class Lambda(decl: Binding, args: List[String], body: Expr) extends Value
