@@ -312,6 +312,9 @@ object Parser {
           case '"' => lexStr('"', src, file, pos)
           case '`' => lexStr('`', src, file, pos)
 
+          // TODO This needs to be a little stricter when it comes to the
+          // various types of characters that can be used depending on the type
+          // of number.
           case n
               if isDigit(n) || (is('-')(n) &&
                 src.hasNext &&
@@ -378,7 +381,8 @@ object Parser {
     isLetter(c) || isDigit(c) || c == '_'
 
   def isNumeric(c: Char): Boolean =
-    isDigit(c) || c == 'x' || c == 'b' || c == '.'
+    isDigit(c) || c == '.' || c == 'a' || c == 'b' || c == 'c' || c == 'd' ||
+      c == 'e' || c == 'f' || c == 'x'
 
   def isDigit(c: Char): Boolean =
     c >= '0' && c <= '9'
