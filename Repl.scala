@@ -14,6 +14,7 @@ object Repl {
     val buff = new StringBuilder
 
     var env = TypeEnvironment.create
+    var debugging = false
 
     while (true) {
       print(if (buff.isEmpty) promptStart else promptCont)
@@ -21,6 +22,11 @@ object Repl {
       buff.append(reader.readLine()).toString match {
         case ""     =>
         case "exit" => return
+        case "\\debug" =>
+          debugging = !debugging
+          println(s"debug mode = ${debugging}")
+          buff.clear
+
         case code =>
           Parser.process(code, "<stdin>").toList match {
             case Left(_: UnexpectedEOF) :: Nil =>
@@ -32,13 +38,13 @@ object Repl {
                 _.fold(
                   err => println(err),
                   exp => {
+                    if (debugging) println(s"ast : $exp")
+
                     Try { Ty.process(exp, env) } match {
                       case Failure(err) =>
                         println(s"exception while typing expressiong: $err")
-                        println(s"ast: $exp")
                       case Success(Left(err)) =>
                         println(err)
-                        println(s"ast: $exp")
                       case Success(Right((ty, _env))) =>
                         println(s"t : $ty")
                         env = _env
