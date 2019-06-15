@@ -228,6 +228,16 @@ sealed trait Declaration extends Positioned
 case class Variable(name: Identifier, typ: Option[Type])
     extends Positioned(name.getFile, name.getStart, typ.getOrElse(name).getEnd)
     with Declaration
+
+/** This is ugly. Functions should be Expr's just like any other value. The
+  * first time around I got stuck trying to refactor Binding in a way that
+  * would allow it to just take a name, an optional type, and a value but I
+  * kept Function and it's body separate. I think that combinding them into one
+  * would let me clean things up.
+  *
+  * TODO Remove name from Function and move the body in Binding into this
+  * class. This would allow Function to go in the body of a Binding.
+  */
 case class Function(
     args: List[Variable],
     name: Option[Identifier],
