@@ -36,12 +36,11 @@ object Parser {
               case _                  => Right(id)
             }
 
-          case ok: App      => Right(ok)
-          case ok: Binding  => Right(ok)
-          case ok: Cond     => Right(ok)
-          case ok: Function => Right(ok)
-          case ok: Let      => Right(ok)
-          case ok: Scalar   => Right(ok)
+          case ok: App     => Right(ok)
+          case ok: Binding => Right(ok)
+          case ok: Cond    => Right(ok)
+          case ok: Let     => Right(ok)
+          case ok: Scalar  => Right(ok)
 
           case EOF(file, pos)       => Left(UnexpectedEOF(file, pos))
           case err: CloseParen      => Left(InvalidExpr(err))

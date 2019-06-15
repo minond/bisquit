@@ -235,7 +235,6 @@ case class Function(
     eq: Positioned
 ) extends Positioned(eq.getFile, eq.getStart, eq.getEnd)
     with Declaration
-    with Expr
 
 case class Binding(decl: Declaration, body: Expr, start: Int)
     extends Positioned(decl.getFile, decl.getStart, body.getEnd)
