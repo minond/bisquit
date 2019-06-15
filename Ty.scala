@@ -7,7 +7,10 @@ sealed trait Ty {
       case (TyInt, TyInt)   => true
       case (TyReal, TyReal) => true
       case (TyStr, TyStr)   => true
-      case (TyUnit, TyUnit) => true
+
+      case (TyUnit, TyUnit)       => true
+      case (TyUnit, TyTuple(Nil)) => true
+      case (TyTuple(Nil), TyUnit) => true
 
       // All fields in `this` must exist in `that` in the same location, and be
       // a subtype as well. Two empty tuples are units and therefore equal to
