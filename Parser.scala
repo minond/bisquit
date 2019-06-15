@@ -36,11 +36,12 @@ object Parser {
               case _                  => Right(id)
             }
 
-          case ok: App     => Right(ok)
-          case ok: Binding => Right(ok)
-          case ok: Cond    => Right(ok)
-          case ok: Let     => Right(ok)
-          case ok: Scalar  => Right(ok)
+          case ok: App      => Right(ok)
+          case ok: Binding  => Right(ok)
+          case ok: Cond     => Right(ok)
+          case ok: Function => Right(ok)
+          case ok: Let      => Right(ok)
+          case ok: Scalar   => Right(ok)
 
           case EOF(file, pos)       => Left(UnexpectedEOF(file, pos))
           case err: CloseParen      => Left(InvalidExpr(err))
@@ -98,10 +99,15 @@ object Parser {
   def parseFunc(
       start: Positioned,
       toks: BufferedIterator[Token]
-  ): Either[Error, Binding] =
+  ): Either[Error, Binding] = {
+    val name =
+      if (peekIs[Identifier](toks))
+        Some(toks.next.asInstanceOf[Identifier])
+      else
+        None
+
     for {
-      name <- expect[Identifier](start, toks).right
-      opar <- expect[OpenParen](name, toks).right
+      opar <- expect[OpenParen](name.getOrElse(start), toks).right
       args <- parseCommaSeparated(opar, charCloseParen, toks)(
         parseAnnotatedVarWithoutTokenContinuations
       ).right
@@ -109,7 +115,8 @@ object Parser {
       rtyp <- parseOptionalType(toks, cpar).right
       sign <- expect[Eq](rtyp._2, toks).right
       body <- next(sign, toks).right
-    } yield Binding(Function(name, args, rtyp._1, sign), body, start.getStart)
+    } yield Binding(Function(args, name, rtyp._1, sign), body, start.getStart)
+  }
 
   def parseBinding(
       tok: Token,
@@ -217,6 +224,16 @@ object Parser {
     */
   def peek(toks: BufferedIterator[Token]): Option[Token] =
     toks.headOption
+
+  /** Peeks at the next token without moving forward and returns true if it is
+    * of type `Expecting`.
+    */
+  def peekIs[Expecting: ClassTag](toks: BufferedIterator[Token]): Boolean =
+    peek(toks) match {
+      case Some(next) if classTag[Expecting].runtimeClass.isInstance(next) =>
+        true
+      case _ => false
+    }
 
   /** Safely returns the next token from the tokens buffer. If the buffer is
     * empty an EOF error is returned.

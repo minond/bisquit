@@ -229,20 +229,24 @@ case class Variable(name: Identifier, typ: Option[Type])
     extends Positioned(name.getFile, name.getStart, typ.getOrElse(name).getEnd)
     with Declaration
 case class Function(
-    name: Identifier,
     args: List[Variable],
+    name: Option[Identifier],
     rtyp: Option[Type],
     eq: Positioned
-) extends Positioned(name.getFile, name.getStart, eq.getEnd)
+) extends Positioned(eq.getFile, eq.getStart, eq.getEnd)
     with Declaration
+    with Expr
 
 case class Binding(decl: Declaration, body: Expr, start: Int)
     extends Positioned(decl.getFile, decl.getStart, body.getEnd)
     with Stmt {
   def name(): String =
     this match {
-      case Binding(Variable(Identifier(id, _, _), _), _, _)       => id
-      case Binding(Function(Identifier(id, _, _), _, _, _), _, _) => id
+      case Binding(Variable(Identifier(id, _, _), _), _, _) => id
+      case Binding(Function(_, Some(Identifier(id, _, _)), _, _), _, _) =>
+        id
+      case Binding(Function(args, None, _, _), _, _) =>
+        s"<anonymous/${args.size}>"
     }
 }
 

@@ -198,8 +198,8 @@ class ParserSpec extends FlatSpec with Matchers {
       List(
         Binding(
           Function(
-            Identifier("xs1", "parserspec", 5),
             List(),
+            Some(Identifier("xs1", "parserspec", 5)),
             None,
             Eq("parserspec", 11)
           ),
@@ -213,12 +213,12 @@ class ParserSpec extends FlatSpec with Matchers {
       List(
         Binding(
           Function(
-            Identifier("xs2", "parserspec", 5),
             List(
               Variable(Identifier("a", "parserspec", 9), None),
               Variable(Identifier("b", "parserspec", 12), None),
               Variable(Identifier("c", "parserspec", 15), None)
             ),
+            Some(Identifier("xs2", "parserspec", 5)),
             None,
             Eq("parserspec", 18)
           ),
@@ -232,7 +232,6 @@ class ParserSpec extends FlatSpec with Matchers {
       List(
         Binding(
           Function(
-            Identifier("xs3", "parserspec", 5),
             List(
               Variable(
                 Identifier("a", "parserspec", 9),
@@ -247,6 +246,7 @@ class ParserSpec extends FlatSpec with Matchers {
                 Some(Type(Identifier("int", "parserspec", 31)))
               )
             ),
+            Some(Identifier("xs3", "parserspec", 5)),
             None,
             Eq("parserspec", 36)
           ),
@@ -260,12 +260,27 @@ class ParserSpec extends FlatSpec with Matchers {
       List(
         Binding(
           Function(
-            Identifier("xs4", "parserspec", 5),
             List(),
+            Some(Identifier("xs4", "parserspec", 5)),
             Some(Type(Identifier("int", "parserspec", 13))),
             Eq("parserspec", 17)
           ),
           Num("1", Int, "parserspec", 19),
+          0
+        )
+      )
+    )
+
+    parse("""func () : int = 1""") should be(
+      List(
+        Binding(
+          Function(
+            List(),
+            None,
+            Some(Type(Identifier("int", "parserspec", 10))),
+            Eq("parserspec", 14)
+          ),
+          Num("1", Int, "parserspec", 16),
           0
         )
       )
