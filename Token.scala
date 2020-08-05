@@ -25,6 +25,6 @@ case class Num(value: Double)
   extends Expression
   with Value
 
-case class Func(args: List[Expression], body: Expression)
+case class Func(params: List[Id], body: Expression)
   extends Expression
   with Value

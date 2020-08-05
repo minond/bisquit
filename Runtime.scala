@@ -7,13 +7,15 @@ object Environment {
 }
 
 object Evaluator {
-  def eval(expr: Expression, scope: Environment.Scope): Value =
+  import Environment.Scope
+
+  def eval(expr: Expression, scope: Scope): Value =
     expr match {
       case value: Value => value
       case Id(label) => lookup(label, scope)
       case Binop(op, left, right) => applyOp(op, Some(eval(left, scope)), Some(eval(right, scope)))
       case Uniop(op, subject) => applyOp(op, Some(eval(subject, scope)), None)
-      case App(fn, args) => applyFunc(fn, args.map { eval(_, scope) })
+      case App(fn, args) => applyFunc(fn, args.map { eval(_, scope) }, scope)
     }
 
   def applyOp(op: Id, left: => Option[Value], right: => Option[Value]): Value =
@@ -37,10 +39,14 @@ object Evaluator {
   def applyNumUniop(right: Num)(f: Double => Double): Num =
     Num(f(right.value))
 
-  def applyFunc(fn: Id, args: => List[Value]): Value =
-    ???
+  def applyFunc(fn: Id, args: => List[Value], scope: Scope): Value =
+    lookup(fn.lexeme, scope) match {
+      case Func(params, body) =>
+        if (params.size != args.size)
+          throw Exception(s"arity error: expected ${params.size} but got ${args.size}")
+        eval(body, params.map(_.lexeme).zip(args).toMap ++ scope)
+    }
 
-  def lookup(label: String, scope: Environment.Scope): Value =
+  def lookup(label: String, scope: Scope): Value =
     scope.getOrElse(label, throw Exception(s"lookup error: $label"))
 }
-
