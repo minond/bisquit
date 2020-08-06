@@ -30,6 +30,6 @@ case class Builtin(f: List[Value] => Either[RuntimeError, Value]) extends Value 
 }
 
 case class LazyBuiltin(f: (List[Expression], Scope) => Either[RuntimeError, Value]) extends Value {
-  def apply[Err](args: List[Expression], scope: Scope): Either[RuntimeError, Value] =
+  def apply(args: List[Expression], scope: Scope): Either[RuntimeError, Value] =
     f(args, scope)
 }
