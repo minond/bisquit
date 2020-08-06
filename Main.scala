@@ -126,6 +126,15 @@ def main(args: Array[String]): Unit =
                    Nil),
                List(Num(43)))
 
+  exprs += Let(Map("a" -> Num(343),
+                   "b" -> Func(Nil, Id("a"))),
+               App(Id("b"), Nil))
+
+  exprs += App(Let(Map("a" -> Num(30),
+                       "b" -> Func(List(Id("c")), Binop(Id("+"), Id("a"), Id("c")))),
+                   Id("b")),
+               List(Num(34)))
+
   for
     expr <- exprs
   do
