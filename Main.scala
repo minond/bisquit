@@ -63,14 +63,16 @@ def main(args: Array[String]): Unit =
 
   exprs += Let(Map("a" -> Num(343),
                    "b" -> Id("a"),
-                   "c" -> Binop(Id("+"), Id("a"), Id("b"))),
-               Binop(Id("+"), Id("c"), Id("c")))
+                   "c" -> Binop(Id("+"), Id("a"), Id("b")),
+                   "x" -> Func(List(Id("x")), Id("x")),
+                   "d" -> Let(Map("x" -> Id("c")), Id("x"))),
+               Binop(Id("+"), Id("d"), Id("d")))
 
   for
     expr <- exprs
   do
-    println(s"> ${formatted(expr)}")
+    println(s"${formatted(expr)}")
     eval(expr, scope) match {
-      case Right(ret) => println(s"= ${formatted(ret)}\n")
+      case Right(ret) => println(s"===\n${formatted(ret)}\n")
       case Left(err) => println(s"error: ${err}\n")
     }
