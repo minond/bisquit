@@ -105,10 +105,26 @@ def main(args: Array[String]): Unit =
 
   exprs += Binop(Id("&&"), Bool(false), Bool(true))
 
-  val scope1 = Let(Map("a" -> Num(343),
-                   "b" -> Num(54)),
-               Func(Nil, Binop(Id("+"), Id("a"), Id("b"))))
-  exprs += App(scope1, Nil)
+  exprs += App(Let(Map("a" -> Num(343),
+                       "b" -> Num(54)),
+                   Func(Nil, Binop(Id("+"), Id("a"), Id("b")))),
+               Nil)
+
+  exprs += App(App(App(App(Let(Map("a" -> Num(222),
+                                   "b" -> Num(999999),
+                                   "x" -> Num(999999)),
+                               Let(Map("b" -> Num(343),
+                                       "x" -> Num(999999)),
+                                   Func(List(Id("x")),
+                                        Binop(Id("+"),
+                                              Id("a"),
+                                              Binop(Id("+"),
+                                                    Id("b"),
+                                                    Id("x")))))),
+                           Nil),
+                       Nil),
+                   Nil),
+               List(Num(43)))
 
   for
     expr <- exprs

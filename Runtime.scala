@@ -29,6 +29,7 @@ def eval(exprs: List[Expression], scope: Scope): Either[RuntimeError, List[Value
 
 def eval(expr: Expression, scope: Scope): Either[RuntimeError, Value] =
   expr match {
+    case Func(args, body, _) => Right(Func(args, body, scope))
     case value: Value => Right(value)
     case id: Id => lookup(id, scope)
     case Binop(op, left, right) => applyOp(op, List(left, right), scope)
@@ -38,7 +39,7 @@ def eval(expr: Expression, scope: Scope): Either[RuntimeError, Value] =
         vals <- eval(args, scope)
         maybeFunc <- eval(fn, scope)
         func <- ensure[RuntimeError, Func](maybeFunc, ArgumentTypeError(fn))
-        ret <- applyOrCurryFunc(func, vals, scope)
+        ret <- applyOrCurryFunc(func, vals)
       yield ret
     case Let(bindings, body) =>
       for
@@ -69,12 +70,12 @@ def applyOp(op: Id, args: => List[Expression], scope: Scope): Either[RuntimeErro
     case builtin: Builtin => builtin.apply(args, scope)
   }
 
-def applyOrCurryFunc(func: Func, args: => List[Value], scope: Scope): Either[RuntimeError, Value] =
+def applyOrCurryFunc(func: Func, args: => List[Value]): Either[RuntimeError, Value] =
   if (func.params.size != args.size)
     Right(func.curried(args))
   else
     val argScope = func.params.map(_.lexeme).zip(args).toMap
-    val lexScope = argScope ++ scope
+    val lexScope = func.scope ++ argScope
     eval(func.body, lexScope)
 
 def lookup(id: Id, scope: Scope): Either[LookupError, Value] =

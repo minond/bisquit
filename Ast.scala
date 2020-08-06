@@ -18,10 +18,11 @@ case class Num(value: Double) extends Value
 case class Bool(value: Boolean) extends Value
 case class Cons(values: List[Value]) extends Value
 
-case class Func(params: List[Id], body: Expression) extends Value {
+case class Func(params: List[Id], body: Expression, scope: Scope = Map()) extends Value {
   def curried(bindings: List[Value]) =
     Func(params=params.drop(bindings.size),
-         body=App(Func(params.take(bindings.size), body), bindings))
+         body=App(Func(params.take(bindings.size), body, scope), bindings),
+         scope=scope)
 }
 
 case class Builtin(f: (List[Expression], Scope) => Either[RuntimeError, Value]) extends Value {
