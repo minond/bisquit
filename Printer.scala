@@ -18,7 +18,7 @@ def formatted(expr: Expression, lvl: Integer): String =
     case Num(num) if num < 0 => s"~${Math.abs(num)}"
     case Num(num) => num.toString
     case Func(params, body) =>
-      val indent = " " * lvl
+      val indent = " " * (lvl + 1)
       s"\\${formatted(params, lvl + 1, " ")} ->\n${indent}${formatted(body, lvl + 1)}"
     case _: Builtin => "<builtin>"
     case Let(bindings, body) =>

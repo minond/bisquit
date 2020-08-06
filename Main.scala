@@ -71,8 +71,8 @@ def main(args: Array[String]): Unit =
   for
     expr <- exprs
   do
-    println(s"${formatted(expr)}")
+    println(s"> ${formatted(expr, 3)}")
     eval(expr, scope) match {
-      case Right(ret) => println(s"===\n${formatted(ret)}\n")
+      case Right(ret) => println(s"= ${formatted(ret, 3)}\n")
       case Left(err) => println(s"error: ${err}\n")
     }
