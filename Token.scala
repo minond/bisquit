@@ -14,6 +14,7 @@ case class App(fn: Id | Func, args: List[Expression]) extends Expression
 case class Let(bindings: Map[String, Expression], body: Expression) extends Expression
 case class Num(value: Double) extends Value
 case class Bool(value: Boolean) extends Value
+case class Cons(values: List[Value]) extends Value
 
 case class Func(params: List[Id], body: Expression) extends Value {
   def curried(bindings: List[Value]) =

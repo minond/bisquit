@@ -85,6 +85,20 @@ def main(args: Array[String]): Unit =
 
   exprs += Bool(false)
 
+  exprs += Cons(List(Num(1)))
+
+  exprs += Cons(List(Bool(true), Bool(false)))
+
+  exprs += Cons(List(Num(1), Num(2), Num(3)))
+
+  exprs += Cons(List(
+    Func(Nil, Binop(Id("+"), Num(2), Num(40))),
+    Func(Nil, Binop(Id("+"), Num(2), Num(40))),
+    Func(Nil, Binop(Id("+"), Num(2), Num(40))),
+  ))
+
+  exprs += Cons(Nil)
+
   for
     expr <- exprs
   do

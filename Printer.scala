@@ -18,6 +18,10 @@ def formatted(expr: Expression, lvl: Integer): String =
     case Bool(v) => if (v) "#t" else "#f"
     case Num(num) if num < 0 => s"~${Math.abs(num)}"
     case Num(num) => num.toString
+    case Cons(Nil) => "[]"
+    case Cons(values) =>
+      val indent = " " * (lvl - 1)
+      s"[ ${formatted(values, lvl + 1, s"\n$indent, ")}\n$indent]"
     case Func(params, body) =>
       val indent = " " * (lvl + 1)
       val spacing = if (params.isEmpty) "" else " "
