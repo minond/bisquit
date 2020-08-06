@@ -36,7 +36,9 @@ def eval(expr: Expression, scope: Scope): Either[RuntimeError, Value] =
     case App(fn, args) =>
       for
         vals <- eval(args, scope)
-        ret <- applyOrCurryFunc(fn, vals, scope)
+        maybeFunc <- eval(fn, scope)
+        func <- ensure[RuntimeError, Func](maybeFunc, ArgumentTypeError(fn))
+        ret <- applyOrCurryFunc(func, vals, scope)
       yield ret
     case Let(bindings, body) =>
       for
@@ -67,30 +69,16 @@ def applyOp(op: Id, args: => List[Expression], scope: Scope): Either[RuntimeErro
     case builtin: Builtin => builtin.apply(args, scope)
   }
 
-def applyOrCurryFunc(fn: Id | Func, args: => List[Value], scope: Scope): Either[RuntimeError, Value] =
-  getOrLookup[Func](fn, scope).flatMap { func =>
-    if (func.params.size != args.size)
-      Right(func.curried(args))
-    else
-      val argScope = func.params.map(_.lexeme).zip(args).toMap
-      val lexScope = argScope ++ scope
-      eval(func.body, lexScope)
-  }
+def applyOrCurryFunc(func: Func, args: => List[Value], scope: Scope): Either[RuntimeError, Value] =
+  if (func.params.size != args.size)
+    Right(func.curried(args))
+  else
+    val argScope = func.params.map(_.lexeme).zip(args).toMap
+    val lexScope = argScope ++ scope
+    eval(func.body, lexScope)
 
 def lookup(id: Id, scope: Scope): Either[LookupError, Value] =
   scope.get(id.lexeme) match {
     case None => Left(LookupError(id))
     case Some(value) => Right(value)
-  }
-
-/** If we already have the T, then return that T. Otherwise do a lookup, assert
-  * the type, and return that result.
-  */
-def getOrLookup[T <: Value: ClassTag](tId: T | Id, scope: Scope): Either[LookupError, T] =
-  tId match {
-    case t : T => Right(t)
-    case id : Id => lookup(id, scope).flatMap {
-      case t : T => Right(t)
-      case _ => Left(LookupError(id))
-    }
   }

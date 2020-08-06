@@ -14,7 +14,7 @@ def formatted(expr: Expression, lvl: Integer): String =
     case Binop(Id(op), left, right) => s"${formatted(left, lvl + 1)} $op ${formatted(right, lvl + 1)}"
     case Uniop(Id(op), right) => s"${op}${formatted(right, lvl + 1)}"
     case App(Id(func), args) => s"${func}(${formatted(args, lvl + 1, ", ")})"
-    case App(fn : Func, args) => s"(${formatted(fn, lvl + 1)})(${formatted(args, lvl + 1, ", ")})"
+    case App(fn, args) => s"(${formatted(fn, lvl + 1)})(${formatted(args, lvl + 1, ", ")})"
     case Bool(v) => if (v) "#t" else "#f"
     case Num(num) if num < 0 => s"~${Math.abs(num)}"
     case Num(num) => num.toString
@@ -33,7 +33,7 @@ def formatted(expr: Expression, lvl: Integer): String =
       val argIndent = " " * (lvl + 1)
       val indent = " " * (lvl - 1)
       val decls = names.zip(values).map { (n, v) => s"\n${argIndent}$n = $v" }.mkString
-      s"let${decls}\n${indent}in ${formatted(body, lvl + 1)}"
+      s"let${decls}\n${indent}in ${formatted(body, lvl + 3)}"
     case Cond(cond, pass, fail) =>
       val indent = " " * (lvl - 1)
       val scond = formatted(cond, lvl + 1)

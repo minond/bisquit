@@ -105,6 +105,11 @@ def main(args: Array[String]): Unit =
 
   exprs += Binop(Id("&&"), Bool(false), Bool(true))
 
+  val scope1 = Let(Map("a" -> Num(343),
+                   "b" -> Num(54)),
+               Func(Nil, Binop(Id("+"), Id("a"), Id("b"))))
+  exprs += App(scope1, Nil)
+
   for
     expr <- exprs
   do
