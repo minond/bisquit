@@ -34,4 +34,10 @@ def formatted(expr: Expression, lvl: Integer): String =
       val indent = " " * (lvl - 1)
       val decls = names.zip(values).map { (n, v) => s"\n${argIndent}$n = $v" }.mkString
       s"let${decls}\n${indent}in ${formatted(body, lvl + 1)}"
+    case Cond(cond, pass, fail) =>
+      val indent = " " * (lvl - 1)
+      val scond = formatted(cond, lvl + 1)
+      val spass = formatted(pass, lvl + 1)
+      val sfail = formatted(fail, lvl + 1)
+      s"if ${scond}\n${indent}then ${spass}\n${indent}else ${sfail}"
   }

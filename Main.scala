@@ -99,6 +99,15 @@ def main(args: Array[String]): Unit =
 
   exprs += Cons(Nil)
 
+  exprs += Cond(Bool(true),
+                Num(1),
+                Num(2))
+
+  exprs += Let(Map("retB" -> Func(Nil, Bool(false))),
+               Cond(App(Id("retB"), Nil),
+                    Num(1),
+                    Num(2)))
+
   for
     expr <- exprs
   do

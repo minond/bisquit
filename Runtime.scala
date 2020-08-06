@@ -4,6 +4,7 @@ import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 import xyz.minond.bisquit.token._
+import xyz.minond.bisquit.utils.ensure
 import xyz.minond.bisquit.utils.Implicits.Eithers
 
 sealed trait RuntimeError
@@ -11,6 +12,7 @@ case class NotCallable(value: Value) extends RuntimeError
 case class UnknownOperator(op: Id) extends RuntimeError
 case class LookupError(id: Id) extends RuntimeError
 case class ArityError(func: Id | Func, expected: Integer, got: Integer) extends RuntimeError
+case class ConditionError(cond: Expression) extends RuntimeError
 
 
 type Scope = Map[String, Value]
@@ -48,6 +50,13 @@ def eval(expr: Expression, scope: Scope): Either[RuntimeError, Value] =
       for
         bound <- letRec(bindings, scope)
         ret <- eval(body, bound)
+      yield ret
+    case Cond(cond, pass, fail) =>
+      for
+        res <- eval(cond, scope)
+        bool <- ensure[RuntimeError, Bool](res, ConditionError(cond))
+        body = if (bool.value) pass else fail
+        ret <- eval(body, scope)
       yield ret
   }
 
