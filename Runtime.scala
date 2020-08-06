@@ -9,12 +9,12 @@ case class UnknownOperator(op: Id) extends RuntimeError
 case class LookupError(label: Id) extends RuntimeError
 case class ArityError(label: Id, expected: Integer, got: Integer) extends RuntimeError
 
-type Scope = Map[String, Value]
-
-object Evaluator {
+object Runtime {
   import scala.language.implicitConversions
 
   import Eithers._
+
+  type Scope = Map[String, Value]
 
   def eval(exprs: List[Expression]): Either[RuntimeError, List[Value]] =
     eval(exprs, Map())

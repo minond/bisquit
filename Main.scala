@@ -1,7 +1,7 @@
 package xyz.minond.bisquit
 
 import xyz.minond.bisquit.token._
-import xyz.minond.bisquit.runtime.Evaluator.eval
+import xyz.minond.bisquit.runtime.Runtime.eval
 
 object Main {
   def main(args: Array[String]): Unit =
