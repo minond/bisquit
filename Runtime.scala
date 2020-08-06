@@ -7,7 +7,6 @@ object Environment {
 }
 
 sealed trait EvaluationError
-case object ApplicationError extends EvaluationError
 case object InvalidType extends EvaluationError
 case class LookupError(label: String) extends EvaluationError
 case class ArityError(label: String, expected: Integer, got: Integer) extends EvaluationError
