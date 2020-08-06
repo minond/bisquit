@@ -4,7 +4,7 @@ import scala.language.implicitConversions
 
 import xyz.minond.bisquit.token._
 import xyz.minond.bisquit.utils.ensure
-import xyz.minond.bisquit.utils.Eithers._
+import xyz.minond.bisquit.utils.Implicits.Eithers
 
 sealed trait RuntimeError
 case class NotCallable(value: Value) extends RuntimeError
@@ -85,7 +85,7 @@ def applyFunc(fn: Id | Func, args: => List[Value], scope: Scope): Either[Runtime
       case id : Id =>
         for {
           value <- lookup(id, scope)
-          func <- ensure[Func, RuntimeError, Value](value, NotCallable(value))
+          func <- ensure[RuntimeError, Func](value, NotCallable(value))
         } yield func
     }
 
