@@ -2,6 +2,7 @@ package xyz.minond.bisquit
 
 import xyz.minond.bisquit.token._
 import xyz.minond.bisquit.runtime.Runtime.eval
+import xyz.minond.bisquit.printer.formatted
 
 object Main {
   def main(args: Array[String]): Unit =
@@ -19,4 +20,6 @@ object Main {
                         Num(65)))
 
     println(eval(expr, scope))
+    println(formatted(addIt))
+    println(formatted(expr))
 }
