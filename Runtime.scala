@@ -3,20 +3,23 @@ package xyz.minond.bisquit.runtime
 import xyz.minond.bisquit.token._
 import xyz.minond.bisquit.utils.{ensure, Eithers}
 
-object Environment {
-  type Scope = Map[String, Value]
-}
-
 sealed trait EvaluationError
 case object InvalidType extends EvaluationError
 case class LookupError(label: String) extends EvaluationError
 case class ArityError(label: String, expected: Integer, got: Integer) extends EvaluationError
 
+type Scope = Map[String, Value]
+
 object Evaluator {
   import scala.language.implicitConversions
 
-  import Environment._
   import Eithers._
+
+  def eval(exprs: List[Expression]): Either[EvaluationError, List[Value]] =
+    eval(exprs, Map())
+
+  def eval(expr: Expression): Either[EvaluationError, Value] =
+    eval(expr, Map())
 
   def eval(exprs: List[Expression], scope: Scope): Either[EvaluationError, List[Value]] =
     exprs.map { eval(_, scope) }.squished()
