@@ -103,6 +103,8 @@ def main(args: Array[String]): Unit =
                     Num(1),
                     Num(2)))
 
+  exprs += Binop(Id("&&"), Bool(false), Bool(true))
+
   for
     expr <- exprs
   do

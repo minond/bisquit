@@ -1,6 +1,7 @@
 package xyz.minond.bisquit.ast
 
 import xyz.minond.bisquit.input.Positioned
+import xyz.minond.bisquit.runtime.{Scope, RuntimeError}
 
 sealed trait Token extends Positioned
 sealed trait Expression extends Token
@@ -23,7 +24,12 @@ case class Func(params: List[Id], body: Expression) extends Value {
          body=App(Func(params.take(bindings.size), body), bindings))
 }
 
-case class Builtin(f: List[Value] => Value) extends Value {
-  def apply(args: List[Value]) =
+case class Builtin(f: List[Value] => Either[RuntimeError, Value]) extends Value {
+  def apply(args: List[Value]): Either[RuntimeError, Value] =
     f(args)
+}
+
+case class LazyBuiltin(f: (List[Expression], Scope) => Either[RuntimeError, Value]) extends Value {
+  def apply[Err](args: List[Expression], scope: Scope): Either[RuntimeError, Value] =
+    f(args, scope)
 }

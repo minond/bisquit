@@ -27,6 +27,7 @@ def formatted(expr: Expression, lvl: Integer): String =
       val spacing = if (params.isEmpty) "" else " "
       s"\\${formatted(params, lvl + 1, " ")}$spacing->\n${indent}${formatted(body, lvl + 1)}"
     case _: Builtin => "<builtin>"
+    case _: LazyBuiltin => "<builtin>"
     case Let(bindings, body) =>
       val names = bindings.keys
       val values = bindings.values.map { formatted(_, lvl + 2 + 4) }

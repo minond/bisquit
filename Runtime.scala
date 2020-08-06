@@ -30,17 +30,8 @@ def eval(expr: Expression, scope: Scope): Either[RuntimeError, Value] =
   expr match {
     case value: Value => Right(value)
     case id: Id => lookup(id, scope)
-    case Binop(op, left, right) =>
-      for
-        arg1 <- eval(left, scope)
-        arg2 <- eval(right, scope)
-        ret <- applyOp(op, List(arg1, arg2), scope)
-      yield ret
-    case Uniop(op, subject) =>
-      for
-        arg <- eval(subject, scope)
-        ret <- applyOp(op, List(arg), scope)
-      yield ret
+    case Binop(op, left, right) => applyOp(op, List(left, right), scope)
+    case Uniop(op, subject) => applyOp(op, List(subject), scope)
     case App(fn, args) =>
       for
         vals <- eval(args, scope)
@@ -70,9 +61,10 @@ def letRec(bindings: Map[String, Expression], scope: Scope): Either[RuntimeError
       }
   }
 
-def applyOp(op: Id, args: => List[Value], scope: Scope): Either[RuntimeError, Value] =
-  lookup(op, scope).map {
-    case builtin: Builtin => builtin.apply(args)
+def applyOp(op: Id, args: => List[Expression], scope: Scope): Either[RuntimeError, Value] =
+  lookup(op, scope).flatMap {
+    case builtin: Builtin => eval(args, scope).flatMap(builtin.apply(_))
+    case builtin: LazyBuiltin => builtin.apply(args, scope)
   }
 
 def applyOrCurryFunc(fn: Id | Func, args: => List[Value], scope: Scope): Either[RuntimeError, Value] =
