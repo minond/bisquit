@@ -52,7 +52,7 @@ def applyOp(op: Id, args: => List[Value], scope: Scope): Either[RuntimeError, Va
   }
 
 def applyOrCurryFunc(fn: Id | Func, args: => List[Value], scope: Scope): Either[RuntimeError, Value] =
-  lookupUntil[Func](fn, scope).flatMap { func =>
+  lookup[Func](fn, scope).flatMap { func =>
     if (func.params.size != args.size)
       Right(func.curried(args))
     else
@@ -64,12 +64,12 @@ def applyOrCurryFunc(fn: Id | Func, args: => List[Value], scope: Scope): Either[
 def lookup(label: Id, scope: Scope): Either[LookupError, Value] =
   Right(scope.getOrElse(label.lexeme, return Left(LookupError(label))))
 
-def lookupUntil[T: ClassTag](tOrId: T | Id, scope: Scope): Either[LookupError, T] =
+def lookup[T: ClassTag](tOrId: T | Id, scope: Scope): Either[LookupError, T] =
   tOrId match {
     case t : T => Right(t)
     case id : Id => lookup(id, scope).flatMap {
       case t : T => Right(t)
-      case id : Id => lookupUntil(id, scope)
+      case id : Id => lookup[T](id, scope)
       case _ => Left(LookupError(id))
     }
   }
