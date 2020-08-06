@@ -15,6 +15,7 @@ def formatted(expr: Expression, lvl: Integer): String =
     case Uniop(Id(op), right) => s"${op}${formatted(right, lvl + 1)}"
     case App(Id(func), args) => s"${func}(${formatted(args, lvl + 1, ", ")})"
     case App(fn : Func, args) => s"(${formatted(fn, lvl + 1)})(${formatted(args, lvl + 1, ", ")})"
+    case Bool(v) => if (v) "#t" else "#f"
     case Num(num) if num < 0 => s"~${Math.abs(num)}"
     case Num(num) => num.toString
     case Func(params, body) =>

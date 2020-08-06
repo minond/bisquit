@@ -81,6 +81,10 @@ def main(args: Array[String]): Unit =
 
   exprs += Func(List(), Id("x"))
 
+  exprs += Bool(true)
+
+  exprs += Bool(false)
+
   for
     expr <- exprs
   do
