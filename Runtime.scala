@@ -1,9 +1,9 @@
 package xyz.minond.bisquit.runtime
 
 import scala.language.implicitConversions
+import scala.reflect.ClassTag
 
 import xyz.minond.bisquit.token._
-import xyz.minond.bisquit.utils.ensure
 import xyz.minond.bisquit.utils.Implicits.Eithers
 
 sealed trait RuntimeError
@@ -42,7 +42,7 @@ def eval(expr: Expression, scope: Scope): Either[RuntimeError, Value] =
     case App(fn, args) =>
       for
         vals <- eval(args, scope)
-        ret <- applyFunc(fn, vals, scope)
+        ret <- applyOrCurryFunc(fn, vals, scope)
       yield ret
   }
 
@@ -51,29 +51,25 @@ def applyOp(op: Id, args: => List[Value], scope: Scope): Either[RuntimeError, Va
     case builtin: Builtin => builtin.apply(args)
   }
 
-def applyFunc(fn: Id | Func, args: => List[Value], scope: Scope): Either[RuntimeError, Value] =
-  def applyOrCurry(func: Func) =
+def applyOrCurryFunc(fn: Id | Func, args: => List[Value], scope: Scope): Either[RuntimeError, Value] =
+  lookupUntil[Func](fn, scope).flatMap { func =>
     if (func.params.size != args.size)
       Right(func.curried(args))
     else
       val argScope = func.params.map(_.lexeme).zip(args).toMap
       val lexScope = argScope ++ scope
       eval(func.body, lexScope)
-
-  def getFunc(): Either[RuntimeError, Func] =
-    fn match {
-      case fn: Func => Right(fn)
-      case id: Id =>
-        for
-          value <- lookup(id, scope)
-          func <- ensure[RuntimeError, Func](value, NotCallable(value))
-        yield func
-    }
-
-  for
-    func <- getFunc()
-    ret <- applyOrCurry(func)
-  yield ret
+  }
 
 def lookup(label: Id, scope: Scope): Either[LookupError, Value] =
   Right(scope.getOrElse(label.lexeme, return Left(LookupError(label))))
+
+def lookupUntil[T: ClassTag](tOrId: T | Id, scope: Scope): Either[LookupError, T] =
+  tOrId match {
+    case t : T => Right(t)
+    case id : Id => lookup(id, scope).flatMap {
+      case t : T => Right(t)
+      case id : Id => lookupUntil(id, scope)
+      case _ => Left(LookupError(id))
+    }
+  }
