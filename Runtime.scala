@@ -30,14 +30,14 @@ def eval(expr: Expression, scope: Scope): Either[RuntimeError, Value] =
     case id: Id => lookup(id, scope)
     case Binop(op, left, right) =>
       for
-        l <- eval(left, scope)
-        r <- eval(right, scope)
-        ret <- applyOp(op, Some(l), Some(r))
+        arg1 <- eval(left, scope)
+        arg2 <- eval(right, scope)
+        ret <- applyOp(op, List(arg1, arg2), scope)
       yield ret
     case Uniop(op, subject) =>
       for
         arg <- eval(subject, scope)
-        ret <- applyOp(op, Some(arg), None)
+        ret <- applyOp(op, List(arg), scope)
       yield ret
     case App(fn, args) =>
       for
@@ -46,28 +46,10 @@ def eval(expr: Expression, scope: Scope): Either[RuntimeError, Value] =
       yield ret
   }
 
-def applyOp(op: Id, left: => Option[Value], right: => Option[Value]): Either[RuntimeError, Value] =
-  (op.lexeme, left, right) match {
-    // Binary number operation
-    case ("+", Some(l: Num), Some(r: Num)) => Right(applyNumBinop(l, r) { _ + _ })
-    case ("-", Some(l: Num), Some(r: Num)) => Right(applyNumBinop(l, r) { _ - _ })
-    case ("*", Some(l: Num), Some(r: Num)) => Right(applyNumBinop(l, r) { _ * _ })
-    case ("/", Some(l: Num), Some(r: Num)) => Right(applyNumBinop(l, r) { _ / _ })
-    case ("%", Some(l: Num), Some(r: Num)) => Right(applyNumBinop(l, r) { _ % _ })
-
-    // Uniary number operations
-    case ("-", Some(n: Num), None) => Right(applyNumUniop(n) { -_ })
-    case ("+", Some(n: Num), None) => Right(applyNumUniop(n) { Math.abs(_) })
-    case ("!", Some(n: Num), None) => Right(applyNumUniop(n) { Math.exp(_) })
-
-    case _ => Left(UnknownOperator(op))
+def applyOp(op: Id, args: => List[Value], scope: Scope): Either[RuntimeError, Value] =
+  lookup(op, scope).map {
+    case builtin: Builtin => builtin.apply(args)
   }
-
-def applyNumBinop(left: Num, right: Num)(f: (Double, Double) => Double): Num =
-  Num(f(left.value, right.value))
-
-def applyNumUniop(right: Num)(f: Double => Double): Num =
-  Num(f(right.value))
 
 def applyFunc(fn: Id | Func, args: => List[Value], scope: Scope): Either[RuntimeError, Value] =
   def applyOrCurry(func: Func) =

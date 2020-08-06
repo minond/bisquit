@@ -12,6 +12,8 @@ def formatted(expr: Expression): String =
     case Uniop(Id(op), right) => s"${op}${formatted(right)}"
     case App(Id(func), args) => s"${func}(${formatted(args, ", ")})"
     case App(fn : Func, args) => s"(${formatted(fn)})(${formatted(args, ", ")})"
+    case Num(num) if num < 0 => s"~${Math.abs(num)}"
     case Num(num) => num.toString
     case Func(params, body) => s"\\${formatted(params, " ")} -> ${formatted(body)}"
+    case _: Builtin => "<builtin>"
   }

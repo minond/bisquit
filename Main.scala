@@ -16,8 +16,16 @@ def main(args: Array[String]): Unit =
                          Binop(Id("+"), Id("a"), Id("b")),
                          Binop(Id("+"), Id("c"), Id("x"))))
 
-  val scope = Map("addIt" -> addIt,
-                  "x" -> Num(32))
+  val scope = Map(
+    "addIt" -> addIt,
+    "x" -> Num(32),
+    "+" -> numericBinaryBuiltin(_ + _),
+    "-" -> numericBinaryBuiltin(_ - _),
+    "*" -> numericBinaryBuiltin(_ * _),
+    "/" -> numericBinaryBuiltin(_ / _),
+    "%" -> numericBinaryBuiltin(_ % _),
+    "~" -> numericUnaryBuiltin(-_),
+  )
 
   var exprs: ListBuffer[Expression] = ListBuffer()
 
@@ -46,6 +54,8 @@ def main(args: Array[String]): Unit =
                List(Binop(Id("+"), Num(32), Num(53)),
                     Num(34),
                     Num(65)))
+
+  exprs += Uniop(Id("~"), Num(43))
 
   for
     expr <- exprs

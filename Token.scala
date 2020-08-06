@@ -18,3 +18,18 @@ case class Func(params: List[Id], body: Expression) extends Value {
     Func(params=params.drop(bindings.size),
          body=App(Func(params.take(bindings.size), body), bindings))
 }
+
+case class Builtin(f: List[Value] => Value) extends Value {
+  def apply(args: List[Value]) =
+    f(args)
+}
+
+def numericBinaryBuiltin(f: (Double, Double) => Double): Builtin =
+  Builtin({
+    case Num(left) :: Num(right) :: Nil => Num(f(left, right))
+  })
+
+def numericUnaryBuiltin(f: Double => Double): Builtin =
+  Builtin({
+    case Num(right) :: Nil => Num(f(right))
+  })
