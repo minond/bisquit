@@ -29,21 +29,21 @@ def eval(expr: Expression, scope: Scope): Either[RuntimeError, Value] =
     case value: Value => Right(value)
     case id: Id => lookup(id, scope)
     case Binop(op, left, right) =>
-      for {
+      for
         l <- eval(left, scope)
         r <- eval(right, scope)
         ret <- applyOp(op, Some(l), Some(r))
-      } yield ret
+      yield ret
     case Uniop(op, subject) =>
-      for {
+      for
         arg <- eval(subject, scope)
         ret <- applyOp(op, Some(arg), None)
-      } yield ret
+      yield ret
     case App(fn, args) =>
-      for {
+      for
         vals <- eval(args, scope)
         ret <- applyFunc(fn, vals, scope)
-      } yield ret
+      yield ret
   }
 
 def applyOp(op: Id, left: => Option[Value], right: => Option[Value]): Either[RuntimeError, Value] =
@@ -83,17 +83,17 @@ def applyFunc(fn: Id | Func, args: => List[Value], scope: Scope): Either[Runtime
     fn match {
       case fn : Func => Right(fn)
       case id : Id =>
-        for {
+        for
           value <- lookup(id, scope)
           func <- ensure[RuntimeError, Func](value, NotCallable(value))
-        } yield func
+        yield func
     }
 
-  for {
+  for
     func <- getFunc()
     _ <- arityMatch(func)
     ret <- apply(func)
-  } yield ret
+  yield ret
 
 def lookup(label: Id, scope: Scope): Either[LookupError, Value] =
   Right(scope.getOrElse(label.lexeme, return Left(LookupError(label))))
