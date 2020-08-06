@@ -62,8 +62,9 @@ def main(args: Array[String]): Unit =
   exprs += Uniop(Id("~"), Num(43))
 
   exprs += Let(Map("a" -> Num(343),
-                   "b" -> Num(543)),
-               Binop(Id("+"), Id("a"), Id("b")))
+                   "b" -> Id("a"),
+                   "c" -> Binop(Id("+"), Id("a"), Id("b"))),
+               Binop(Id("+"), Id("c"), Id("c")))
 
   for
     expr <- exprs

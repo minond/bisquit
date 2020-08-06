@@ -46,11 +46,20 @@ def eval(expr: Expression, scope: Scope): Either[RuntimeError, Value] =
       yield ret
     case Let(bindings, body) =>
       for
-        vals <- eval(bindings.values.toList, scope) // TODO Needs to be like letrec
-        bound = bindings.keys.zip(vals).toMap
-        ret <- eval(body, bound ++ scope)
+        bound <- letRec(bindings, scope)
+        ret <- eval(body, bound)
       yield ret
   }
+
+def letRec(bindings: Map[String, Expression], scope: Scope): Either[RuntimeError, Scope] =
+  Right(bindings.foldLeft(scope) {
+    case (recscope, (label, expr)) =>
+      eval(expr, recscope) match {
+        case Left(err) => return Left(err)
+        case Right(ok) => recscope ++ Map(label -> ok)
+      }
+  })
+
 
 def applyOp(op: Id, args: => List[Value], scope: Scope): Either[RuntimeError, Value] =
   lookup(op, scope).map {
