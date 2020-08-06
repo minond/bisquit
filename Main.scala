@@ -3,6 +3,7 @@ package xyz.minond.bisquit
 import scala.collection.mutable.ListBuffer
 
 import xyz.minond.bisquit.ast._
+import xyz.minond.bisquit.prelude
 import xyz.minond.bisquit.runtime.{eval, Scope}
 import xyz.minond.bisquit.printer.formatted
 
@@ -12,15 +13,9 @@ def main(args: Array[String]): Unit =
                          Binop(Id("+"), Id("a"), Id("b")),
                          Binop(Id("+"), Id("c"), Id("x"))))
 
-  val scope = Map(
+  val scope = prelude.Ops ++ Map(
     "addIt" -> addIt,
     "x" -> Num(32),
-    "+" -> numericBinaryBuiltin(_ + _),
-    "-" -> numericBinaryBuiltin(_ - _),
-    "*" -> numericBinaryBuiltin(_ * _),
-    "/" -> numericBinaryBuiltin(_ / _),
-    "%" -> numericBinaryBuiltin(_ % _),
-    "~" -> numericUnaryBuiltin(-_),
   )
 
   var exprs: ListBuffer[Expression] = ListBuffer()
