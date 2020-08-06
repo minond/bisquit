@@ -12,6 +12,7 @@ case class NotCallable(value: Value) extends RuntimeError
 case class UnknownOperator(op: Id) extends RuntimeError
 case class LookupError(id: Id) extends RuntimeError
 case class ArityError(func: Id | Func, expected: Integer, got: Integer) extends RuntimeError
+case class ArgumentTypeError(arg: Expression) extends RuntimeError
 case class ConditionError(cond: Expression) extends RuntimeError
 
 
@@ -63,8 +64,7 @@ def letRec(bindings: Map[String, Expression], scope: Scope): Either[RuntimeError
 
 def applyOp(op: Id, args: => List[Expression], scope: Scope): Either[RuntimeError, Value] =
   lookup(op, scope).flatMap {
-    case builtin: Builtin => eval(args, scope).flatMap(builtin.apply(_))
-    case builtin: LazyBuiltin => builtin.apply(args, scope)
+    case builtin: Builtin => builtin.apply(args, scope)
   }
 
 def applyOrCurryFunc(fn: Id | Func, args: => List[Value], scope: Scope): Either[RuntimeError, Value] =

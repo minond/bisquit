@@ -24,12 +24,7 @@ case class Func(params: List[Id], body: Expression) extends Value {
          body=App(Func(params.take(bindings.size), body), bindings))
 }
 
-case class Builtin(f: List[Value] => Either[RuntimeError, Value]) extends Value {
-  def apply(args: List[Value]): Either[RuntimeError, Value] =
-    f(args)
-}
-
-case class LazyBuiltin(f: (List[Expression], Scope) => Either[RuntimeError, Value]) extends Value {
+case class Builtin(f: (List[Expression], Scope) => Either[RuntimeError, Value]) extends Value {
   def apply(args: List[Expression], scope: Scope): Either[RuntimeError, Value] =
     f(args, scope)
 }

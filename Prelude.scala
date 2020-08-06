@@ -2,18 +2,29 @@ package xyz.minond.bisquit.prelude
 
 import xyz.minond.bisquit.ast._
 import xyz.minond.bisquit.runtime._
+import xyz.minond.bisquit.utils.ensure
 
 def numericBinaryBuiltin(f: (Double, Double) => Double): Builtin =
   Builtin({
-    case Num(left) :: Num(right) :: Nil => Right(Num(f(left, right)))
+    case (l :: r :: Nil, scope) =>
+      for
+        leftVal <- eval(l, scope)
+        leftNum <- ensure[RuntimeError, Num](leftVal, ArgumentTypeError(l))
+        rightVal <- eval(r, scope)
+        rightNum <- ensure[RuntimeError, Num](rightVal, ArgumentTypeError(r))
+      yield Num(f(leftNum.value, rightNum.value))
   })
 
 def numericUnaryBuiltin(f: Double => Double): Builtin =
   Builtin({
-    case Num(right) :: Nil => Right(Num(f(right)))
+    case (expr :: Nil, scope) =>
+      for
+        value <- eval(expr, scope)
+        num <- ensure[RuntimeError, Num](value, ArgumentTypeError(expr))
+      yield Num(f(num.value))
   })
 
-val booleanAnd = LazyBuiltin({
+val booleanAnd = Builtin({
   case (left :: right :: Nil, scope) =>
     eval(left, scope).flatMap {
       case Bool(true) => eval(right, scope)
@@ -21,7 +32,7 @@ val booleanAnd = LazyBuiltin({
     }
 })
 
-val booleanOr = LazyBuiltin({
+val booleanOr = Builtin({
   case (left :: right :: Nil, scope) =>
     eval(left, scope).flatMap {
       case Bool(true) => Right(Bool(true))
