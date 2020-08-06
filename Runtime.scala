@@ -5,6 +5,7 @@ import xyz.minond.bisquit.utils.{ensure, Eithers}
 
 sealed trait EvaluationError
 case object InvalidType extends EvaluationError
+case class UnknownOperator(op: Id) extends EvaluationError
 case class LookupError(label: String) extends EvaluationError
 case class ArityError(label: String, expected: Integer, got: Integer) extends EvaluationError
 
@@ -60,7 +61,7 @@ object Evaluator {
       case ("+", Some(n: Num), None) => Right(applyNumUniop(n) { Math.abs(_) })
       case ("!", Some(n: Num), None) => Right(applyNumUniop(n) { Math.exp(_) })
 
-      case _ => ???
+      case _ => Left(UnknownOperator(op))
     }
 
   def applyNumBinop(left: Num, right: Num)(f: (Double, Double) => Double): Num =
