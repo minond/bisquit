@@ -4,7 +4,7 @@ import xyz.minond.bisquit.input.Positioned
 
 sealed trait Token extends Positioned
 sealed trait Expression extends Token
-sealed trait Value
+sealed trait Value extends Expression
 
 case object Eof
   extends Token
@@ -25,9 +25,9 @@ case class Num(value: Double)
   extends Expression
   with Value
 
-case class Func(params: List[Id], body: Expression, bindings: List[Value] = List())
+case class Func(params: List[Id], body: Expression)
   extends Expression
   with Value {
-  def curry(newBindings: List[Value]) =
-    Func(params, body, bindings ++ newBindings)
+  def curried(bindings: List[Value]) =
+    Func(params.drop(bindings.size), App(Func(params.take(bindings.size), body), bindings))
 }

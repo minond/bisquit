@@ -72,7 +72,7 @@ def applyNumUniop(right: Num)(f: Double => Double): Num =
 def applyFunc(fn: Id | Func, args: => List[Value], scope: Scope): Either[RuntimeError, Value] =
   def applyOrCurry(func: Func) =
     if (func.params.size != args.size)
-      Right(func.curry(args))
+      Right(func.curried(args))
     else
       val argScope = func.params.map(_.lexeme).zip(args).toMap
       val lexScope = argScope ++ scope
