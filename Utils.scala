@@ -30,12 +30,10 @@ object Implicits {
       * The `squished` method lets you convert `List[Either[L, R]]` into an
       * `Either[L, List[R]]`.
       */
-    def squished(): Either[L, List[R]] = {
-      val acc: Either[L, List[R]] = Right(List())
-      eithers.foldLeft(acc) {
+    def squished(): Either[L, List[R]] =
+      eithers.foldLeft[Either[L, List[R]]](Right(List())) {
         (acc, x) =>
           acc.flatMap(xs => x.map(_ +: xs))
       }
-    }
   }
 }

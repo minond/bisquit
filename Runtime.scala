@@ -52,14 +52,14 @@ def eval(expr: Expression, scope: Scope): Either[RuntimeError, Value] =
   }
 
 def letRec(bindings: Map[String, Expression], scope: Scope): Either[RuntimeError, Scope] =
-  Right(bindings.foldLeft(scope) {
-    case (recscope, (label, expr)) =>
-      eval(expr, recscope) match {
-        case Left(err) => return Left(err)
-        case Right(ok) => recscope ++ Map(label -> ok)
+  bindings.foldLeft[Either[RuntimeError, Scope]](Right(scope)) {
+    case (acc, (label, expr)) =>
+      acc.flatMap { recscope =>
+        eval(expr, recscope).map { v =>
+          recscope ++ Map(label -> v)
+        }
       }
-  })
-
+  }
 
 def applyOp(op: Id, args: => List[Value], scope: Scope): Either[RuntimeError, Value] =
   lookup(op, scope).map {
