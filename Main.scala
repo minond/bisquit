@@ -68,6 +68,13 @@ def main(args: Array[String]): Unit =
                    "d" -> Let(Map("x" -> Id("c")), Id("x"))),
                Binop(Id("+"), Id("d"), Id("d")))
 
+  exprs += Let(Map("x" -> Num(34),
+                   "y" -> Num(54),
+                   "z" -> Func(Nil, Binop(Id("+"), Id("x"), Id("y")))),
+               App(Id("z"), Nil))
+
+  exprs += Func(List(), Id("x"))
+
   for
     expr <- exprs
   do
