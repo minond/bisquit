@@ -2,7 +2,7 @@ package xyz.minond.bisquit.utils
 
 import scala.reflect.ClassTag
 
-def ensure[V, L, R: ClassTag](value: V, left: => L): Either[L, R] =
+def ensure[R: ClassTag, L, V](value: V, left: => L): Either[L, R] =
   value match {
     case ok : R => Right(ok)
     case _ => Left(left)

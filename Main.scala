@@ -24,9 +24,10 @@ object Main {
                           Binop(Id("+"), Id("a"), Id("b")),
                           Id("c")))
 
-    val scope = Map("add3" -> add3)
+    val scope = Map("add3" -> add3,
+                    "num" -> Num(32))
 
-    var expr = App(Id("add3"),
+    var expr = App(Id("num"),
                    List(Binop(Id("+"), Num(32), Num(53)),
                         Num(34),
                         Num(65)))
