@@ -25,6 +25,9 @@ case class Num(value: Double)
   extends Expression
   with Value
 
-case class Func(params: List[Id], body: Expression)
+case class Func(params: List[Id], body: Expression, bindings: List[Value] = List())
   extends Expression
-  with Value
+  with Value {
+  def curry(newBindings: List[Value]) =
+    Func(params, body, bindings ++ newBindings)
+}

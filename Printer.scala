@@ -13,5 +13,5 @@ def formatted(expr: Expression): String =
     case App(Id(func), args) => s"${func}(${formatted(args, ", ")})"
     case App(fn : Func, args) => s"(${formatted(fn)})(${formatted(args, ", ")})"
     case Num(num) => num.toString
-    case Func(params, body) => s"\\${formatted(params, " ")} -> ${formatted(body)}"
+    case Func(params, body, _) => s"\\${formatted(params, " ")} -> ${formatted(body)}"
   }

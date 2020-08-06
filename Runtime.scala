@@ -70,19 +70,18 @@ def applyNumUniop(right: Num)(f: Double => Double): Num =
   Num(f(right.value))
 
 def applyFunc(fn: Id | Func, args: => List[Value], scope: Scope): Either[RuntimeError, Value] =
-  def apply(func: Func) =
-    eval(func.body, func.params.map(_.lexeme).zip(args).toMap ++ scope)
-
-  def arityMatch(func: Func) =
+  def applyOrCurry(func: Func) =
     if (func.params.size != args.size)
-      Left(ArityError(fn, func.params.size, args.size))
+      Right(func.curry(args))
     else
-      Right(())
+      val argScope = func.params.map(_.lexeme).zip(args).toMap
+      val lexScope = argScope ++ scope
+      eval(func.body, lexScope)
 
   def getFunc(): Either[RuntimeError, Func] =
     fn match {
-      case fn : Func => Right(fn)
-      case id : Id =>
+      case fn: Func => Right(fn)
+      case id: Id =>
         for
           value <- lookup(id, scope)
           func <- ensure[RuntimeError, Func](value, NotCallable(value))
@@ -91,8 +90,7 @@ def applyFunc(fn: Id | Func, args: => List[Value], scope: Scope): Either[Runtime
 
   for
     func <- getFunc()
-    _ <- arityMatch(func)
-    ret <- apply(func)
+    ret <- applyOrCurry(func)
   yield ret
 
 def lookup(label: Id, scope: Scope): Either[LookupError, Value] =

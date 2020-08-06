@@ -27,9 +27,18 @@ object Main {
                         Num(34),
                         Num(65)))
 
+    var app3 = App(Func(List(Id("a"), Id("b"), Id("c")),
+                        Binop(Id("+"),
+                              Binop(Id("+"), Id("a"), Id("b")),
+                              Binop(Id("+"), Id("c"), Id("x")))),
+                   List(Binop(Id("+"), Num(32), Num(53)),
+                        Num(65)))
+
     println(eval(app1, scope))
     println(eval(app2, scope))
+    println(eval(app3, scope))
     println(formatted(addIt))
     println(formatted(app1))
     println(formatted(app2))
+    println(formatted(app3))
 }
