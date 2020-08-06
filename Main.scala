@@ -73,6 +73,12 @@ def main(args: Array[String]): Unit =
                    "z" -> Func(Nil, Binop(Id("+"), Id("x"), Id("y")))),
                App(Id("z"), Nil))
 
+  exprs += Let(Map("a" -> Func(Nil, Binop(Id("+"), Num(2), Num(40))),
+                   "b" -> Id("a"),
+                   "c" -> Id("b"),
+                   "d" -> Id("c")),
+               App(Id("d"), Nil))
+
   exprs += Func(List(), Id("x"))
 
   for

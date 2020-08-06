@@ -67,7 +67,7 @@ def applyOp(op: Id, args: => List[Value], scope: Scope): Either[RuntimeError, Va
   }
 
 def applyOrCurryFunc(fn: Id | Func, args: => List[Value], scope: Scope): Either[RuntimeError, Value] =
-  lookup[Func](fn, scope).flatMap { func =>
+  getOrLookup[Func](fn, scope).flatMap { func =>
     if (func.params.size != args.size)
       Right(func.curried(args))
     else
@@ -77,14 +77,19 @@ def applyOrCurryFunc(fn: Id | Func, args: => List[Value], scope: Scope): Either[
   }
 
 def lookup(id: Id, scope: Scope): Either[LookupError, Value] =
-  Right(scope.getOrElse(id.lexeme, return Left(LookupError(id))))
+  scope.get(id.lexeme) match {
+    case None => Left(LookupError(id))
+    case Some(value) => Right(value)
+  }
 
-def lookup[T: ClassTag](tOrId: T | Id, scope: Scope): Either[LookupError, T] =
-  tOrId match {
+/** If we already have the T, then return that T. Otherwise do a lookup, assert
+  * the type, and return that result.
+  */
+def getOrLookup[T <: Value: ClassTag](tId: T | Id, scope: Scope): Either[LookupError, T] =
+  tId match {
     case t : T => Right(t)
     case id : Id => lookup(id, scope).flatMap {
       case t : T => Right(t)
-      case id : Id => lookup[T](id, scope)
       case _ => Left(LookupError(id))
     }
   }
