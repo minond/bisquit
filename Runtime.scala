@@ -3,7 +3,7 @@ package xyz.minond.bisquit.runtime
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
-import xyz.minond.bisquit.token._
+import xyz.minond.bisquit.ast._
 import xyz.minond.bisquit.utils.ensure
 import xyz.minond.bisquit.utils.Implicits.Eithers
 

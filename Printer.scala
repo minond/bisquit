@@ -1,6 +1,6 @@
 package xyz.minond.bisquit.printer
 
-import xyz.minond.bisquit.token._
+import xyz.minond.bisquit.ast._
 
 def formatted(exprs: List[Expression], lvl: Integer, sep: String = " "): String =
   exprs.map(formatted(_, lvl)).mkString(sep)

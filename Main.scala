@@ -2,7 +2,7 @@ package xyz.minond.bisquit
 
 import scala.collection.mutable.ListBuffer
 
-import xyz.minond.bisquit.token._
+import xyz.minond.bisquit.ast._
 import xyz.minond.bisquit.runtime.{eval, Scope}
 import xyz.minond.bisquit.printer.formatted
 

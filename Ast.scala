@@ -1,4 +1,4 @@
-package xyz.minond.bisquit.token
+package xyz.minond.bisquit.ast
 
 import xyz.minond.bisquit.input.Positioned
 
