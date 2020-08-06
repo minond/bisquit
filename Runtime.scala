@@ -9,7 +9,7 @@ import xyz.minond.bisquit.utils.Implicits.Eithers
 sealed trait RuntimeError
 case class NotCallable(value: Value) extends RuntimeError
 case class UnknownOperator(op: Id) extends RuntimeError
-case class LookupError(label: Id) extends RuntimeError
+case class LookupError(id: Id) extends RuntimeError
 case class ArityError(func: Id | Func, expected: Integer, got: Integer) extends RuntimeError
 
 
@@ -61,8 +61,8 @@ def applyOrCurryFunc(fn: Id | Func, args: => List[Value], scope: Scope): Either[
       eval(func.body, lexScope)
   }
 
-def lookup(label: Id, scope: Scope): Either[LookupError, Value] =
-  Right(scope.getOrElse(label.lexeme, return Left(LookupError(label))))
+def lookup(id: Id, scope: Scope): Either[LookupError, Value] =
+  Right(scope.getOrElse(id.lexeme, return Left(LookupError(id))))
 
 def lookup[T: ClassTag](tOrId: T | Id, scope: Scope): Either[LookupError, T] =
   tOrId match {
