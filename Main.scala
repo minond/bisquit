@@ -18,6 +18,7 @@ object Main {
     // println(Evaluator.eval(Uniop(Id("-"), Id("a")), scope))
     // println(Positioned.stdin(Id("hi"), 0, 0).position.get.toString)
 
+    // val add3 = Func(List(Id("a"), Id("b"), Id("c")),
     val add3 = Func(List(Id("a"), Id("b"), Id("c")),
                     Binop(Id("+"),
                           Binop(Id("+"), Id("a"), Id("b")),
