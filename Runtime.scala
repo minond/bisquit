@@ -44,6 +44,12 @@ def eval(expr: Expression, scope: Scope): Either[RuntimeError, Value] =
         vals <- eval(args, scope)
         ret <- applyOrCurryFunc(fn, vals, scope)
       yield ret
+    case Let(bindings, body) =>
+      for
+        vals <- eval(bindings.values.toList, scope) // TODO Needs to be like letrec
+        bound = bindings.keys.zip(vals).toMap
+        ret <- eval(body, bound ++ scope)
+      yield ret
   }
 
 def applyOp(op: Id, args: => List[Value], scope: Scope): Either[RuntimeError, Value] =

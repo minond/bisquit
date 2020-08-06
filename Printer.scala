@@ -16,4 +16,9 @@ def formatted(expr: Expression): String =
     case Num(num) => num.toString
     case Func(params, body) => s"\\${formatted(params, " ")} -> ${formatted(body)}"
     case _: Builtin => "<builtin>"
+    case Let(bindings, body) =>
+      val names = bindings.keys
+      val values = bindings.values.map { formatted(_) }
+      val decls = names.zip(values).map { (n, v) => s"\n    $n = $v" }.mkString
+      s"let${decls}\n  in ${formatted(body)}"
   }

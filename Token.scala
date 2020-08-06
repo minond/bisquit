@@ -11,6 +11,7 @@ case class Id(lexeme: String) extends Expression
 case class Binop(op: Id, left: Expression, right: Expression) extends Expression
 case class Uniop(op: Id, subject: Expression) extends Expression
 case class App(fn: Id | Func, args: List[Expression]) extends Expression
+case class Let(bindings: Map[String, Expression], body: Expression) extends Expression
 case class Num(value: Double) extends Value
 
 case class Func(params: List[Id], body: Expression) extends Value {
