@@ -1,6 +1,7 @@
 package xyz.minond.bisquit.runtime
 
 import xyz.minond.bisquit.token._
+import xyz.minond.bisquit.utils.{ensure, Eithers}
 
 object Environment {
   type Scope = Map[String, Value]
@@ -10,21 +11,6 @@ sealed trait EvaluationError
 case object InvalidType extends EvaluationError
 case class LookupError(label: String) extends EvaluationError
 case class ArityError(label: String, expected: Integer, got: Integer) extends EvaluationError
-
-object Eithers {
-  implicit def listOfEithersToEithers[L, R](eithers: List[Either[L, R]]): Container[L, R] =
-    Container(eithers)
-
-  class Container[L, R](val eithers: List[Either[L, R]]) {
-    def squished(): Either[L, List[R]] = {
-      val acc: Either[L, List[R]] = Right(List())
-      eithers.foldLeft(acc) {
-        (acc, x) =>
-          acc.right.flatMap(xs => x.right.map(_ +: xs))
-      }
-    }
-  }
-}
 
 object Evaluator {
   import scala.language.implicitConversions
@@ -41,22 +27,20 @@ object Evaluator {
       case Id(label) => lookup(label, scope)
       case Binop(op, left, right) =>
         for {
-          l <- eval(left, scope).right
-          r <- eval(right, scope).right
-          ret <- applyOp(op, Some(l), Some(r)).right
+          l <- eval(left, scope)
+          r <- eval(right, scope)
+          ret <- applyOp(op, Some(l), Some(r))
         } yield ret
       case Uniop(op, subject) =>
         for {
-          arg <- eval(subject, scope).right
-          ret <- applyOp(op, Some(arg), None).right
+          arg <- eval(subject, scope)
+          ret <- applyOp(op, Some(arg), None)
         } yield ret
       case App(fn, args) =>
         for {
-          vals <- eval(args, scope).right
-          ret <- applyFunc(fn, vals, scope).right
+          vals <- eval(args, scope)
+          ret <- applyFunc(fn, vals, scope)
         } yield ret
-
-      case _ => ???
     }
 
   def applyOp(op: Id, left: => Option[Value], right: => Option[Value]): Either[EvaluationError, Value] =
@@ -72,6 +56,8 @@ object Evaluator {
       case ("-", Some(n: Num), None) => Right(applyNumUniop(n) { -_ })
       case ("+", Some(n: Num), None) => Right(applyNumUniop(n) { Math.abs(_) })
       case ("!", Some(n: Num), None) => Right(applyNumUniop(n) { Math.exp(_) })
+
+      case _ => ???
     }
 
   def applyNumBinop(left: Num, right: Num)(f: (Double, Double) => Double): Num =
@@ -91,17 +77,11 @@ object Evaluator {
         Right(())
 
     for {
-      value <- lookup(fn.lexeme, scope).right
-      func <- ensure[Func](value).right
-      _ <- arityMatch(func).right
-      ret <- apply(func).right
+      value <- lookup(fn.lexeme, scope)
+      func <- ensure[Value, EvaluationError, Func](value, InvalidType)
+      _ <- arityMatch(func)
+      ret <- apply(func)
     } yield ret
-
-  def ensure[T](value: Value): Either[EvaluationError, T] =
-    value match {
-      case ok : T => Right(ok)
-      case _ => Left(InvalidType)
-    }
 
   def lookup(label: String, scope: Scope): Either[LookupError, Value] =
     Right(scope.getOrElse(label, return Left(LookupError(label))))
