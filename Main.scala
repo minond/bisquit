@@ -1,7 +1,7 @@
 package xyz.minond.bisquit
 
 import xyz.minond.bisquit.token._
-import xyz.minond.bisquit.runtime.Runtime.eval
+import xyz.minond.bisquit.runtime.eval
 import xyz.minond.bisquit.printer.formatted
 
 object Main {
