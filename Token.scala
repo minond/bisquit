@@ -18,7 +18,7 @@ case class Binop(op: Id, left: Expression, right: Expression)
 case class Uniop(op: Id, subject: Expression)
   extends Expression
 
-case class App(fn: Id, args: List[Expression])
+case class App(fn: Id | Func, args: List[Expression])
   extends Expression
 
 case class Num(value: Double)

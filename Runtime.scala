@@ -7,7 +7,7 @@ sealed trait RuntimeError
 case class NotCallable(value: Value) extends RuntimeError
 case class UnknownOperator(op: Id) extends RuntimeError
 case class LookupError(label: Id) extends RuntimeError
-case class ArityError(label: Id, expected: Integer, got: Integer) extends RuntimeError
+case class ArityError(func: Id | Func, expected: Integer, got: Integer) extends RuntimeError
 
 object Runtime {
   import scala.language.implicitConversions
@@ -70,7 +70,7 @@ object Runtime {
   def applyNumUniop(right: Num)(f: Double => Double): Num =
     Num(f(right.value))
 
-  def applyFunc(fn: Id, args: => List[Value], scope: Scope): Either[RuntimeError, Value] =
+  def applyFunc(fn: Id | Func, args: => List[Value], scope: Scope): Either[RuntimeError, Value] =
     def apply(func: Func) =
       eval(func.body, func.params.map(_.lexeme).zip(args).toMap ++ scope)
 
@@ -80,9 +80,18 @@ object Runtime {
       else
         Right(())
 
+    def getFunc(): Either[RuntimeError, Func] =
+      fn match {
+        case fn : Func => Right(fn)
+        case id : Id =>
+          for {
+            value <- lookup(id, scope)
+            func <- ensure[Func, RuntimeError, Value](value, NotCallable(value))
+          } yield func
+      }
+
     for {
-      value <- lookup(fn, scope)
-      func <- ensure[Func, RuntimeError, Value](value, NotCallable(value))
+      func <- getFunc()
       _ <- arityMatch(func)
       ret <- apply(func)
     } yield ret
