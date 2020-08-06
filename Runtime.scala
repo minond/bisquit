@@ -1,13 +1,15 @@
 package xyz.minond.bisquit.runtime
 
+import scala.reflect.ClassTag
+
 import xyz.minond.bisquit.token._
 import xyz.minond.bisquit.utils.{ensure, Eithers}
 
 sealed trait EvaluationError
-case object InvalidType extends EvaluationError
+case class InvalidType[Expected: ClassTag](value: Value) extends EvaluationError
 case class UnknownOperator(op: Id) extends EvaluationError
-case class LookupError(label: String) extends EvaluationError
-case class ArityError(label: String, expected: Integer, got: Integer) extends EvaluationError
+case class LookupError(label: Id) extends EvaluationError
+case class ArityError(label: Id, expected: Integer, got: Integer) extends EvaluationError
 
 type Scope = Map[String, Value]
 
@@ -28,7 +30,7 @@ object Evaluator {
   def eval(expr: Expression, scope: Scope): Either[EvaluationError, Value] =
     expr match {
       case value: Value => Right(value)
-      case Id(label) => lookup(label, scope)
+      case id: Id => lookup(id, scope)
       case Binop(op, left, right) =>
         for {
           l <- eval(left, scope)
@@ -76,17 +78,17 @@ object Evaluator {
 
     def arityMatch(func: Func) =
       if (func.params.size != args.size)
-        Left(ArityError(fn.lexeme, func.params.size, args.size))
+        Left(ArityError(fn, func.params.size, args.size))
       else
         Right(())
 
     for {
-      value <- lookup(fn.lexeme, scope)
-      func <- ensure[Value, EvaluationError, Func](value, InvalidType)
+      value <- lookup(fn, scope)
+      func <- ensure[Value, EvaluationError, Func](value, InvalidType[Func](value))
       _ <- arityMatch(func)
       ret <- apply(func)
     } yield ret
 
-  def lookup(label: String, scope: Scope): Either[LookupError, Value] =
-    Right(scope.getOrElse(label, return Left(LookupError(label))))
+  def lookup(label: Id, scope: Scope): Either[LookupError, Value] =
+    Right(scope.getOrElse(label.lexeme, return Left(LookupError(label))))
 }
