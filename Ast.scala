@@ -16,7 +16,13 @@ case class Let(bindings: Map[String, Expression], body: Expression) extends Expr
 case class Cond(cond: Expression, pass: Expression, fail: Expression) extends Expression
 case class Num(value: Double) extends Value
 case class Bool(value: Boolean) extends Value
-case class Cons(values: List[Value]) extends Value
+
+// XXX making values a List[Value] | List[Expression] will mean that now all
+// Values will have to be potentially re-evaluated before they're used in any
+// way since it's not clear if a list is still holding unevaluated expressions
+// or not. Consider creating another list type that is an Expression and
+// keeping Cons _just_ for Values.
+case class Cons(values: List[Value] | List[Expression]) extends Value
 
 case class Func(params: List[Id], body: Expression, scope: Scope = Map()) extends Value {
   def curried(bindings: List[Value]) =

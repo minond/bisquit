@@ -30,6 +30,10 @@ def eval(exprs: List[Expression], scope: Scope): Either[RuntimeError, List[Value
 def eval(expr: Expression, scope: Scope): Either[RuntimeError, Value] =
   expr match {
     case Func(args, body, _) => Right(Func(args, body, scope))
+    case Cons(values) =>
+      for
+        vals <- eval(values, scope)
+      yield Cons(vals)
     case value: Value => Right(value)
     case id: Id => lookup(id, scope)
     case Binop(op, left, right) => applyOp(op, List(left, right), scope)

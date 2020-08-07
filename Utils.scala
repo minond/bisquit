@@ -31,8 +31,8 @@ object Implicits {
       * `Either[L, List[R]]`.
       */
     def squished(): Either[L, List[R]] =
-      eithers.foldLeft[Either[L, List[R]]](Right(List())) {
-        (acc, x) =>
+      eithers.foldRight[Either[L, List[R]]](Right(List())) {
+        (x, acc) =>
           acc.flatMap(xs => x.map(_ +: xs))
       }
   }
