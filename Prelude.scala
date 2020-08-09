@@ -2,11 +2,11 @@ package xyz.minond.bisquit.prelude
 
 import xyz.minond.bisquit.ast._
 import xyz.minond.bisquit.runtime._
-import xyz.minond.bisquit.typer.{BoolTy, NumTy, Signature}
+import xyz.minond.bisquit.typer.{BoolType, NumType, Signature}
 import xyz.minond.bisquit.utils.ensure
 
 def numericBinaryBuiltin(f: (Double, Double) => Double): Builtin =
-  Builtin(Signature(NumTy, NumTy, NumTy), {
+  Builtin(Signature(NumType, NumType, NumType), {
     case (l :: r :: Nil, scope) =>
       for
         leftVal <- eval(l, scope)
@@ -17,7 +17,7 @@ def numericBinaryBuiltin(f: (Double, Double) => Double): Builtin =
   })
 
 def numericUnaryBuiltin(f: Double => Double): Builtin =
-  Builtin(Signature(NumTy, NumTy), {
+  Builtin(Signature(NumType, NumType), {
     case (expr :: Nil, scope) =>
       for
         value <- eval(expr, scope)
@@ -25,7 +25,7 @@ def numericUnaryBuiltin(f: Double => Double): Builtin =
       yield Num(f(num.value))
   })
 
-val booleanAnd = Builtin(Signature(BoolTy, BoolTy, BoolTy), {
+val booleanAnd = Builtin(Signature(BoolType, BoolType, BoolType), {
   case (left :: right :: Nil, scope) =>
     eval(left, scope).flatMap {
       case Bool(true) => eval(right, scope)
@@ -33,7 +33,7 @@ val booleanAnd = Builtin(Signature(BoolTy, BoolTy, BoolTy), {
     }
 })
 
-val booleanOr = Builtin(Signature(BoolTy, BoolTy, BoolTy), {
+val booleanOr = Builtin(Signature(BoolType, BoolType, BoolType), {
   case (left :: right :: Nil, scope) =>
     eval(left, scope).flatMap {
       case Bool(true) => Right(Bool(true))
