@@ -12,7 +12,6 @@ case class LookupError(id: Id) extends RuntimeError
 case class ArgumentTypeError(arg: Expression) extends RuntimeError
 case class ConditionError(cond: Expression) extends RuntimeError
 
-
 type Scope = Map[String, Value]
 
 def eval(exprs: List[Expression]): Either[RuntimeError, List[Value]] =

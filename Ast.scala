@@ -1,6 +1,7 @@
 package xyz.minond.bisquit.ast
 
 import xyz.minond.bisquit.input.Positioned
+import xyz.minond.bisquit.typer.Signature
 import xyz.minond.bisquit.runtime.{Scope, RuntimeError}
 
 sealed trait Token extends Positioned
@@ -24,7 +25,7 @@ case class Func(params: List[Id], body: Expression, scope: Scope = Map()) extend
          scope=scope)
 }
 
-case class Builtin(f: (List[Expression], Scope) => Either[RuntimeError, Value]) extends Value {
+case class Builtin(sig: Signature, f: (List[Expression], Scope) => Either[RuntimeError, Value]) extends Value {
   def apply(args: List[Expression], scope: Scope): Either[RuntimeError, Value] =
     f(args, scope)
 }

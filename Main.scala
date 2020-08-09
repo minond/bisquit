@@ -4,7 +4,7 @@ import scala.collection.mutable.ListBuffer
 
 import xyz.minond.bisquit.ast._
 import xyz.minond.bisquit.prelude
-import xyz.minond.bisquit.runtime.{eval, Scope}
+import xyz.minond.bisquit.runtime.eval
 import xyz.minond.bisquit.printer.formatted
 
 def main(args: Array[String]): Unit =
