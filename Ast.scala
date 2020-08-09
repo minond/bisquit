@@ -7,7 +7,6 @@ sealed trait Token extends Positioned
 sealed trait Expression extends Token
 sealed trait Value extends Expression
 
-case object Eof extends Token
 case class Id(lexeme: String) extends Expression
 case class Binop(op: Id, left: Expression, right: Expression) extends Expression
 case class Uniop(op: Id, subject: Expression) extends Expression
