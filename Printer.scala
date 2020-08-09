@@ -15,7 +15,7 @@ def formatted(expr: Expression, lvl: Integer): String =
     case Uniop(Id(op), right) => s"${op}${formatted(right, lvl + 1)}"
     case App(Id(func), args) => s"${func}(${formatted(args, lvl + 1, ", ")})"
     case App(fn, args) => s"(${formatted(fn, lvl + 1)})(${formatted(args, lvl + 1, ", ")})"
-    case Bool(v) => if (v) "#t" else "#f"
+    case Bool(v) => if v then "#t" else "#f"
     case Num(num) if num < 0 => s"~${Math.abs(num)}"
     case Num(num) => num.toString
     case Cons(Nil) => "[]"
@@ -24,7 +24,7 @@ def formatted(expr: Expression, lvl: Integer): String =
       s"[ ${formatted(values, lvl + 1, s"\n$indent, ")}\n$indent]"
     case Func(params, body, _) =>
       val indent = " " * (lvl + 1)
-      val spacing = if (params.isEmpty) "" else " "
+      val spacing = if params.isEmpty then "" else " "
       s"\\${formatted(params, lvl + 1, " ")}$spacing->\n${indent}${formatted(body, lvl + 1)}"
     case _: Builtin => "<builtin>"
     case Let(bindings, body) =>

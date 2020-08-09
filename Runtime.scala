@@ -50,7 +50,7 @@ def eval(expr: Expression, scope: Scope): Either[RuntimeError, Value] =
       for
         res <- eval(cond, scope)
         bool <- ensure[RuntimeError, Bool](res, ConditionError(cond))
-        body = if (bool.value) pass else fail
+        body = if bool.value then pass else fail
         ret <- eval(body, scope)
       yield ret
   }
@@ -71,8 +71,8 @@ def applyOp(op: Id, args: => List[Expression], scope: Scope): Either[RuntimeErro
   }
 
 def applyOrCurryFunc(func: Func, args: => List[Value]): Either[RuntimeError, Value] =
-  if (func.params.size != args.size)
-    Right(func.curried(args))
+  if func.params.size != args.size
+  then Right(func.curried(args))
   else
     val argScope = func.params.map(_.lexeme).zip(args).toMap
     val lexScope = func.scope ++ argScope
