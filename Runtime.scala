@@ -12,7 +12,7 @@ case class LookupError(id: Id) extends RuntimeError
 case class ArgumentTypeError(arg: Expression) extends RuntimeError
 case class ConditionError(cond: Expression) extends RuntimeError
 
-type Scope = Map[String, Value]
+type RuntimeScope = Map[String, Value]
 
 def eval(exprs: List[Expression]): Either[RuntimeError, List[Value]] =
   eval(exprs, Map())
@@ -20,10 +20,10 @@ def eval(exprs: List[Expression]): Either[RuntimeError, List[Value]] =
 def eval(expr: Expression): Either[RuntimeError, Value] =
   eval(expr, Map())
 
-def eval(exprs: List[Expression], scope: Scope): Either[RuntimeError, List[Value]] =
+def eval(exprs: List[Expression], scope: RuntimeScope): Either[RuntimeError, List[Value]] =
   exprs.map { eval(_, scope) }.squished()
 
-def eval(expr: Expression, scope: Scope): Either[RuntimeError, Value] =
+def eval(expr: Expression, scope: RuntimeScope): Either[RuntimeError, Value] =
   expr match {
     case Func(args, body, _) => Right(Func(args, body, scope))
     case Cons(values) =>
@@ -55,8 +55,8 @@ def eval(expr: Expression, scope: Scope): Either[RuntimeError, Value] =
       yield ret
   }
 
-def letRec(bindings: Map[String, Expression], scope: Scope): Either[RuntimeError, Scope] =
-  bindings.foldLeft[Either[RuntimeError, Scope]](Right(scope)) {
+def letRec(bindings: Map[String, Expression], scope: RuntimeScope) =
+  bindings.foldLeft[Either[RuntimeError, RuntimeScope]](Right(scope)) {
     case (acc, (label, expr)) =>
       acc.flatMap { recscope =>
         eval(expr, recscope).map { v =>
@@ -65,12 +65,12 @@ def letRec(bindings: Map[String, Expression], scope: Scope): Either[RuntimeError
       }
   }
 
-def applyOp(op: Id, args: => List[Expression], scope: Scope): Either[RuntimeError, Value] =
+def applyOp(op: Id, args: => List[Expression], scope: RuntimeScope) =
   lookup(op, scope).flatMap {
     case builtin: Builtin => builtin.apply(args, scope)
   }
 
-def applyOrCurryFunc(func: Func, args: => List[Value]): Either[RuntimeError, Value] =
+def applyOrCurryFunc(func: Func, args: => List[Value]) =
   if func.params.size != args.size
   then Right(func.curried(args))
   else
@@ -78,7 +78,7 @@ def applyOrCurryFunc(func: Func, args: => List[Value]): Either[RuntimeError, Val
     val lexScope = func.scope ++ argScope
     eval(func.body, lexScope)
 
-def lookup(id: Id, scope: Scope): Either[LookupError, Value] =
+def lookup(id: Id, scope: RuntimeScope): Either[LookupError, Value] =
   scope.get(id.lexeme) match {
     case None => Left(LookupError(id))
     case Some(value) => Right(value)

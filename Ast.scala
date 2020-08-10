@@ -2,7 +2,7 @@ package xyz.minond.bisquit.ast
 
 import xyz.minond.bisquit.input.Positioned
 import xyz.minond.bisquit.typer.Signature
-import xyz.minond.bisquit.runtime.{Scope, RuntimeError}
+import xyz.minond.bisquit.runtime.{RuntimeScope, RuntimeError}
 
 sealed trait Token extends Positioned
 sealed trait Expression extends Token
@@ -18,14 +18,15 @@ case class Num(value: Double) extends Value
 case class Bool(value: Boolean) extends Value
 case class Cons(values: List[Expression]) extends Value
 
-case class Func(params: List[Id], body: Expression, scope: Scope = Map()) extends Value {
+case class Func(params: List[Id], body: Expression, scope: RuntimeScope = Map()) extends Value {
   def curried(bindings: List[Value]) =
     Func(params=params.drop(bindings.size),
          body=App(Func(params.take(bindings.size), body, scope), bindings),
          scope=scope)
 }
 
-case class Builtin(sig: Signature, f: (List[Expression], Scope) => Either[RuntimeError, Value]) extends Value {
-  def apply(args: List[Expression], scope: Scope): Either[RuntimeError, Value] =
+type Callable = (List[Expression], RuntimeScope) => Either[RuntimeError, Value]
+case class Builtin(sig: Signature, f: Callable) extends Value {
+  def apply(args: List[Expression], scope: RuntimeScope): Either[RuntimeError, Value] =
     f(args, scope)
 }
