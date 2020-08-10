@@ -4,6 +4,7 @@ import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 import xyz.minond.bisquit.ast._
+import xyz.minond.bisquit.scope._
 import xyz.minond.bisquit.utils.ensure
 import xyz.minond.bisquit.utils.Implicits.Eithers
 
@@ -11,8 +12,6 @@ sealed trait RuntimeError
 case class LookupError(id: Id) extends RuntimeError
 case class ArgumentTypeError(arg: Expression) extends RuntimeError
 case class ConditionError(cond: Expression) extends RuntimeError
-
-type RuntimeScope = Map[String, Value]
 
 def eval(exprs: List[Expression]): Either[RuntimeError, List[Value]] =
   eval(exprs, Map())

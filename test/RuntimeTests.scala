@@ -7,8 +7,9 @@ import flatspec._
 import matchers._
 
 import xyz.minond.bisquit.ast._
+import xyz.minond.bisquit.scope._
 import xyz.minond.bisquit.prelude
-import xyz.minond.bisquit.runtime.{eval, Scope}
+import xyz.minond.bisquit.runtime.eval
 
 class RuntimeTests extends AnyFlatSpec with should.Matchers {
   it should "evaluate scalars" in {
