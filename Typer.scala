@@ -10,12 +10,12 @@ case object UnitType extends Type
 case object NumType extends Type
 case object BoolType extends Type
 
-case class FuncType(tys: Type*) extends Type {
+case class FuncType(tys: List[Type]) extends Type {
   def apply(args: Type*): Type =
     apply(args.toList)
 
   def apply(args: List[Type]): Type =
-    FuncType(tys.drop(args.size): _*).flatten
+    FuncType(tys.drop(args.size)).flatten
 
   def flatten =
     if tys.size == 1
@@ -27,7 +27,8 @@ sealed trait TypingError
 case class LookupError(id: Id) extends TypingError
 case class CondMismatchError(cond: Cond, pass: Type, fail: Type) extends TypingError
 
-type Signature = FuncType
+def signature(tys: Type*) =
+  FuncType(tys.toList)
 
 def deduce(expr: Expression): Either[TypingError, Type] =
   deduce(expr, Map())
