@@ -5,10 +5,10 @@ import xyz.minond.bisquit.scope._
 import xyz.minond.bisquit.runtime._
 import xyz.minond.bisquit.utils.ensure
 
-trait Typing {
+trait Typing { self =>
   var ty: Option[Type] = None
 
-  def typeTag(ty: Type) =
+  def typeTag(ty: Type): self.type =
     this.ty = Some(ty)
     this
 }

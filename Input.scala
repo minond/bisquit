@@ -7,10 +7,10 @@ case class Position(file: String, line: Integer, column: Integer) {
     s"$file:$column:$line"
 }
 
-open class Positioned {
+open class Positioned { self =>
   var position: Option[Position] = None
 
-  def at(position: Position) =
+  def at(position: Position): self.type =
     this.position = Some(position)
     this
 }
