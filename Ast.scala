@@ -2,11 +2,11 @@ package xyz.minond.bisquit.ast
 
 import xyz.minond.bisquit.scope._
 import xyz.minond.bisquit.input.Positioned
-import xyz.minond.bisquit.typechecker.FuncType
+import xyz.minond.bisquit.typechecker.{Typing, FuncType}
 import xyz.minond.bisquit.runtime.RuntimeError
 
 sealed trait Token extends Positioned
-sealed trait Expression extends Token
+sealed trait Expression extends Token with Typing
 sealed trait Value extends Expression
 
 case class Id(lexeme: String) extends Expression

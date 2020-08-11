@@ -5,6 +5,14 @@ import xyz.minond.bisquit.scope._
 import xyz.minond.bisquit.runtime._
 import xyz.minond.bisquit.utils.ensure
 
+trait Typing {
+  var ty: Option[Type] = None
+
+  def typeTag(ty: Type) =
+    this.ty = Some(ty)
+    this
+}
+
 sealed trait Type
 case object UnitType extends Type
 case object NumType extends Type

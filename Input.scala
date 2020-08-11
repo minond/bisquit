@@ -10,10 +10,9 @@ case class Position(file: String, line: Integer, column: Integer) {
 open class Positioned {
   var position: Option[Position] = None
 
-  def at(position: Position) = {
+  def at(position: Position) =
     this.position = Some(position)
     this
-  }
 }
 
 object Positioned {
