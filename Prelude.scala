@@ -2,7 +2,7 @@ package xyz.minond.bisquit.prelude
 
 import xyz.minond.bisquit.ast._
 import xyz.minond.bisquit.runtime._
-import xyz.minond.bisquit.typer.{BoolType, NumType, signature}
+import xyz.minond.bisquit.typechecker.{BoolType, NumType, signature}
 import xyz.minond.bisquit.utils.ensure
 
 def numericBinaryBuiltin(f: (Double, Double) => Double): Builtin =

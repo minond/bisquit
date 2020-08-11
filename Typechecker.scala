@@ -1,4 +1,4 @@
-package xyz.minond.bisquit.typer
+package xyz.minond.bisquit.typechecker
 
 import xyz.minond.bisquit.ast._
 import xyz.minond.bisquit.scope._

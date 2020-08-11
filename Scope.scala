@@ -1,7 +1,7 @@
 package xyz.minond.bisquit.scope
 
 import xyz.minond.bisquit.ast.{Builtin, Value}
-import xyz.minond.bisquit.typer.Type
+import xyz.minond.bisquit.typechecker.Type
 
 type RuntimeScope = Map[String, Value]
 type TypeScope = Map[String, Type]

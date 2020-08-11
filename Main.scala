@@ -5,7 +5,7 @@ import scala.collection.mutable.ListBuffer
 import xyz.minond.bisquit.ast._
 import xyz.minond.bisquit.prelude
 import xyz.minond.bisquit.runtime.eval
-import xyz.minond.bisquit.typer.deduce
+import xyz.minond.bisquit.typechecker.deduce
 import xyz.minond.bisquit.scope.typeScope
 import xyz.minond.bisquit.printer.formatted
 

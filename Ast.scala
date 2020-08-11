@@ -2,7 +2,7 @@ package xyz.minond.bisquit.ast
 
 import xyz.minond.bisquit.scope._
 import xyz.minond.bisquit.input.Positioned
-import xyz.minond.bisquit.typer.FuncType
+import xyz.minond.bisquit.typechecker.FuncType
 import xyz.minond.bisquit.runtime.RuntimeError
 
 sealed trait Token extends Positioned
