@@ -121,6 +121,6 @@ def main(args: Array[String]): Unit =
     }
 
     deduce(expr, scope) match {
-      case Right(ret) => println(s": ${ret}\n")
+      case Right(ret) => println(s": ${formatted(ret)}\n")
       case Left(err) => println(s"error: ${err}\n")
     }

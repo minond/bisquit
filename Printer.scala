@@ -1,6 +1,7 @@
 package xyz.minond.bisquit.printer
 
 import xyz.minond.bisquit.ast._
+import xyz.minond.bisquit.typechecker._
 
 def formatted(exprs: List[Expression], lvl: Integer, sep: String = " "): String =
   exprs.map(formatted(_, lvl)).mkString(sep)
@@ -37,4 +38,13 @@ def formatted(expr: Expression, lvl: Integer): String =
       val spass = formatted(pass, lvl + 1)
       val sfail = formatted(fail, lvl + 1)
       s"if ${scond}\n${indent}then ${spass}\n${indent}else ${sfail}"
+  }
+
+def formatted(ty: Type): String =
+  ty match {
+    case UnitType => "unit"
+    case IntType => "int"
+    case StrType => "str"
+    case BoolType => "bool"
+    case LambdaType(tys) => tys.map(formatted(_)).mkString(" -> ")
   }
