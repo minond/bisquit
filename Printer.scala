@@ -43,9 +43,9 @@ def formatted(expr: Expression, lvl: Integer): String =
 
 def formatted(ty: Type): String =
   ty match {
-    case UnitType => "unit"
-    case IntType => "int"
-    case StrType => "str"
-    case BoolType => "bool"
+    case UnitType => "Unit"
+    case IntType => "Int"
+    case StrType => "Str"
+    case BoolType => "Bool"
     case LambdaType(tys) => tys.map(formatted(_)).mkString(" -> ")
   }
