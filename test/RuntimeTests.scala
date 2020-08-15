@@ -37,7 +37,7 @@ class RuntimeTests extends AnyFlatSpec with should.Matchers {
     //       a + b)()
     val expr = App(Let(Map("a" -> Int(343),
                            "b" -> Int(54)),
-                       Func(Nil, Binop(Id("+"), Id("a"), Id("b")))),
+                       Lambda(Nil, Binop(Id("+"), Id("a"), Id("b")))),
                    Nil)
 
     eval(expr, prelude.Ops) should be (Right(Int(397)))
@@ -60,12 +60,12 @@ class RuntimeTests extends AnyFlatSpec with should.Matchers {
                                        "x" -> Int(999999)),
                                    Let(Map("b" -> Int(343),
                                            "x" -> Int(999999)),
-                                       Func(List(Id("x")),
-                                            Binop(Id("+"),
-                                                  Id("a"),
-                                                  Binop(Id("+"),
-                                                        Id("b"),
-                                                        Id("x")))))),
+                                       Lambda(List(Id("x")),
+                                              Binop(Id("+"),
+                                                    Id("a"),
+                                                    Binop(Id("+"),
+                                                          Id("b"),
+                                                          Id("x")))))),
                                Nil),
                            Nil),
                        Nil),
@@ -80,7 +80,7 @@ class RuntimeTests extends AnyFlatSpec with should.Matchers {
     // in if id(#f)
     //    then 1.0
     //    else 2.0
-    val expr = Let(Map("id" -> Func(List(Id("x")), Id("x"))),
+    val expr = Let(Map("id" -> Lambda(List(Id("x")), Id("x"))),
                    Cond(App(Id("id"), List(Bool(true))),
                         Int(1),
                         Int(2)))
@@ -94,7 +94,7 @@ class RuntimeTests extends AnyFlatSpec with should.Matchers {
     // in if id(#t)
     //    then 1.0
     //    else 2.0
-    val expr = Let(Map("id" -> Func(List(Id("x")), Id("x"))),
+    val expr = Let(Map("id" -> Lambda(List(Id("x")), Id("x"))),
                    Cond(App(Id("id"), List(Bool(false))),
                         Int(1),
                         Int(2)))

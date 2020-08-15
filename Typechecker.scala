@@ -18,12 +18,12 @@ case object UnitType extends Type
 case object IntType extends Type
 case object BoolType extends Type
 
-case class FuncType(tys: List[Type]) extends Type {
+case class LambdaType(tys: List[Type]) extends Type {
   def apply(args: Type*): Type =
     apply(args.toList)
 
   def apply(args: List[Type]): Type =
-    FuncType(tys.drop(args.size)).flatten
+    LambdaType(tys.drop(args.size)).flatten
 
   def flatten =
     if tys.size == 1
@@ -36,7 +36,7 @@ case class LookupError(id: Id) extends TypingError
 case class CondMismatchError(cond: Cond, pass: Type, fail: Type) extends TypingError
 
 def signature(tys: Type*) =
-  FuncType(tys.toList)
+  LambdaType(tys.toList)
 
 def deduce(expr: Expression): Either[TypingError, Type] =
   deduce(expr, Map())
@@ -54,15 +54,15 @@ def deduce(expr: Expression, scope: RuntimeScope): Either[TypingError, Type] =
 
 def deduceUniop(op: Id, subject: Expression, scope: RuntimeScope) =
   for
-    maybeFunc <- lookup(op, scope)
-    opTy <- ensure[TypingError, FuncType](maybeFunc, LookupError(op))
+    maybeLambda <- lookup(op, scope)
+    opTy <- ensure[TypingError, LambdaType](maybeLambda, LookupError(op))
     subjectTy <- deduce(subject, scope)
   yield opTy.apply(subjectTy)
 
 def deduceBinop(op: Id, left: Expression, right: Expression, scope: RuntimeScope) =
   for
-    maybeFunc <- lookup(op, scope)
-    opTy <- ensure[TypingError, FuncType](maybeFunc, LookupError(op))
+    maybeLambda <- lookup(op, scope)
+    opTy <- ensure[TypingError, LambdaType](maybeLambda, LookupError(op))
     leftTy <- deduce(left, scope)
     rightTy <- deduce(right, scope)
   yield opTy.apply(leftTy, rightTy)

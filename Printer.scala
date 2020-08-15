@@ -22,7 +22,7 @@ def formatted(expr: Expression, lvl: Integer): String =
     case Cons(values) =>
       val indent = " " * (lvl - 1)
       s"[ ${formatted(values, lvl + 1, s"\n$indent, ")}\n$indent]"
-    case Func(params, body, _) =>
+    case Lambda(params, body, _) =>
       val indent = " " * (lvl + 1)
       val spacing = if params.isEmpty then "" else " "
       s"\\${formatted(params, lvl + 1, " ")}$spacing->\n${indent}${formatted(body, lvl + 1)}"

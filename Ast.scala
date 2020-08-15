@@ -2,7 +2,7 @@ package xyz.minond.bisquit.ast
 
 import xyz.minond.bisquit.scope._
 import xyz.minond.bisquit.input.Positioned
-import xyz.minond.bisquit.typechecker.{Typing, FuncType}
+import xyz.minond.bisquit.typechecker.{Typing, LambdaType}
 import xyz.minond.bisquit.runtime.RuntimeError
 
 sealed trait Token extends Positioned
@@ -19,15 +19,15 @@ case class Int(value: Integer) extends Value
 case class Bool(value: Boolean) extends Value
 case class Cons(values: List[Expression]) extends Value
 
-case class Func(params: List[Id], body: Expression, scope: RuntimeScope = Map()) extends Value {
+case class Lambda(params: List[Id], body: Expression, scope: RuntimeScope = Map()) extends Value {
   def curried(bindings: List[Value]) =
-    Func(params=params.drop(bindings.size),
-         body=App(Func(params.take(bindings.size), body, scope), bindings),
+    Lambda(params=params.drop(bindings.size),
+         body=App(Lambda(params.take(bindings.size), body, scope), bindings),
          scope=scope)
 }
 
 type Callable = (List[Expression], RuntimeScope) => Either[RuntimeError, Value]
-case class Builtin(sig: FuncType, f: Callable) extends Value {
+case class Builtin(sig: LambdaType, f: Callable) extends Value {
   typeTag(sig)
 
   def apply(args: List[Expression], scope: RuntimeScope): Either[RuntimeError, Value] =

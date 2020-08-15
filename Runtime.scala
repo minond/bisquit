@@ -24,7 +24,7 @@ def eval(exprs: List[Expression], scope: RuntimeScope): Either[RuntimeError, Lis
 
 def eval(expr: Expression, scope: RuntimeScope): Either[RuntimeError, Value] =
   expr match {
-    case Func(args, body, _) => Right(Func(args, body, scope))
+    case Lambda(args, body, _) => Right(Lambda(args, body, scope))
     case Cons(values) =>
       for
         vals <- eval(values, scope)
@@ -36,9 +36,9 @@ def eval(expr: Expression, scope: RuntimeScope): Either[RuntimeError, Value] =
     case App(fn, args) =>
       for
         vals <- eval(args, scope)
-        maybeFunc <- eval(fn, scope)
-        func <- ensure[RuntimeError, Func](maybeFunc, ArgumentTypeError(fn))
-        ret <- applyOrCurryFunc(func, vals)
+        maybeLambda <- eval(fn, scope)
+        func <- ensure[RuntimeError, Lambda](maybeLambda, ArgumentTypeError(fn))
+        ret <- applyOrCurryLambda(func, vals)
       yield ret
     case Let(bindings, body) =>
       for
@@ -69,7 +69,7 @@ def applyOp(op: Id, args: => List[Expression], scope: RuntimeScope) =
     case builtin: Builtin => builtin.apply(args, scope)
   }
 
-def applyOrCurryFunc(func: Func, args: => List[Value]) =
+def applyOrCurryLambda(func: Lambda, args: => List[Value]) =
   if func.params.size != args.size
   then Right(func.curried(args))
   else
