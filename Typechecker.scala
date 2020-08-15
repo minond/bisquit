@@ -52,7 +52,8 @@ def deduce(expr: Expression, env: Environment): Either[TypingError, Type] =
     case Builtin(sig, _) => Right(sig)
     case Uniop(op, subject) => deduceUniop(op, subject, env)
     case Binop(op, left, right) => deduceBinop(op, left, right, env)
-    case cond @ Cond(_, passExpr, failExpr) => deduceCond(cond, env)
+    case cond : Cond => deduceCond(cond, env)
+    case Let(bindings, body) => deduce(body, env ++ bindings)
   }
 
 def deduceUniop(op: Id, subject: Expression, env: Environment) =
@@ -86,7 +87,7 @@ def lookup(id: Id, env: Environment): Either[TypingError, Type] =
     case None => Left(LookupError(id))
     case Some(value) =>
       value.ty match {
-        case None => Left(LookupError(id))
+        case None => deduce(value, env)
         case Some(ty) => Right(ty)
       }
   }

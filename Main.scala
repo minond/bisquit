@@ -105,6 +105,15 @@ def main(args: Array[String]): Unit =
 
   exprs += Id("~")
 
+  exprs += Let(Map("a" -> Int(343),
+                   "b" -> Id("a"),
+                   "c" -> Binop(Id("+"), Id("a"), Id("b")),
+                   "d" -> Let(Map("x" -> Id("c")), Id("x"))),
+               Binop(Id("+"), Id("d"), Id("d")))
+
+  exprs += Let(Map("a" -> Int(343)),
+               Id("a"))
+
   // exprs += Lambda(List(Id("a").typeTag(IntType), Id("b").typeTag(IntType), Id("c").typeTag(IntType)),
   //                    Binop(Id("+"),
   //                          Binop(Id("+"), Id("a"), Id("b")),
