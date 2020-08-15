@@ -19,16 +19,6 @@ class RuntimeTests extends AnyFlatSpec with should.Matchers {
     eval(Bool(false)) should be (Right(Bool(false)))
   }
 
-  it should "evaluate items in a list" in {
-    // [2 + 40, 2 + 39]
-    val expr = Cons(List(
-      Binop(Id("+"), Int(2), Int(40)),
-      Binop(Id("+"), Int(2), Int(39)),
-    ))
-
-    eval(expr, prelude.Ops) should be (Right(Cons(List(Int(42), Int(41)))))
-  }
-
   it should "add two numbers" in {
     // (let
     //    a = 343.0

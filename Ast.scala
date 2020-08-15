@@ -17,7 +17,6 @@ case class Let(bindings: Map[String, Expression], body: Expression) extends Expr
 case class Cond(cond: Expression, pass: Expression, fail: Expression) extends Expression
 case class Int(value: Integer) extends Value
 case class Bool(value: Boolean) extends Value
-case class Cons(values: List[Expression]) extends Value
 
 case class Lambda(params: List[Id], body: Expression, scope: RuntimeScope = Map()) extends Value {
   def curried(bindings: List[Value]) =

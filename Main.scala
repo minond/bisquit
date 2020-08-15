@@ -82,20 +82,6 @@ def main(args: Array[String]): Unit =
   //
   // exprs += Bool(false)
   //
-  // exprs += Cons(List(Int(1)))
-  //
-  // exprs += Cons(List(Bool(true), Bool(false)))
-  //
-  // exprs += Cons(List(Int(1), Int(2), Int(3)))
-  //
-  // exprs += Cons(List(
-  //   Lambda(Nil, Binop(Id("+"), Int(2), Int(40))),
-  //   Lambda(Nil, Binop(Id("+"), Int(2), Int(40))),
-  //   Lambda(Nil, Binop(Id("+"), Int(2), Int(40))),
-  // ))
-  //
-  // exprs += Cons(Nil)
-  //
   // exprs += Cond(Bool(true),
   //               Int(1),
   //               Int(2))
