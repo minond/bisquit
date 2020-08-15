@@ -17,60 +17,60 @@ def main(args: Array[String]): Unit =
 
   val scope = prelude.Ops ++ Map(
     "addIt" -> addIt,
-    "x" -> Num(32),
+    "x" -> Int(32),
   )
 
   var exprs: ListBuffer[Expression] = ListBuffer()
 
   // exprs += App(Id("addIt"),
-  //              List(Binop(Id("+"), Num(32), Num(53)),
-  //                   Num(34),
-  //                   Num(65)))
+  //              List(Binop(Id("+"), Int(32), Int(53)),
+  //                   Int(34),
+  //                   Int(65)))
   //
   // exprs += App(Func(List(Id("a"), Id("b"), Id("c")),
   //                   Binop(Id("+"),
   //                         Binop(Id("+"), Id("a"), Id("b")),
   //                         Binop(Id("+"), Id("c"), Id("x")))),
-  //              List(Binop(Id("+"), Num(32), Num(53))))
+  //              List(Binop(Id("+"), Int(32), Int(53))))
   //
   // exprs += App(Func(List(Id("a"), Id("b"), Id("c")),
   //                   Binop(Id("+"),
   //                         Binop(Id("+"), Id("a"), Id("b")),
   //                         Binop(Id("+"), Id("c"), Id("x")))),
-  //              List(Binop(Id("+"), Num(32), Num(53)),
-  //                   Num(65)))
+  //              List(Binop(Id("+"), Int(32), Int(53)),
+  //                   Int(65)))
   //
   // exprs += App(Func(List(Id("a"), Id("b"), Id("c")),
   //                   Binop(Id("+"),
   //                         Binop(Id("+"), Id("a"), Id("b")),
   //                         Binop(Id("+"), Id("c"), Id("x")))),
-  //              List(Binop(Id("+"), Num(32), Num(53)),
-  //                   Num(34),
-  //                   Num(65)))
+  //              List(Binop(Id("+"), Int(32), Int(53)),
+  //                   Int(34),
+  //                   Int(65)))
   //
   // exprs += App(Func(List(Id("a")),
   //                   Uniop(Id("~"), Id("a"))),
-  //              List(Num(34)))
+  //              List(Int(34)))
   //
   // exprs += App(Func(List(Id("a")),
   //                   Uniop(Id("~"), Id("a"))),
-  //              List(Num(34)))
+  //              List(Int(34)))
   //
-  // exprs += Uniop(Id("~"), Num(43))
+  // exprs += Uniop(Id("~"), Int(43))
   //
-  // exprs += Let(Map("a" -> Num(343),
+  // exprs += Let(Map("a" -> Int(343),
   //                  "b" -> Id("a"),
   //                  "c" -> Binop(Id("+"), Id("a"), Id("b")),
   //                  "x" -> Func(List(Id("x")), Id("x")),
   //                  "d" -> Let(Map("x" -> Id("c")), Id("x"))),
   //              Binop(Id("+"), Id("d"), Id("d")))
   //
-  // exprs += Let(Map("x" -> Num(34),
-  //                  "y" -> Num(54),
+  // exprs += Let(Map("x" -> Int(34),
+  //                  "y" -> Int(54),
   //                  "z" -> Func(Nil, Binop(Id("+"), Id("x"), Id("y")))),
   //              App(Id("z"), Nil))
   //
-  // exprs += Let(Map("a" -> Func(Nil, Binop(Id("+"), Num(2), Num(40))),
+  // exprs += Let(Map("a" -> Func(Nil, Binop(Id("+"), Int(2), Int(40))),
   //                  "b" -> Id("a"),
   //                  "c" -> Id("b"),
   //                  "d" -> Id("c")),
@@ -82,45 +82,45 @@ def main(args: Array[String]): Unit =
   //
   // exprs += Bool(false)
   //
-  // exprs += Cons(List(Num(1)))
+  // exprs += Cons(List(Int(1)))
   //
   // exprs += Cons(List(Bool(true), Bool(false)))
   //
-  // exprs += Cons(List(Num(1), Num(2), Num(3)))
+  // exprs += Cons(List(Int(1), Int(2), Int(3)))
   //
   // exprs += Cons(List(
-  //   Func(Nil, Binop(Id("+"), Num(2), Num(40))),
-  //   Func(Nil, Binop(Id("+"), Num(2), Num(40))),
-  //   Func(Nil, Binop(Id("+"), Num(2), Num(40))),
+  //   Func(Nil, Binop(Id("+"), Int(2), Int(40))),
+  //   Func(Nil, Binop(Id("+"), Int(2), Int(40))),
+  //   Func(Nil, Binop(Id("+"), Int(2), Int(40))),
   // ))
   //
   // exprs += Cons(Nil)
   //
   // exprs += Cond(Bool(true),
-  //               Num(1),
-  //               Num(2))
+  //               Int(1),
+  //               Int(2))
 
   exprs += Bool(false)
 
   exprs += Binop(Id("&&"), Bool(false), Bool(true))
 
-  // exprs += Let(Map("a" -> Num(343),
+  // exprs += Let(Map("a" -> Int(343),
   //                  "b" -> Func(Nil, Id("a"))),
   //              App(Id("b"), Nil))
   //
-  // exprs += App(Let(Map("a" -> Num(30),
+  // exprs += App(Let(Map("a" -> Int(30),
   //                      "b" -> Func(List(Id("c")), Binop(Id("+"), Id("a"), Id("c")))),
   //                  Id("b")),
-  //              List(Num(34)))
+  //              List(Int(34)))
 
-  exprs += Uniop(Id("~"), Num(345))
+  exprs += Uniop(Id("~"), Int(345))
 
   exprs += Id("~")
 
-  // exprs += Func(List(Id("a").typeTag(NumType), Id("b").typeTag(NumType), Id("c").typeTag(NumType)),
+  // exprs += Func(List(Id("a").typeTag(IntType), Id("b").typeTag(IntType), Id("c").typeTag(IntType)),
   //                    Binop(Id("+"),
   //                          Binop(Id("+"), Id("a"), Id("b")),
-  //                          Binop(Id("+"), Id("c"), Id("x")))).typeTag(NumType)
+  //                          Binop(Id("+"), Id("c"), Id("x")))).typeTag(IntType)
 
   for
     expr <- exprs

@@ -13,8 +13,8 @@ import xyz.minond.bisquit.runtime.eval
 
 class RuntimeTests extends AnyFlatSpec with should.Matchers {
   it should "evaluate scalars" in {
-    eval(Num(3)) should be (Right(Num(3)))
-    eval(Num(-3)) should be (Right(Num(-3)))
+    eval(Int(3)) should be (Right(Int(3)))
+    eval(Int(-3)) should be (Right(Int(-3)))
     eval(Bool(true)) should be (Right(Bool(true)))
     eval(Bool(false)) should be (Right(Bool(false)))
   }
@@ -22,11 +22,11 @@ class RuntimeTests extends AnyFlatSpec with should.Matchers {
   it should "evaluate items in a list" in {
     // [2 + 40, 2 + 39]
     val expr = Cons(List(
-      Binop(Id("+"), Num(2), Num(40)),
-      Binop(Id("+"), Num(2), Num(39)),
+      Binop(Id("+"), Int(2), Int(40)),
+      Binop(Id("+"), Int(2), Int(39)),
     ))
 
-    eval(expr, prelude.Ops) should be (Right(Cons(List(Num(42), Num(41)))))
+    eval(expr, prelude.Ops) should be (Right(Cons(List(Int(42), Int(41)))))
   }
 
   it should "add two numbers" in {
@@ -35,12 +35,12 @@ class RuntimeTests extends AnyFlatSpec with should.Matchers {
     //    b = 54.0
     //  in \->
     //       a + b)()
-    val expr = App(Let(Map("a" -> Num(343),
-                           "b" -> Num(54)),
+    val expr = App(Let(Map("a" -> Int(343),
+                           "b" -> Int(54)),
                        Func(Nil, Binop(Id("+"), Id("a"), Id("b")))),
                    Nil)
 
-    eval(expr, prelude.Ops) should be (Right(Num(397)))
+    eval(expr, prelude.Ops) should be (Right(Int(397)))
   }
 
   it should "use lexically scope bindings" in {
@@ -55,11 +55,11 @@ class RuntimeTests extends AnyFlatSpec with should.Matchers {
     //             a + b + x)())())())(43.0)
     //
     // # => 608 : num
-    val expr = App(App(App(App(Let(Map("a" -> Num(222),
-                                       "b" -> Num(999999),
-                                       "x" -> Num(999999)),
-                                   Let(Map("b" -> Num(343),
-                                           "x" -> Num(999999)),
+    val expr = App(App(App(App(Let(Map("a" -> Int(222),
+                                       "b" -> Int(999999),
+                                       "x" -> Int(999999)),
+                                   Let(Map("b" -> Int(343),
+                                           "x" -> Int(999999)),
                                        Func(List(Id("x")),
                                             Binop(Id("+"),
                                                   Id("a"),
@@ -69,9 +69,9 @@ class RuntimeTests extends AnyFlatSpec with should.Matchers {
                                Nil),
                            Nil),
                        Nil),
-                   List(Num(43)))
+                   List(Int(43)))
 
-    eval(expr, prelude.Ops) should be (Right(Num(608)))
+    eval(expr, prelude.Ops) should be (Right(Int(608)))
   }
 
   it should "branch to the then body" in {
@@ -82,10 +82,10 @@ class RuntimeTests extends AnyFlatSpec with should.Matchers {
     //    else 2.0
     val expr = Let(Map("id" -> Func(List(Id("x")), Id("x"))),
                    Cond(App(Id("id"), List(Bool(true))),
-                        Num(1),
-                        Num(2)))
+                        Int(1),
+                        Int(2)))
 
-    eval(expr, prelude.Ops) should be (Right(Num(1)))
+    eval(expr, prelude.Ops) should be (Right(Int(1)))
   }
 
   it should "branch to the else body" in {
@@ -96,9 +96,9 @@ class RuntimeTests extends AnyFlatSpec with should.Matchers {
     //    else 2.0
     val expr = Let(Map("id" -> Func(List(Id("x")), Id("x"))),
                    Cond(App(Id("id"), List(Bool(false))),
-                        Num(1),
-                        Num(2)))
+                        Int(1),
+                        Int(2)))
 
-    eval(expr, prelude.Ops) should be (Right(Num(2)))
+    eval(expr, prelude.Ops) should be (Right(Int(2)))
   }
 }

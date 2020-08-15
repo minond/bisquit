@@ -15,7 +15,7 @@ trait Typing { self =>
 
 sealed trait Type
 case object UnitType extends Type
-case object NumType extends Type
+case object IntType extends Type
 case object BoolType extends Type
 
 case class FuncType(tys: List[Type]) extends Type {
@@ -43,7 +43,7 @@ def deduce(expr: Expression): Either[TypingError, Type] =
 
 def deduce(expr: Expression, scope: RuntimeScope): Either[TypingError, Type] =
   expr match {
-    case _: Num => Right(NumType)
+    case _: Int => Right(IntType)
     case _: Bool => Right(BoolType)
     case id : Id => lookup(id, scope)
     case Builtin(sig, _) => Right(sig)

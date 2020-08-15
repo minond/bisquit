@@ -2,27 +2,27 @@ package xyz.minond.bisquit.prelude
 
 import xyz.minond.bisquit.ast._
 import xyz.minond.bisquit.runtime._
-import xyz.minond.bisquit.typechecker.{BoolType, NumType, signature}
+import xyz.minond.bisquit.typechecker.{BoolType, IntType, signature}
 import xyz.minond.bisquit.utils.ensure
 
-def numericBinaryBuiltin(f: (Double, Double) => Double): Builtin =
-  Builtin(signature(NumType, NumType, NumType), {
+def numericBinaryBuiltin(f: (Integer, Integer) => Integer): Builtin =
+  Builtin(signature(IntType, IntType, IntType), {
     case (l :: r :: Nil, scope) =>
       for
         leftVal <- eval(l, scope)
-        leftNum <- ensure[RuntimeError, Num](leftVal, ArgumentTypeError(l))
+        leftInt <- ensure[RuntimeError, Int](leftVal, ArgumentTypeError(l))
         rightVal <- eval(r, scope)
-        rightNum <- ensure[RuntimeError, Num](rightVal, ArgumentTypeError(r))
-      yield Num(f(leftNum.value, rightNum.value))
+        rightInt <- ensure[RuntimeError, Int](rightVal, ArgumentTypeError(r))
+      yield Int(f(leftInt.value, rightInt.value))
   })
 
-def numericUnaryBuiltin(f: Double => Double): Builtin =
-  Builtin(signature(NumType, NumType), {
+def numericUnaryBuiltin(f: Integer => Integer): Builtin =
+  Builtin(signature(IntType, IntType), {
     case (expr :: Nil, scope) =>
       for
         value <- eval(expr, scope)
-        num <- ensure[RuntimeError, Num](value, ArgumentTypeError(expr))
-      yield Num(f(num.value))
+        num <- ensure[RuntimeError, Int](value, ArgumentTypeError(expr))
+      yield Int(f(num.value))
   })
 
 val booleanAnd = Builtin(signature(BoolType, BoolType, BoolType), {
