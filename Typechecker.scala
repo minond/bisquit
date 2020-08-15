@@ -43,46 +43,46 @@ def signature(tys: Type*) =
 def deduce(expr: Expression): Either[TypingError, Type] =
   deduce(expr, Map())
 
-def deduce(expr: Expression, scope: RuntimeScope): Either[TypingError, Type] =
+def deduce(expr: Expression, env: Environment): Either[TypingError, Type] =
   expr match {
     case _: Int => Right(IntType)
     case _: Str => Right(StrType)
     case _: Bool => Right(BoolType)
-    case id : Id => lookup(id, scope)
+    case id : Id => lookup(id, env)
     case Builtin(sig, _) => Right(sig)
-    case Uniop(op, subject) => deduceUniop(op, subject, scope)
-    case Binop(op, left, right) => deduceBinop(op, left, right, scope)
-    case cond @ Cond(_, passExpr, failExpr) => deduceCond(cond, scope)
+    case Uniop(op, subject) => deduceUniop(op, subject, env)
+    case Binop(op, left, right) => deduceBinop(op, left, right, env)
+    case cond @ Cond(_, passExpr, failExpr) => deduceCond(cond, env)
   }
 
-def deduceUniop(op: Id, subject: Expression, scope: RuntimeScope) =
+def deduceUniop(op: Id, subject: Expression, env: Environment) =
   for
-    maybeLambda <- lookup(op, scope)
+    maybeLambda <- lookup(op, env)
     opTy <- ensure[TypingError, LambdaType](maybeLambda, LookupError(op))
-    subjectTy <- deduce(subject, scope)
+    subjectTy <- deduce(subject, env)
   yield opTy.apply(subjectTy)
 
-def deduceBinop(op: Id, left: Expression, right: Expression, scope: RuntimeScope) =
+def deduceBinop(op: Id, left: Expression, right: Expression, env: Environment) =
   for
-    maybeLambda <- lookup(op, scope)
+    maybeLambda <- lookup(op, env)
     opTy <- ensure[TypingError, LambdaType](maybeLambda, LookupError(op))
-    leftTy <- deduce(left, scope)
-    rightTy <- deduce(right, scope)
+    leftTy <- deduce(left, env)
+    rightTy <- deduce(right, env)
   yield opTy.apply(leftTy, rightTy)
 
-def deduceCond(cond: Cond, scope: RuntimeScope) =
+def deduceCond(cond: Cond, env: Environment) =
   def branchesAreOfEqualType(pass: Type, fail: Type) =
     if pass == fail
     then Right(None)
     else Left(CondMismatchError(cond, pass, fail))
   for
-    pass <- deduce(cond.pass, scope)
-    fail <- deduce(cond.fail, scope)
+    pass <- deduce(cond.pass, env)
+    fail <- deduce(cond.fail, env)
     _ <- branchesAreOfEqualType(pass, fail)
   yield pass
 
-def lookup(id: Id, scope: RuntimeScope): Either[TypingError, Type] =
-  scope.get(id.lexeme) match {
+def lookup(id: Id, env: Environment): Either[TypingError, Type] =
+  env.get(id.lexeme) match {
     case None => Left(LookupError(id))
     case Some(value) =>
       value.ty match {
