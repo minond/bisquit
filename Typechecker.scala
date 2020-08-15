@@ -41,24 +41,25 @@ def signature(tys: Type*) =
 def deduce(expr: Expression): Either[TypingError, Type] =
   deduce(expr, Map())
 
-def deduce(expr: Expression, scope: TypeScope): Either[TypingError, Type] =
+def deduce(expr: Expression, scope: RuntimeScope): Either[TypingError, Type] =
   expr match {
     case _: Num => Right(NumType)
     case _: Bool => Right(BoolType)
+    case id : Id => lookup(id, scope)
     case Builtin(sig, _) => Right(sig)
     case Uniop(op, subject) => deduceUniop(op, subject, scope)
     case Binop(op, left, right) => deduceBinop(op, left, right, scope)
     case cond @ Cond(_, passExpr, failExpr) => deduceCond(cond, scope)
   }
 
-def deduceUniop(op: Id, subject: Expression, scope: TypeScope) =
+def deduceUniop(op: Id, subject: Expression, scope: RuntimeScope) =
   for
     maybeFunc <- lookup(op, scope)
     opTy <- ensure[TypingError, FuncType](maybeFunc, LookupError(op))
     subjectTy <- deduce(subject, scope)
   yield opTy.apply(subjectTy)
 
-def deduceBinop(op: Id, left: Expression, right: Expression, scope: TypeScope) =
+def deduceBinop(op: Id, left: Expression, right: Expression, scope: RuntimeScope) =
   for
     maybeFunc <- lookup(op, scope)
     opTy <- ensure[TypingError, FuncType](maybeFunc, LookupError(op))
@@ -66,7 +67,7 @@ def deduceBinop(op: Id, left: Expression, right: Expression, scope: TypeScope) =
     rightTy <- deduce(right, scope)
   yield opTy.apply(leftTy, rightTy)
 
-def deduceCond(cond: Cond, scope: TypeScope) =
+def deduceCond(cond: Cond, scope: RuntimeScope) =
   def branchesAreOfEqualType(pass: Type, fail: Type) =
     if pass == fail
     then Right(None)
@@ -77,18 +78,12 @@ def deduceCond(cond: Cond, scope: TypeScope) =
     _ <- branchesAreOfEqualType(pass, fail)
   yield pass
 
-def bound(bindings: Map[String, Expression], scope: TypeScope) =
-  bindings.foldLeft[Either[TypingError, TypeScope]](Right(scope)) {
-    case (acc, (label, expr)) =>
-      acc.flatMap { recscope =>
-        deduce(expr, recscope).map { v =>
-          recscope ++ Map(label -> v)
-        }
-      }
-  }
-
-def lookup(id: Id, scope: TypeScope): Either[TypingError, Type] =
+def lookup(id: Id, scope: RuntimeScope): Either[TypingError, Type] =
   scope.get(id.lexeme) match {
     case None => Left(LookupError(id))
-    case Some(value) => Right(value)
+    case Some(value) =>
+      value.ty match {
+        case None => Left(LookupError(id))
+        case Some(ty) => Right(ty)
+      }
   }

@@ -28,6 +28,8 @@ case class Func(params: List[Id], body: Expression, scope: RuntimeScope = Map())
 
 type Callable = (List[Expression], RuntimeScope) => Either[RuntimeError, Value]
 case class Builtin(sig: FuncType, f: Callable) extends Value {
+  typeTag(sig)
+
   def apply(args: List[Expression], scope: RuntimeScope): Either[RuntimeError, Value] =
     f(args, scope)
 }

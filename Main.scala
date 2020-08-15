@@ -115,6 +115,8 @@ def main(args: Array[String]): Unit =
 
   exprs += Uniop(Id("~"), Num(345))
 
+  exprs += Id("~")
+
   // exprs += Func(List(Id("a").typeTag(NumType), Id("b").typeTag(NumType), Id("c").typeTag(NumType)),
   //                    Binop(Id("+"),
   //                          Binop(Id("+"), Id("a"), Id("b")),
@@ -130,7 +132,7 @@ def main(args: Array[String]): Unit =
       case Left(err) => println(s"error: ${err}")
     }
 
-    deduce(expr, typeScope(scope)) match {
+    deduce(expr, scope) match {
       case Right(ret) => println(s": ${ret}\n")
       case Left(err) => println(s"error: ${err}\n")
     }
