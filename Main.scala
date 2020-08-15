@@ -5,7 +5,7 @@ import scala.collection.mutable.ListBuffer
 import xyz.minond.bisquit.ast._
 import xyz.minond.bisquit.prelude
 import xyz.minond.bisquit.runtime.eval
-import xyz.minond.bisquit.typechecker.deduce
+import xyz.minond.bisquit.typechecker._
 import xyz.minond.bisquit.scope.typeScope
 import xyz.minond.bisquit.printer.formatted
 
@@ -112,6 +112,13 @@ def main(args: Array[String]): Unit =
   //                      "b" -> Func(List(Id("c")), Binop(Id("+"), Id("a"), Id("c")))),
   //                  Id("b")),
   //              List(Num(34)))
+
+  exprs += Uniop(Id("~"), Num(345))
+
+  // exprs += Func(List(Id("a").typeTag(NumType), Id("b").typeTag(NumType), Id("c").typeTag(NumType)),
+  //                    Binop(Id("+"),
+  //                          Binop(Id("+"), Id("a"), Id("b")),
+  //                          Binop(Id("+"), Id("c"), Id("x")))).typeTag(NumType)
 
   for
     expr <- exprs

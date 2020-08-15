@@ -46,11 +46,17 @@ def deduce(expr: Expression, scope: TypeScope): Either[TypingError, Type] =
     case _: Num => Right(NumType)
     case _: Bool => Right(BoolType)
     case Builtin(sig, _) => Right(sig)
+    case Uniop(op, subject) => deduceUniop(op, subject, scope)
     case Binop(op, left, right) => deduceBinop(op, left, right, scope)
     case cond @ Cond(_, passExpr, failExpr) => deduceCond(cond, scope)
-    case let @ Let(bindings, body) =>
-      ???
   }
+
+def deduceUniop(op: Id, subject: Expression, scope: TypeScope) =
+  for
+    maybeFunc <- lookup(op, scope)
+    opTy <- ensure[TypingError, FuncType](maybeFunc, LookupError(op))
+    subjectTy <- deduce(subject, scope)
+  yield opTy.apply(subjectTy)
 
 def deduceBinop(op: Id, left: Expression, right: Expression, scope: TypeScope) =
   for
