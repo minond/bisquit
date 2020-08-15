@@ -101,6 +101,8 @@ def main(args: Array[String]): Unit =
 
   exprs += Uniop(Id("~"), Int(345))
 
+  exprs += Str("~")
+
   exprs += Id("~")
 
   // exprs += Lambda(List(Id("a").typeTag(IntType), Id("b").typeTag(IntType), Id("c").typeTag(IntType)),

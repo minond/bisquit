@@ -16,6 +16,7 @@ case class App(fn: Expression, args: List[Expression]) extends Expression
 case class Let(bindings: Map[String, Expression], body: Expression) extends Expression
 case class Cond(cond: Expression, pass: Expression, fail: Expression) extends Expression
 case class Int(value: Integer) extends Value
+case class Str(value: String) extends Value
 case class Bool(value: Boolean) extends Value
 
 case class Lambda(params: List[Id], body: Expression, scope: RuntimeScope = Map()) extends Value {

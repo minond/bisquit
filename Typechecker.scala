@@ -16,6 +16,7 @@ trait Typing { self =>
 sealed trait Type
 case object UnitType extends Type
 case object IntType extends Type
+case object StrType extends Type
 case object BoolType extends Type
 
 case class LambdaType(tys: List[Type]) extends Type {
@@ -44,6 +45,7 @@ def deduce(expr: Expression): Either[TypingError, Type] =
 def deduce(expr: Expression, scope: RuntimeScope): Either[TypingError, Type] =
   expr match {
     case _: Int => Right(IntType)
+    case _: Str => Right(StrType)
     case _: Bool => Right(BoolType)
     case id : Id => lookup(id, scope)
     case Builtin(sig, _) => Right(sig)
