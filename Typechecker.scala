@@ -40,45 +40,45 @@ case class CondMismatchError(cond: Cond, pass: Type, fail: Type) extends TypingE
 def signature(tys: Type*) =
   LambdaType(tys.toList)
 
-def deduce(expr: Expression): Either[TypingError, Type] =
-  deduce(expr, Map())
+def infer(expr: Expression): Either[TypingError, Type] =
+  infer(expr, Map())
 
-def deduce(expr: Expression, env: Environment): Either[TypingError, Type] =
+def infer(expr: Expression, env: Environment): Either[TypingError, Type] =
   expr match {
     case _: Int => Right(IntType)
     case _: Str => Right(StrType)
     case _: Bool => Right(BoolType)
     case id : Id => lookup(id, env)
     case Builtin(sig, _) => Right(sig)
-    case Uniop(op, subject) => deduceUniop(op, subject, env)
-    case Binop(op, left, right) => deduceBinop(op, left, right, env)
-    case cond : Cond => deduceCond(cond, env)
-    case Let(bindings, body) => deduce(body, env ++ bindings)
+    case Uniop(op, subject) => inferUniop(op, subject, env)
+    case Binop(op, left, right) => inferBinop(op, left, right, env)
+    case cond : Cond => inferCond(cond, env)
+    case Let(bindings, body) => infer(body, env ++ bindings)
   }
 
-def deduceUniop(op: Id, subject: Expression, env: Environment) =
+def inferUniop(op: Id, subject: Expression, env: Environment) =
   for
     maybeLambda <- lookup(op, env)
     opTy <- ensure[TypingError, LambdaType](maybeLambda, LookupError(op))
-    subjectTy <- deduce(subject, env)
+    subjectTy <- infer(subject, env)
   yield opTy.apply(subjectTy)
 
-def deduceBinop(op: Id, left: Expression, right: Expression, env: Environment) =
+def inferBinop(op: Id, left: Expression, right: Expression, env: Environment) =
   for
     maybeLambda <- lookup(op, env)
     opTy <- ensure[TypingError, LambdaType](maybeLambda, LookupError(op))
-    leftTy <- deduce(left, env)
-    rightTy <- deduce(right, env)
+    leftTy <- infer(left, env)
+    rightTy <- infer(right, env)
   yield opTy.apply(leftTy, rightTy)
 
-def deduceCond(cond: Cond, env: Environment) =
+def inferCond(cond: Cond, env: Environment) =
   def branchesAreOfEqualType(pass: Type, fail: Type) =
     if pass == fail
     then Right(None)
     else Left(CondMismatchError(cond, pass, fail))
   for
-    pass <- deduce(cond.pass, env)
-    fail <- deduce(cond.fail, env)
+    pass <- infer(cond.pass, env)
+    fail <- infer(cond.fail, env)
     _ <- branchesAreOfEqualType(pass, fail)
   yield pass
 
@@ -87,7 +87,7 @@ def lookup(id: Id, env: Environment): Either[TypingError, Type] =
     case None => Left(LookupError(id))
     case Some(value) =>
       value.ty match {
-        case None => deduce(value, env)
+        case None => infer(value, env)
         case Some(ty) => Right(ty)
       }
   }
