@@ -1,9 +1,10 @@
-package xyz.minond.bisquit.typechecker
+package bisquit
+package typechecker
 
-import xyz.minond.bisquit.ast._
-import xyz.minond.bisquit.scope._
-import xyz.minond.bisquit.runtime._
-import xyz.minond.bisquit.utils.ensure
+import ast._
+import scope._
+import runtime._
+import utils.ensure
 
 trait Typing { self =>
   var ty: Option[Type] = None

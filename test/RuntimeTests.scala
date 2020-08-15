@@ -1,4 +1,5 @@
-package xyz.minond.bisquit.test
+package bisquit
+package test
 
 import scala.language.implicitConversions
 
@@ -6,10 +7,10 @@ import org.scalatest._
 import flatspec._
 import matchers._
 
-import xyz.minond.bisquit.ast._
-import xyz.minond.bisquit.scope._
-import xyz.minond.bisquit.prelude
-import xyz.minond.bisquit.runtime.eval
+import ast._
+import scope._
+import prelude.Ops
+import runtime.eval
 
 class RuntimeTests extends AnyFlatSpec with should.Matchers {
   it should "evaluate scalars" in {
@@ -30,7 +31,7 @@ class RuntimeTests extends AnyFlatSpec with should.Matchers {
                        Lambda(Nil, Binop(Id("+"), Id("a"), Id("b")))),
                    Nil)
 
-    eval(expr, prelude.Ops) should be (Right(Int(397)))
+    eval(expr, Ops) should be (Right(Int(397)))
   }
 
   it should "use lexically scope bindings" in {

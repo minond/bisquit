@@ -1,13 +1,13 @@
-package xyz.minond.bisquit
+package bisquit
 
 import scala.collection.mutable.ListBuffer
 
-import xyz.minond.bisquit.ast._
-import xyz.minond.bisquit.prelude
-import xyz.minond.bisquit.runtime.eval
-import xyz.minond.bisquit.typechecker._
-import xyz.minond.bisquit.scope.typeScope
-import xyz.minond.bisquit.printer.formatted
+import ast._
+import prelude.Ops
+import runtime.eval
+import typechecker._
+import scope.typeScope
+import printer.formatted
 
 def main(args: Array[String]): Unit =
   val addIt = Lambda(List(Id("a"), Id("b"), Id("c")),
@@ -15,7 +15,7 @@ def main(args: Array[String]): Unit =
                            Binop(Id("+"), Id("a"), Id("b")),
                            Binop(Id("+"), Id("c"), Id("x"))))
 
-  val scope = prelude.Ops ++ Map(
+  val scope = Ops ++ Map(
     "addIt" -> addIt,
     "x" -> Int(32),
   )

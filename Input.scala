@@ -1,6 +1,7 @@
-package xyz.minond.bisquit.input
+package bisquit
+package input
 
-import xyz.minond.bisquit.ast.Token
+import ast.Token
 
 case class Position(file: String, line: Integer, column: Integer) {
   override def toString =

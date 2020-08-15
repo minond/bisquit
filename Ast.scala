@@ -1,9 +1,10 @@
-package xyz.minond.bisquit.ast
+package bisquit
+package ast
 
-import xyz.minond.bisquit.scope._
-import xyz.minond.bisquit.input.Positioned
-import xyz.minond.bisquit.typechecker.{Typing, LambdaType}
-import xyz.minond.bisquit.runtime.RuntimeError
+import scope._
+import input.Positioned
+import typechecker.{Typing, LambdaType}
+import runtime.RuntimeError
 
 sealed trait Token extends Positioned
 sealed trait Expression extends Token with Typing

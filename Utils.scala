@@ -1,4 +1,5 @@
-package xyz.minond.bisquit.utils
+package bisquit
+package utils
 
 import scala.reflect.ClassTag
 

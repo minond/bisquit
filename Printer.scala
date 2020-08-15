@@ -1,7 +1,8 @@
-package xyz.minond.bisquit.printer
+package bisquit
+package printer
 
-import xyz.minond.bisquit.ast._
-import xyz.minond.bisquit.typechecker._
+import ast._
+import typechecker._
 
 def formatted(exprs: List[Expression], lvl: Integer, sep: String = " "): String =
   exprs.map(formatted(_, lvl)).mkString(sep)

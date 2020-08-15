@@ -1,9 +1,10 @@
-package xyz.minond.bisquit.prelude
+package bisquit
+package prelude
 
-import xyz.minond.bisquit.ast._
-import xyz.minond.bisquit.runtime._
-import xyz.minond.bisquit.typechecker.{BoolType, IntType, signature}
-import xyz.minond.bisquit.utils.ensure
+import ast._
+import runtime._
+import typechecker.{BoolType, IntType, signature}
+import utils.ensure
 
 def numericBinaryBuiltin(f: (Integer, Integer) => Integer): Builtin =
   Builtin(signature(IntType, IntType, IntType), {

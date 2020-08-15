@@ -1,12 +1,13 @@
-package xyz.minond.bisquit.runtime
+package bisquit
+package runtime
 
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
-import xyz.minond.bisquit.ast._
-import xyz.minond.bisquit.scope._
-import xyz.minond.bisquit.utils.ensure
-import xyz.minond.bisquit.utils.Implicits.Eithers
+import ast._
+import scope._
+import utils.ensure
+import utils.Implicits.Eithers
 
 sealed trait RuntimeError
 case class LookupError(id: Id) extends RuntimeError
