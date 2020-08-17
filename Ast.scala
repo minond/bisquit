@@ -26,7 +26,13 @@ object Callable {
 }
 
 trait Callable {
-  val apply: Callable.Func
+  def apply(args: List[Expression], scope: RuntimeScope):
+    Either[RuntimeError, Value]
+}
+
+trait Calling(fn: Callable.Func) {
+  def apply(args: List[Expression], scope: RuntimeScope) =
+    fn(args, scope)
 }
 
 case class Lambda(params: List[Id], body: Expression, scope: RuntimeScope = Map()) extends Value {
@@ -36,7 +42,7 @@ case class Lambda(params: List[Id], body: Expression, scope: RuntimeScope = Map(
          scope=scope)
 }
 
-case class Builtin(sig: LambdaType, apply: Callable.Func)
+case class Builtin(sig: LambdaType, fn: Callable.Func)
   extends Value
   with Typed(sig)
-  with Callable
+  with Calling(fn)
