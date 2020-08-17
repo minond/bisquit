@@ -28,24 +28,9 @@ def eval(expr: Expression, scope: RuntimeScope): Either[RuntimeError, Value] =
     case Lambda(args, body, _) => Right(Lambda(args, body, scope))
     case value: Value => Right(value)
     case id: Id => lookup(id, scope)
-    case Binop(op, left, right) =>
-      for
-        maybeCallable <- eval(op, scope)
-        callable <- ensure[RuntimeError, Callable](maybeCallable, ArgumentTypeError(op))
-        ret <- callable.apply(List(left, right), scope)
-      yield ret
-    case Uniop(op, subject) =>
-      for
-        maybeCallable <- eval(op, scope)
-        callable <- ensure[RuntimeError, Callable](maybeCallable, ArgumentTypeError(op))
-        ret <- callable.apply(List(subject), scope)
-      yield ret
-    case App(fn, args) =>
-      for
-        maybeCallable <- eval(fn, scope)
-        callable <- ensure[RuntimeError, Callable](maybeCallable, ArgumentTypeError(fn))
-        ret <- callable.apply(args, scope)
-      yield ret
+    case Binop(op, left, right) => apply(op, List(left, right), scope)
+    case Uniop(op, subject) => apply(op, List(subject), scope)
+    case App(fn, args) => apply(fn, args, scope)
     case Let(bindings, body) =>
       for
         bound <- letRec(bindings, scope)
@@ -59,6 +44,13 @@ def eval(expr: Expression, scope: RuntimeScope): Either[RuntimeError, Value] =
         ret <- eval(body, scope)
       yield ret
   }
+
+def apply(fn: Expression, args: List[Expression], scope: RuntimeScope) =
+  for
+    maybeCallable <- eval(fn, scope)
+    callable <- ensure[RuntimeError, Callable](maybeCallable, ArgumentTypeError(fn))
+    ret <- callable.apply(args, scope)
+  yield ret
 
 def letRec(bindings: Map[String, Expression], scope: RuntimeScope) =
   bindings.foldLeft[Either[RuntimeError, RuntimeScope]](Right(scope)) {
