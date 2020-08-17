@@ -4,7 +4,7 @@ package ast
 import scope._
 import input.Positioned
 import typechecker.{Typing, Typed, LambdaType}
-import runtime.RuntimeError
+import runtime.{eval, RuntimeError}
 
 sealed trait Token extends Positioned
 sealed trait Expression extends Token with Typing
@@ -35,11 +35,31 @@ trait Calling(fn: Callable.Func) {
     fn(args, scope)
 }
 
-case class Lambda(params: List[Id], body: Expression, scope: RuntimeScope = Map()) extends Value {
-  def curried(bindings: List[Value]) =
-    Lambda(params=params.drop(bindings.size),
-         body=App(Lambda(params.take(bindings.size), body, scope), bindings),
-         scope=scope)
+case class Lambda(
+  params: List[Id],
+  body: Expression,
+  boundScope: RuntimeScope = Map(),
+) extends Value with Callable {
+  def apply(args: List[Expression], scope: RuntimeScope): Either[RuntimeError, Value] =
+    for
+      vals <- eval(args, scope)
+      ret <- evalIt(vals)
+    yield ret
+
+  def evalIt(vals: List[Value]) =
+    val argScope = params.map(_.lexeme).zip(vals).toMap
+    val lexScope = boundScope ++ argScope
+    if params.size != vals.size
+    then Right(curryIt(vals, lexScope))
+    else eval(body, lexScope)
+
+  def curryIt(bindings: List[Value], lexScope: RuntimeScope) =
+    Lambda(params = params.drop(bindings.size),
+           body = App(fn = Lambda(params = params.take(bindings.size),
+                                  body = body,
+                                  boundScope = boundScope),
+                      args = bindings),
+           boundScope = lexScope)
 }
 
 case class Builtin(sig: LambdaType, fn: Callable.Func)

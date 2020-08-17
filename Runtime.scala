@@ -32,10 +32,9 @@ def eval(expr: Expression, scope: RuntimeScope): Either[RuntimeError, Value] =
     case Uniop(op, subject) => applyOp(op, List(subject), scope)
     case App(fn, args) =>
       for
-        vals <- eval(args, scope)
-        maybeLambda <- eval(fn, scope)
-        func <- ensure[RuntimeError, Lambda](maybeLambda, ArgumentTypeError(fn))
-        ret <- applyOrCurryLambda(func, vals)
+        maybeCallable <- eval(fn, scope)
+        callable <- ensure[RuntimeError, Callable](maybeCallable, ArgumentTypeError(fn))
+        ret <- callable.apply(args, scope)
       yield ret
     case Let(bindings, body) =>
       for
@@ -65,14 +64,6 @@ def applyOp(op: Id, args: => List[Expression], scope: RuntimeScope) =
   lookup(op, scope).flatMap {
     case builtin: Builtin => builtin.apply(args, scope)
   }
-
-def applyOrCurryLambda(func: Lambda, args: => List[Value]) =
-  if func.params.size != args.size
-  then Right(func.curried(args))
-  else
-    val argScope = func.params.map(_.lexeme).zip(args).toMap
-    val lexScope = func.scope ++ argScope
-    eval(func.body, lexScope)
 
 def lookup(id: Id, scope: RuntimeScope): Either[LookupError, Value] =
   scope.get(id.lexeme) match {
