@@ -28,8 +28,18 @@ def eval(expr: Expression, scope: RuntimeScope): Either[RuntimeError, Value] =
     case Lambda(args, body, _) => Right(Lambda(args, body, scope))
     case value: Value => Right(value)
     case id: Id => lookup(id, scope)
-    case Binop(op, left, right) => applyOp(op, List(left, right), scope)
-    case Uniop(op, subject) => applyOp(op, List(subject), scope)
+    case Binop(op, left, right) =>
+      for
+        maybeCallable <- eval(op, scope)
+        callable <- ensure[RuntimeError, Callable](maybeCallable, ArgumentTypeError(op))
+        ret <- callable.apply(List(left, right), scope)
+      yield ret
+    case Uniop(op, subject) =>
+      for
+        maybeCallable <- eval(op, scope)
+        callable <- ensure[RuntimeError, Callable](maybeCallable, ArgumentTypeError(op))
+        ret <- callable.apply(List(subject), scope)
+      yield ret
     case App(fn, args) =>
       for
         maybeCallable <- eval(fn, scope)
@@ -58,11 +68,6 @@ def letRec(bindings: Map[String, Expression], scope: RuntimeScope) =
           recscope ++ Map(label -> v)
         }
       }
-  }
-
-def applyOp(op: Id, args: => List[Expression], scope: RuntimeScope) =
-  lookup(op, scope).flatMap {
-    case builtin: Builtin => builtin.apply(args, scope)
   }
 
 def lookup(id: Id, scope: RuntimeScope): Either[LookupError, Value] =

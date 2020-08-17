@@ -65,4 +65,5 @@ case class Lambda(
 case class Builtin(sig: LambdaType, fn: Callable.Func)
   extends Value
   with Typed(sig)
+  with Callable
   with Calling(fn)
