@@ -14,6 +14,10 @@ trait Typing { self =>
     this
 }
 
+trait Typed(ty: Type) extends Typing {
+  typeTag(ty)
+}
+
 sealed trait Type
 case object UnitType extends Type
 case object IntType extends Type

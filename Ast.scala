@@ -3,7 +3,7 @@ package ast
 
 import scope._
 import input.Positioned
-import typechecker.{Typing, LambdaType}
+import typechecker.{Typing, Typed, LambdaType}
 import runtime.RuntimeError
 
 sealed trait Token extends Positioned
@@ -20,6 +20,15 @@ case class Int(value: Integer) extends Value
 case class Str(value: String) extends Value
 case class Bool(value: Boolean) extends Value
 
+object Callable {
+  type Func = (List[Expression], RuntimeScope) =>
+    Either[RuntimeError, Value]
+}
+
+trait Callable {
+  val apply: Callable.Func
+}
+
 case class Lambda(params: List[Id], body: Expression, scope: RuntimeScope = Map()) extends Value {
   def curried(bindings: List[Value]) =
     Lambda(params=params.drop(bindings.size),
@@ -27,10 +36,7 @@ case class Lambda(params: List[Id], body: Expression, scope: RuntimeScope = Map(
          scope=scope)
 }
 
-type Callable = (List[Expression], RuntimeScope) => Either[RuntimeError, Value]
-case class Builtin(sig: LambdaType, f: Callable) extends Value {
-  typeTag(sig)
-
-  def apply(args: List[Expression], scope: RuntimeScope): Either[RuntimeError, Value] =
-    f(args, scope)
-}
+case class Builtin(sig: LambdaType, apply: Callable.Func)
+  extends Value
+  with Typed(sig)
+  with Callable
