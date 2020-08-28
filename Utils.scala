@@ -3,6 +3,15 @@ package utils
 
 import scala.reflect.ClassTag
 
+/** Rebuilds a map by passing each value though a function.
+  *
+  *   val chars: Map[Int, Char] = remap(Map(1 -> 1)) { _.toChar }
+  */
+def remap[K, V1, V2](orig: Map[K, V1])(f: V1 => V2): Map[K, V2] =
+  orig.foldLeft[Map[K, V2]](Map()) {
+    case (acc, (k, v)) => acc ++ Map(k -> f(v))
+  }
+
 /** Compile time _and_ runtime type checking. The returned value will be
   * annotated with the expected type, which ensuring that at runtime the
   * value type checks and type errors are handled.

@@ -95,6 +95,7 @@ def infer(expr: Expression, env: Environment): Either[TypingError, Type] =
     case cond : Cond => inferCond(cond, env)
     case Let(bindings, body) => infer(body, env ++ bindings)
     case Lambda(params, body, scope) => inferLambda(params, body, scope, env)
+    case _: App => Right(PlaceholderType.fresh)
   }
 
 def inferUniop(op: Id, subject: Expression, env: Environment) =

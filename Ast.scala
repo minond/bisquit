@@ -8,20 +8,22 @@ import runtime.{eval, RuntimeError}
 
 sealed trait Token extends Positioned
 sealed trait Expression extends Token with Typing
+sealed trait IR
 sealed trait Value extends Expression
 
-case class Id(lexeme: String) extends Expression
+case class Id(lexeme: String) extends IR with Expression
 case class Binop(op: Id, left: Expression, right: Expression) extends Expression
 case class Uniop(op: Id, subject: Expression) extends Expression
-case class App(fn: Expression, args: List[Expression]) extends Expression
-case class Let(bindings: Map[String, Expression], body: Expression) extends Expression
-case class Cond(cond: Expression, pass: Expression, fail: Expression) extends Expression
-case class Int(value: Integer) extends Value
-case class Str(value: String) extends Value
-case class Bool(value: Boolean) extends Value
+case class App(fn: Expression, args: List[Expression]) extends IR with Expression
+case class Let(bindings: Map[String, Expression], body: Expression) extends IR with Expression
+case class Cond(cond: Expression, pass: Expression, fail: Expression) extends IR with Expression
+case class Int(value: Integer) extends IR with Value
+case class Str(value: String) extends IR with Value
+case class Bool(value: Boolean) extends IR with Value
 
 case class Builtin(sig: LambdaType, fn: Callable.Func)
-  extends Value
+  extends IR
+  with Value
   with Typed(sig)
   with Callable
   with Calling(fn)
@@ -30,8 +32,8 @@ case class Lambda(
   params: List[Id],
   body: Expression,
   boundScope: RuntimeScope = Map(),
-) extends Value with Callable {
-  def apply(args: List[Expression], scope: RuntimeScope): Either[RuntimeError, Value] =
+) extends IR with Value with Callable {
+  def apply(args: List[IR], scope: RuntimeScope): Either[RuntimeError, Value] =
     for
       vals <- eval(args, scope)
       ret <- evalIt(vals)
@@ -42,7 +44,7 @@ case class Lambda(
     val lexScope = boundScope ++ argScope
     if params.size != vals.size
     then Right(curryIt(vals, lexScope))
-    else eval(body, lexScope)
+    else eval(body.asInstanceOf[IR] /* XXX */, lexScope)
 
   def curryIt(bindings: List[Value], lexScope: RuntimeScope) =
     Lambda(params = params.drop(bindings.size),
@@ -55,16 +57,16 @@ case class Lambda(
 
 
 object Callable {
-  type Func = (List[Expression], RuntimeScope) =>
+  type Func = (List[IR], RuntimeScope) =>
     Either[RuntimeError, Value]
 }
 
 trait Callable {
-  def apply(args: List[Expression], scope: RuntimeScope):
+  def apply(args: List[IR], scope: RuntimeScope):
     Either[RuntimeError, Value]
 }
 
 trait Calling(fn: Callable.Func) {
-  def apply(args: List[Expression], scope: RuntimeScope) =
+  def apply(args: List[IR], scope: RuntimeScope) =
     fn(args, scope)
 }
