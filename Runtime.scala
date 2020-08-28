@@ -41,8 +41,6 @@ def eval(expr: IR, scope: RuntimeScope): Either[RuntimeError, Value] =
     case Lambda(args, body, _) => Right(Lambda(args, body, scope))
     case value: Value => Right(value)
     case id: Id => lookup(id, scope)
-    // case Binop(op, left, right) => evalCallable(op, List(left, right), scope)
-    // case Uniop(op, subject) => evalCallable(op, List(subject), scope)
     case App(fn, args) => evalCallable(pass1(fn), args.map(pass1), scope)
     case Let(bindings, body) =>
       for

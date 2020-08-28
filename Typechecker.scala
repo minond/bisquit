@@ -80,38 +80,21 @@ case class Substitution(substitutions: Map[scala.Int, Type]) {
 }
 
 
-def infer(expr: Expression): Either[TypingError, Type] =
+def infer(expr: IR): Either[TypingError, Type] =
   infer(expr, Map())
 
-def infer(expr: Expression, env: Environment): Either[TypingError, Type] =
+def infer(expr: IR, env: Environment): Either[TypingError, Type] =
   expr match {
     case _: Int => Right(IntType)
     case _: Str => Right(StrType)
     case _: Bool => Right(BoolType)
     case id : Id => lookup(id, env)
     case Builtin(sig, _) => Right(sig)
-    case Uniop(op, subject) => inferUniop(op, subject, env)
-    case Binop(op, left, right) => inferBinop(op, left, right, env)
     case cond : Cond => inferCond(cond, env)
-    case Let(bindings, body) => infer(body, env ++ bindings)
-    case Lambda(params, body, scope) => inferLambda(params, body, scope, env)
+    case Let(bindings, body) => infer(pass1(body), env ++ bindings)
+    case Lambda(params, body, scope) => inferLambda(params, pass1(body), scope, env)
     case _: App => Right(PlaceholderType.fresh)
   }
-
-def inferUniop(op: Id, subject: Expression, env: Environment) =
-  for
-    maybeLambda <- lookup(op, env)
-    opTy <- ensure[TypingError, LambdaType](maybeLambda, LookupError(op))
-    subjectTy <- infer(subject, env)
-  yield opTy.apply(subjectTy)
-
-def inferBinop(op: Id, left: Expression, right: Expression, env: Environment) =
-  for
-    maybeLambda <- lookup(op, env)
-    opTy <- ensure[TypingError, LambdaType](maybeLambda, LookupError(op))
-    leftTy <- infer(left, env)
-    rightTy <- infer(right, env)
-  yield opTy.apply(leftTy, rightTy)
 
 def inferCond(cond: Cond, env: Environment) =
   def branchesAreOfEqualType(pass: Type, fail: Type) =
@@ -119,12 +102,12 @@ def inferCond(cond: Cond, env: Environment) =
     then Right(None)
     else Left(CondMismatchError(cond, pass, fail))
   for
-    pass <- infer(cond.pass, env)
-    fail <- infer(cond.fail, env)
+    pass <- infer(pass1(cond.pass), env)
+    fail <- infer(pass1(cond.fail), env)
     _ <- branchesAreOfEqualType(pass, fail)
   yield pass
 
-def inferLambda(params: List[Id], body: Expression, scope: Environment, env: Environment) =
+def inferLambda(params: List[Id], body: IR, scope: Environment, env: Environment) =
   val paramTys = params.map { _ => PlaceholderType.fresh }
 
   val lexScope = params.zip(paramTys).foldLeft(env ++ scope) {
@@ -143,7 +126,7 @@ def lookup(id: Id, env: Environment): Either[TypingError, Type] =
     case None => Left(LookupError(id))
     case Some(value) =>
       value.ty match {
-        case None => infer(value, env)
+        case None => infer(pass1(value), env)
         case Some(ty) => Right(ty)
       }
   }
