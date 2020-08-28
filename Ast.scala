@@ -4,7 +4,7 @@ package ast
 import scope._
 import input.Positioned
 import typechecker.{Typing, Typed, LambdaType}
-import runtime.{eval, RuntimeError}
+import runtime.{eval, pass1, RuntimeError}
 
 sealed trait Token extends Positioned
 sealed trait Expression extends Token with Typing
@@ -44,7 +44,7 @@ case class Lambda(
     val lexScope = boundScope ++ argScope
     if params.size != vals.size
     then Right(curryIt(vals, lexScope))
-    else eval(body.asInstanceOf[IR] /* XXX */, lexScope)
+    else eval(pass1(body), lexScope)
 
   def curryIt(bindings: List[Value], lexScope: RuntimeScope) =
     Lambda(params = params.drop(bindings.size),

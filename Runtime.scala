@@ -43,18 +43,18 @@ def eval(expr: IR, scope: RuntimeScope): Either[RuntimeError, Value] =
     case id: Id => lookup(id, scope)
     // case Binop(op, left, right) => evalCallable(op, List(left, right), scope)
     // case Uniop(op, subject) => evalCallable(op, List(subject), scope)
-    case App(fn, args) => evalCallable(fn.asInstanceOf[IR] /* XXX */, args.asInstanceOf[List[IR]] /* XXX */, scope)
+    case App(fn, args) => evalCallable(pass1(fn), args.map(pass1), scope)
     case Let(bindings, body) =>
       for
         bound <- letRec(bindings, scope)
-        ret <- eval(body.asInstanceOf[IR] /* XXX */, bound)
+        ret <- eval(pass1(body), bound)
       yield ret
     case Cond(cond, pass, fail) =>
       for
-        res <- eval(cond.asInstanceOf[IR] /* XXX */, scope)
-        bool <- ensure[RuntimeError, Bool](res, ConditionError(cond.asInstanceOf[IR] /* XXX */))
+        res <- eval(pass1(cond), scope)
+        bool <- ensure[RuntimeError, Bool](res, ConditionError(pass1(cond)))
         body = if bool.value then pass else fail
-        ret <- eval(body.asInstanceOf[IR] /* XXX */, scope)
+        ret <- eval(pass1(body), scope)
       yield ret
   }
 
@@ -70,7 +70,7 @@ def letRec(bindings: Map[String, Expression], scope: RuntimeScope) =
   bindings.foldLeft[Either[RuntimeError, RuntimeScope]](Right(scope)) {
     case (acc, (label, expr)) =>
       acc.flatMap { recscope =>
-        eval(expr.asInstanceOf[IR] /* XXX */, recscope).map { v =>
+        eval(pass1(expr), recscope).map { v =>
           recscope ++ Map(label -> v)
         }
       }
