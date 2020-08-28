@@ -54,11 +54,7 @@ case class Substitution(substitutions: Map[scala.Int, Type]) {
       case LambdaType(tys) =>
         LambdaType(tys.map(apply))
       case PlaceholderType(id) =>
-        substitutions.getOrElse(id, ty) match {
-          case ty2 if ty2 == ty => ty
-          case ty2: PlaceholderType => apply(ty2)
-          case ty2 => ty2
-        }
+        apply(substitutions.getOrElse(id, return ty))
     }
 }
 
