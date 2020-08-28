@@ -94,18 +94,7 @@ def infer(expr: Expression, env: Environment): Either[TypingError, Type] =
     case Binop(op, left, right) => inferBinop(op, left, right, env)
     case cond : Cond => inferCond(cond, env)
     case Let(bindings, body) => infer(body, env ++ bindings)
-    case Lambda(params, body, scope) =>
-      val paramTys = params.map { _ => PlaceholderType.fresh }
-
-      val lexScope = params.zip(paramTys).foldLeft(env ++ scope) {
-        case (acc, (id, ty)) =>
-          acc ++ Map(id.lexeme -> Id(id.lexeme).typeTag(ty))
-      }
-
-      for
-        tyBody <- infer(body, lexScope)
-      yield
-        LambdaType(paramTys :+ tyBody)
+    case Lambda(params, body, scope) => inferLambda(params, body, scope, env)
   }
 
 def inferUniop(op: Id, subject: Expression, env: Environment) =
@@ -133,6 +122,19 @@ def inferCond(cond: Cond, env: Environment) =
     fail <- infer(cond.fail, env)
     _ <- branchesAreOfEqualType(pass, fail)
   yield pass
+
+def inferLambda(params: List[Id], body: Expression, scope: Environment, env: Environment) =
+  val paramTys = params.map { _ => PlaceholderType.fresh }
+
+  val lexScope = params.zip(paramTys).foldLeft(env ++ scope) {
+    case (acc, (id, ty)) =>
+      acc ++ Map(id.lexeme -> Id(id.lexeme).typeTag(ty))
+  }
+
+  for
+    tyBody <- infer(body, lexScope)
+  yield
+    LambdaType(paramTys :+ tyBody)
 
 
 def lookup(id: Id, env: Environment): Either[TypingError, Type] =
