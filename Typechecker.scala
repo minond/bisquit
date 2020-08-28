@@ -83,7 +83,17 @@ def infer(expr: Expression, env: Environment): Either[TypingError, Type] =
     case cond : Cond => inferCond(cond, env)
     case Let(bindings, body) => infer(body, env ++ bindings)
     case Lambda(params, body, scope) =>
-      Right(PlaceholderType.fresh)
+      val paramTys = params.map { _ => PlaceholderType.fresh }
+
+      val lexScope = params.zip(paramTys).foldLeft(env ++ scope) {
+        case (acc, (id, ty)) =>
+          acc ++ Map(id.lexeme -> Id(id.lexeme).typeTag(ty))
+      }
+
+      for
+        tyBody <- infer(body, lexScope)
+      yield
+        LambdaType(paramTys :+ tyBody)
   }
 
 def inferUniop(op: Id, subject: Expression, env: Environment) =
