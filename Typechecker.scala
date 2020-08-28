@@ -25,7 +25,7 @@ case class LambdaType(tys: List[Type]) extends Type {
     else this
 }
 
-case class PlaceholderType(id: Integer) extends Type
+case class PlaceholderType(id: scala.Int) extends Type
 
 object PlaceholderType {
   private var currId = 0
@@ -61,6 +61,21 @@ case class Substitution(substitutions: Map[scala.Int, Type]) {
         LambdaType(tys.map(apply))
       case PlaceholderType(id) =>
         apply(substitutions.getOrElse(id, return ty))
+    }
+
+  def unify(ty1: Type, ty2: Type): Substitution =
+    (ty1, ty2) match {
+      case _ if ty1 == ty2 => this
+      case (PlaceholderType(id), ty @ PlaceholderType) =>
+        Substitution(substitutions ++ Map(id -> ty2))
+      case (PlaceholderType(id), ty) =>
+        Substitution(substitutions ++ Map(id -> ty))
+      case (ty, PlaceholderType(id)) =>
+        Substitution(substitutions ++ Map(id -> ty))
+      case (LambdaType(tys1), LambdaType(tys2)) =>
+        tys1.zip(tys2).foldLeft(this) {
+          case (sub, (ty1, ty2)) => sub.unify(ty1, ty2)
+        }
     }
 }
 
