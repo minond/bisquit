@@ -14,6 +14,7 @@ case class LookupError(id: Id) extends RuntimeError
 case class ArgumentTypeError(arg: Expression) extends RuntimeError
 case class ConditionError(cond: Expression) extends RuntimeError
 
+
 def eval(exprs: List[Expression]): Either[RuntimeError, List[Value]] =
   eval(exprs, Map())
 
@@ -28,9 +29,9 @@ def eval(expr: Expression, scope: RuntimeScope): Either[RuntimeError, Value] =
     case Lambda(args, body, _) => Right(Lambda(args, body, scope))
     case value: Value => Right(value)
     case id: Id => lookup(id, scope)
-    case Binop(op, left, right) => apply(op, List(left, right), scope)
-    case Uniop(op, subject) => apply(op, List(subject), scope)
-    case App(fn, args) => apply(fn, args, scope)
+    case Binop(op, left, right) => evalCallable(op, List(left, right), scope)
+    case Uniop(op, subject) => evalCallable(op, List(subject), scope)
+    case App(fn, args) => evalCallable(fn, args, scope)
     case Let(bindings, body) =>
       for
         bound <- letRec(bindings, scope)
@@ -45,12 +46,13 @@ def eval(expr: Expression, scope: RuntimeScope): Either[RuntimeError, Value] =
       yield ret
   }
 
-def apply(fn: Expression, args: List[Expression], scope: RuntimeScope) =
+def evalCallable(fn: Expression, args: List[Expression], scope: RuntimeScope) =
   for
     maybeCallable <- eval(fn, scope)
     callable <- ensure[RuntimeError, Callable](maybeCallable, ArgumentTypeError(fn))
     ret <- callable.apply(args, scope)
   yield ret
+
 
 def letRec(bindings: Map[String, Expression], scope: RuntimeScope) =
   bindings.foldLeft[Either[RuntimeError, RuntimeScope]](Right(scope)) {
@@ -61,6 +63,7 @@ def letRec(bindings: Map[String, Expression], scope: RuntimeScope) =
         }
       }
   }
+
 
 def lookup(id: Id, scope: RuntimeScope): Either[LookupError, Value] =
   scope.get(id.lexeme) match {

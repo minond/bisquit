@@ -6,18 +6,6 @@ import scope._
 import runtime._
 import utils.ensure
 
-trait Typing { self =>
-  var ty: Option[Type] = None
-
-  def typeTag(ty: Type): self.type =
-    this.ty = Some(ty)
-    this
-}
-
-trait Typed(ty: Type) extends Typing {
-  typeTag(ty)
-}
-
 sealed trait Type
 case object UnitType extends Type
 case object IntType extends Type
@@ -47,6 +35,24 @@ object PlaceholderType {
 }
 
 
+trait Typing { self =>
+  var ty: Option[Type] = None
+
+  def typeTag(ty: Type): self.type =
+    this.ty = Some(ty)
+    this
+}
+
+trait Typed(ty: Type) extends Typing {
+  typeTag(ty)
+}
+
+
+sealed trait TypingError
+case class LookupError(id: Id) extends TypingError
+case class CondMismatchError(cond: Cond, pass: Type, fail: Type) extends TypingError
+
+
 case class Substitution(substitutions: Map[scala.Int, Type]) {
   def apply(ty: Type): Type =
     ty match {
@@ -57,11 +63,6 @@ case class Substitution(substitutions: Map[scala.Int, Type]) {
         apply(substitutions.getOrElse(id, return ty))
     }
 }
-
-
-sealed trait TypingError
-case class LookupError(id: Id) extends TypingError
-case class CondMismatchError(cond: Cond, pass: Type, fail: Type) extends TypingError
 
 
 def infer(expr: Expression): Either[TypingError, Type] =
