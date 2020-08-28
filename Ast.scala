@@ -20,20 +20,11 @@ case class Int(value: Integer) extends Value
 case class Str(value: String) extends Value
 case class Bool(value: Boolean) extends Value
 
-object Callable {
-  type Func = (List[Expression], RuntimeScope) =>
-    Either[RuntimeError, Value]
-}
-
-trait Callable {
-  def apply(args: List[Expression], scope: RuntimeScope):
-    Either[RuntimeError, Value]
-}
-
-trait Calling(fn: Callable.Func) {
-  def apply(args: List[Expression], scope: RuntimeScope) =
-    fn(args, scope)
-}
+case class Builtin(sig: LambdaType, fn: Callable.Func)
+  extends Value
+  with Typed(sig)
+  with Callable
+  with Calling(fn)
 
 case class Lambda(
   params: List[Id],
@@ -62,8 +53,18 @@ case class Lambda(
            boundScope = lexScope)
 }
 
-case class Builtin(sig: LambdaType, fn: Callable.Func)
-  extends Value
-  with Typed(sig)
-  with Callable
-  with Calling(fn)
+
+object Callable {
+  type Func = (List[Expression], RuntimeScope) =>
+    Either[RuntimeError, Value]
+}
+
+trait Callable {
+  def apply(args: List[Expression], scope: RuntimeScope):
+    Either[RuntimeError, Value]
+}
+
+trait Calling(fn: Callable.Func) {
+  def apply(args: List[Expression], scope: RuntimeScope) =
+    fn(args, scope)
+}

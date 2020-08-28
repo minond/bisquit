@@ -3,7 +3,7 @@ package prelude
 
 import ast._
 import runtime._
-import typechecker.{BoolType, IntType, signature}
+import typechecker.{BoolType, IntType, LambdaType, Type}
 import utils.ensure
 
 def signature(tys: Type*) =
