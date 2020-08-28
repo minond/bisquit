@@ -6,6 +6,9 @@ import runtime._
 import typechecker.{BoolType, IntType, signature}
 import utils.ensure
 
+def signature(tys: Type*) =
+  LambdaType(tys.toList)
+
 def numericBinaryBuiltin(f: (Integer, Integer) => Integer): Builtin =
   Builtin(signature(IntType, IntType, IntType), {
     case (l :: r :: Nil, scope) =>
@@ -41,6 +44,7 @@ val booleanOr = Builtin(signature(BoolType, BoolType, BoolType), {
       case Bool(false) => eval(right, scope)
     }
 })
+
 
 val Ops = Map(
   "+" -> numericBinaryBuiltin(_ + _),

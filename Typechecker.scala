@@ -128,6 +128,3 @@ def lookup(id: Id, env: Environment): Either[TypingError, Type] =
         case Some(ty) => Right(ty)
       }
   }
-
-def signature(tys: Type*) =
-  LambdaType(tys.toList)
