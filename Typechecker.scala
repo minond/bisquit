@@ -37,12 +37,36 @@ case class LambdaType(tys: List[Type]) extends Type {
     else this
 }
 
+case class PlaceholderType(id: Integer) extends Type
+
+object PlaceholderType {
+  private var currId = 0
+  def fresh =
+    currId += 1
+    PlaceholderType(currId)
+}
+
+
+case class Substitution(substitutions: Map[scala.Int, Type]) {
+  def apply(ty: Type): Type =
+    ty match {
+      case ty @ (UnitType | IntType | StrType | BoolType) => ty
+      case LambdaType(tys) =>
+        LambdaType(tys.map(apply))
+      case PlaceholderType(id) =>
+        substitutions.getOrElse(id, ty) match {
+          case ty2 if ty2 == ty => ty
+          case ty2: PlaceholderType => apply(ty2)
+          case ty2 => ty2
+        }
+    }
+}
+
+
 sealed trait TypingError
 case class LookupError(id: Id) extends TypingError
 case class CondMismatchError(cond: Cond, pass: Type, fail: Type) extends TypingError
 
-def signature(tys: Type*) =
-  LambdaType(tys.toList)
 
 def infer(expr: Expression): Either[TypingError, Type] =
   infer(expr, Map())
@@ -58,6 +82,8 @@ def infer(expr: Expression, env: Environment): Either[TypingError, Type] =
     case Binop(op, left, right) => inferBinop(op, left, right, env)
     case cond : Cond => inferCond(cond, env)
     case Let(bindings, body) => infer(body, env ++ bindings)
+    case Lambda(params, body, scope) =>
+      Right(PlaceholderType.fresh)
   }
 
 def inferUniop(op: Id, subject: Expression, env: Environment) =
@@ -86,6 +112,7 @@ def inferCond(cond: Cond, env: Environment) =
     _ <- branchesAreOfEqualType(pass, fail)
   yield pass
 
+
 def lookup(id: Id, env: Environment): Either[TypingError, Type] =
   env.get(id.lexeme) match {
     case None => Left(LookupError(id))
@@ -95,3 +122,6 @@ def lookup(id: Id, env: Environment): Either[TypingError, Type] =
         case Some(ty) => Right(ty)
       }
   }
+
+def signature(tys: Type*) =
+  LambdaType(tys.toList)

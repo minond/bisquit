@@ -114,6 +114,14 @@ def main(args: Array[String]): Unit =
   exprs += Let(Map("a" -> Int(343)),
                Id("a"))
 
+  exprs += Lambda(List(Id("a")),
+                  Int(123))
+
+  exprs += Lambda(List(Id("a")),
+                  Id("a"))
+
+  exprs += addIt
+
   // exprs += Lambda(List(Id("a").typeTag(IntType), Id("b").typeTag(IntType), Id("c").typeTag(IntType)),
   //                    Binop(Id("+"),
   //                          Binop(Id("+"), Id("a"), Id("b")),
@@ -133,3 +141,27 @@ def main(args: Array[String]): Unit =
       case Right(ret) => println(s": ${formatted(ret)}\n")
       case Left(err) => println(s"error: ${err}\n")
     }
+
+  val subs = Substitution(Map(
+    1 -> IntType,
+    2 -> BoolType,
+    3 -> PlaceholderType(1)
+  ))
+
+  println(formatted(subs(IntType)))
+  println(formatted(subs(PlaceholderType(1))))
+  println(formatted(subs(PlaceholderType(2))))
+  println(formatted(subs(PlaceholderType(3))))
+  println(formatted(subs(
+    LambdaType(List(
+      IntType,
+      IntType,
+    ))
+  )))
+  println(formatted(subs(
+    LambdaType(List(
+      PlaceholderType(1),
+      PlaceholderType(2),
+      PlaceholderType(3),
+    ))
+  )))
