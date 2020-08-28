@@ -42,18 +42,8 @@ def eval(expr: IR, scope: RuntimeScope): Either[RuntimeError, Value] =
     case value: Value => Right(value)
     case id: Id => lookup(id, scope)
     case App(fn, args) => evalCallable(pass1(fn), args.map(pass1), scope)
-    case Let(bindings, body) =>
-      for
-        bound <- letRec(bindings, scope)
-        ret <- eval(pass1(body), bound)
-      yield ret
-    case Cond(cond, pass, fail) =>
-      for
-        res <- eval(pass1(cond), scope)
-        bool <- ensure[RuntimeError, Bool](res, ConditionError(pass1(cond)))
-        body = if bool.value then pass else fail
-        ret <- eval(pass1(body), scope)
-      yield ret
+    case Let(bindings, body) => evalLet(bindings, body, scope)
+    case Cond(cond, pass, fail) => evalCond(cond, pass, fail, scope)
   }
 
 def evalCallable(fn: IR, args: List[IR], scope: RuntimeScope) =
@@ -61,6 +51,20 @@ def evalCallable(fn: IR, args: List[IR], scope: RuntimeScope) =
     maybeCallable <- eval(fn, scope)
     callable <- ensure[RuntimeError, Callable](maybeCallable, ArgumentTypeError(fn))
     ret <- callable.apply(args, scope)
+  yield ret
+
+def evalLet(bindings: Map[String, Expression], body: Expression, scope: RuntimeScope) =
+  for
+    bound <- letRec(bindings, scope)
+    ret <- eval(pass1(body), bound)
+  yield ret
+
+def evalCond(cond: Expression, pass: Expression, fail: Expression, scope: RuntimeScope) =
+  for
+    res <- eval(pass1(cond), scope)
+    bool <- ensure[RuntimeError, Bool](res, ConditionError(pass1(cond)))
+    body = if bool.value then pass else fail
+    ret <- eval(pass1(body), scope)
   yield ret
 
 
