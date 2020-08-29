@@ -1,10 +1,13 @@
 package bisquit
 package typechecker
 
+import scala.language.implicitConversions
+
 import ast._
 import scope._
 import runtime._
 import utils.ensure
+import utils.Implicits.Eithers
 
 sealed trait Type
 case object UnitType extends Type
@@ -53,7 +56,7 @@ case class LookupError(id: Id) extends TypingError
 case class CondMismatchError(cond: Cond, pass: Type, fail: Type) extends TypingError
 
 
-case class Substitution(substitutions: Map[scala.Int, Type]) {
+case class Substitution(substitutions: Map[scala.Int, Type] = Map()) {
   def apply(ty: Type): Type =
     ty match {
       case ty @ (UnitType | IntType | StrType | BoolType) => ty
@@ -79,6 +82,10 @@ case class Substitution(substitutions: Map[scala.Int, Type]) {
     }
 }
 
+object Substitution {
+  def apply(ty1: Type, ty2: Type): Substitution =
+    Substitution().unify(ty1, ty2)
+}
 
 def infer(expr: IR): Either[TypingError, Type] =
   infer(expr, Map())
@@ -93,8 +100,16 @@ def infer(expr: IR, env: Environment): Either[TypingError, Type] =
     case cond : Cond => inferCond(cond, env)
     case Let(bindings, body) => infer(pass1(body), env ++ bindings)
     case Lambda(params, body, scope) => inferLambda(params, pass1(body), scope, env)
-    case _: App => Right(PlaceholderType.fresh)
+    case App(fn, args) => inferApp(fn, args, env)
   }
+
+def inferApp(fn: Expression, args: List[Expression], env: Environment) =
+  for
+    tyArgs <- args.map(pass1).map(infer(_, env)).squished()
+    tyFn <- infer(pass1(fn), env)
+    tyRes = PlaceholderType.fresh
+    sub = Substitution(tyFn, LambdaType(tyArgs :+ tyRes))
+  yield sub(tyRes)
 
 def inferCond(cond: Cond, env: Environment) =
   def branchesAreOfEqualType(pass: Type, fail: Type) =
