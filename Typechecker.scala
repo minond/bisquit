@@ -29,7 +29,7 @@ case class LambdaType(tys: List[Type]) extends Type {
     else this
 }
 
-case class PlaceholderType(id: scala.Int) extends Type
+case class PlaceholderType(id: String) extends Type
 
 
 trait Typing { self =>
@@ -50,11 +50,11 @@ case class LookupError(id: Id) extends TypingError
 case class CondMismatchError(cond: Cond, pass: Type, fail: Type) extends TypingError
 
 
-case class Substitution(substitutions: MMap[scala.Int, Type] = MMap()) {
-  private var currId = 0
+case class Substitution(substitutions: MMap[String, Type] = MMap()) {
+  private var currId = 96
   def fresh =
     currId += 1
-    PlaceholderType(currId)
+    PlaceholderType(currId.toChar.toString)
 
   def apply(ty: Type): Type =
     ty match {

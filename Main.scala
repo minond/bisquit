@@ -147,14 +147,14 @@ def main(args: Array[String]): Unit =
     }
 
   val subs = Substitution()
-  subs.unify(PlaceholderType(1), IntType)
-  subs.unify(PlaceholderType(2), BoolType)
-  subs.unify(PlaceholderType(3), PlaceholderType(1))
+  subs.unify(PlaceholderType("a"), IntType)
+  subs.unify(PlaceholderType("b"), BoolType)
+  subs.unify(PlaceholderType("c"), PlaceholderType("a"))
 
   println(formatted(subs(IntType)))
-  println(formatted(subs(PlaceholderType(1))))
-  println(formatted(subs(PlaceholderType(2))))
-  println(formatted(subs(PlaceholderType(3))))
+  println(formatted(subs(PlaceholderType("a"))))
+  println(formatted(subs(PlaceholderType("b"))))
+  println(formatted(subs(PlaceholderType("c"))))
   println(formatted(subs(
     LambdaType(List(
       IntType,
@@ -163,8 +163,8 @@ def main(args: Array[String]): Unit =
   )))
   println(formatted(subs(
     LambdaType(List(
-      PlaceholderType(1),
-      PlaceholderType(2),
-      PlaceholderType(3),
+      PlaceholderType("a"),
+      PlaceholderType("b"),
+      PlaceholderType("c"),
     ))
   )))
