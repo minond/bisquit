@@ -8,6 +8,10 @@ type RuntimeScope = Map[String, Value]
 type TypeScope = Map[String, Type]
 type Environment = Map[String, Expression]
 
+object Environment {
+  def apply(): Environment = Map()
+}
+
 
 def typeScope(scope: RuntimeScope): TypeScope =
   scope.foldLeft[TypeScope](Map()) {

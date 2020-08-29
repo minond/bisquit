@@ -141,7 +141,7 @@ def main(args: Array[String]): Unit =
       case Left(err) => println(s"error: ${err}")
     }
 
-    infer(pass1(expr), scope) match {
+    infer(pass1(expr), scope, Substitution()) match {
       case Right(ret) => println(s": ${formatted(ret)}\n")
       case Left(err) => println(s"error: ${err}\n")
     }
