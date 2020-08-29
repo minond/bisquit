@@ -65,14 +65,18 @@ case class Substitution(substitutions: MMap[String, Type] = MMap()) {
         apply(substitutions.getOrElse(id, return ty))
     }
 
-  def unify(ty1: Type, ty2: Type): Substitution =
+  def unify(ty1: Type, ty2: Type, force: Boolean = false): Substitution =
     (ty1, ty2) match {
       case _ if ty1 == ty2 => this
       case (PlaceholderType(id), ty @ PlaceholderType) =>
-        substitutions.addOne(id, ty2)
+        if substitutions.contains(id) && !force
+        then this.unify(ty2, ty1, true)
+        else substitutions.addOne(id, ty2)
         this
       case (PlaceholderType(id), ty) =>
-        substitutions.addOne(id, ty)
+        if substitutions.contains(id) && !force
+        then this.unify(ty2, ty1, true)
+        else substitutions.addOne(id, ty)
         this
       case (ty, PlaceholderType(id)) =>
         substitutions.addOne(id, ty)

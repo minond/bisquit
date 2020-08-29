@@ -140,10 +140,10 @@ def main(args: Array[String]): Unit =
 
   exprs += App(Id("id"), List(Str("FDSA")))
 
-  // exprs += Lambda(List(Id("a").typeTag(IntType), Id("b").typeTag(IntType), Id("c").typeTag(IntType)),
-  //                    Binop(Id("+"),
-  //                          Binop(Id("+"), Id("a"), Id("b")),
-  //                          Binop(Id("+"), Id("c"), Id("x")))).typeTag(IntType)
+  exprs += Lambda(List(Id("a").typeTag(IntType), Id("b").typeTag(IntType), Id("c").typeTag(IntType)),
+                     Binop(Id("+"),
+                           Binop(Id("+"), Id("a"), Id("b")),
+                           Binop(Id("+"), Id("c"), Id("x")))).typeTag(IntType)
 
   for
     expr <- exprs
