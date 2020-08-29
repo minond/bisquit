@@ -52,10 +52,8 @@ case class UnificationError(ty1: Type, ty2: Type) extends TypingError
 
 
 case class Substitution(substitutions: MMap[String, Type] = MMap()) {
-  private var currId = 96
-  def fresh =
-    currId += 1
-    TypeVariable(currId.toChar.toString)
+  private val nums = LazyList.from(97).sliding(1)
+  def fresh = TypeVariable(nums.next.head.toChar.toString)
 
   def apply(ty: Type): Type =
     ty match {
