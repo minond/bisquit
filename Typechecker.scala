@@ -31,13 +31,6 @@ case class LambdaType(tys: List[Type]) extends Type {
 
 case class PlaceholderType(id: scala.Int) extends Type
 
-object PlaceholderType {
-  private var currId = 0
-  def fresh =
-    currId += 1
-    PlaceholderType(currId)
-}
-
 
 trait Typing { self =>
   var ty: Option[Type] = None
@@ -58,6 +51,11 @@ case class CondMismatchError(cond: Cond, pass: Type, fail: Type) extends TypingE
 
 
 case class Substitution(substitutions: MMap[scala.Int, Type] = MMap()) {
+  private var currId = 0
+  def fresh =
+    currId += 1
+    PlaceholderType(currId)
+
   def apply(ty: Type): Type =
     ty match {
       case ty @ (UnitType | IntType | StrType | BoolType) => ty
@@ -107,7 +105,7 @@ def inferApp(fn: Expression, args: List[Expression], env: Environment, sub: Subs
   for
     tyArgs <- args.map(pass1).map(infer(_, env, sub)).squished()
     tyFn <- infer(pass1(fn), env, sub)
-    tyRes = PlaceholderType.fresh
+    tyRes = sub.fresh
     _ = sub.unify(tyFn, LambdaType(tyArgs :+ tyRes))
   yield sub(tyRes)
 
@@ -123,7 +121,7 @@ def inferCond(cond: Cond, env: Environment, sub: Substitution) =
   yield pass
 
 def inferLambda(params: List[Id], body: IR, scope: Environment, env: Environment, sub: Substitution) =
-  val paramTys = params.map { _ => PlaceholderType.fresh }
+  val paramTys = params.map { _ => sub.fresh }
 
   val lexScope = params.zip(paramTys).foldLeft(env ++ scope) {
     case (acc, (id, ty)) =>
