@@ -48,5 +48,5 @@ def formatted(ty: Type): String =
     case StrType => "Str"
     case BoolType => "Bool"
     case LambdaType(tys) => tys.map(formatted(_)).mkString(" -> ")
-    case PlaceholderType(id) => s"$id"
+    case TypeVariable(id) => s"$id"
   }

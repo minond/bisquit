@@ -29,7 +29,7 @@ case class LambdaType(tys: List[Type]) extends Type {
     else this
 }
 
-case class PlaceholderType(id: String) extends Type
+case class TypeVariable(id: String) extends Type
 
 
 trait Typing { self =>
@@ -54,38 +54,39 @@ case class Substitution(substitutions: MMap[String, Type] = MMap()) {
   private var currId = 96
   def fresh =
     currId += 1
-    PlaceholderType(currId.toChar.toString)
+    TypeVariable(currId.toChar.toString)
 
   def apply(ty: Type): Type =
     ty match {
       case ty @ (UnitType | IntType | StrType | BoolType) => ty
       case LambdaType(tys) =>
         LambdaType(tys.map(apply))
-      case PlaceholderType(id) =>
+      case TypeVariable(id) =>
         apply(substitutions.getOrElse(id, return ty))
     }
 
   def unify(ty1: Type, ty2: Type, force: Boolean = false): Substitution =
     (ty1, ty2) match {
       case _ if ty1 == ty2 => this
-      case (PlaceholderType(id), ty @ PlaceholderType) =>
+      case (TypeVariable(id), ty @ TypeVariable) =>
         if substitutions.contains(id) && !force
-        then this.unify(ty2, ty1, true)
-        else substitutions.addOne(id, ty2)
-        this
-      case (PlaceholderType(id), ty) =>
+        then unify(ty2, ty1, true)
+        else set(id, ty2)
+      case (TypeVariable(id), ty) =>
         if substitutions.contains(id) && !force
-        then this.unify(ty2, ty1, true)
-        else substitutions.addOne(id, ty)
-        this
-      case (ty, PlaceholderType(id)) =>
-        substitutions.addOne(id, ty)
-        this
+        then unify(ty2, ty1, true)
+        else set(id, ty)
+      case (ty, TypeVariable(id)) =>
+        set(id, ty)
       case (LambdaType(tys1), LambdaType(tys2)) =>
         tys1.zip(tys2).foldLeft(this) {
           case (sub, (ty1, ty2)) => sub.unify(ty1, ty2)
         }
     }
+
+  private def set(k: String, v: Type) =
+    substitutions.addOne(k, v)
+    this
 }
 
 
