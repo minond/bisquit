@@ -163,6 +163,8 @@ def main(args: Array[String]): Unit =
 
   exprs += App(App(App(App(App(identity, List(identity)), List(identity)), List(identity)), List(identity)), List(Int(42)))
 
+  exprs += App(addIt, List(Str("one"), Str("two"), Str("three")))
+
   for
     expr <- exprs
   do
@@ -178,25 +180,25 @@ def main(args: Array[String]): Unit =
       case Left(err) => println(s"error: ${err}\n")
     }
 
-  val subs = Substitution()
-  subs.unify(TypeVariable("a"), IntType)
-  subs.unify(TypeVariable("b"), BoolType)
-  subs.unify(TypeVariable("c"), TypeVariable("a"))
-
-  println(formatted(subs(IntType)))
-  println(formatted(subs(TypeVariable("a"))))
-  println(formatted(subs(TypeVariable("b"))))
-  println(formatted(subs(TypeVariable("c"))))
-  println(formatted(subs(
-    LambdaType(List(
-      IntType,
-      IntType,
-    ))
-  )))
-  println(formatted(subs(
-    LambdaType(List(
-      TypeVariable("a"),
-      TypeVariable("b"),
-      TypeVariable("c"),
-    ))
-  )))
+  // val subs = Substitution()
+  // subs.unify(TypeVariable("a"), IntType)
+  // subs.unify(TypeVariable("b"), BoolType)
+  // subs.unify(TypeVariable("c"), TypeVariable("a"))
+  //
+  // println(formatted(subs(IntType)))
+  // println(formatted(subs(TypeVariable("a"))))
+  // println(formatted(subs(TypeVariable("b"))))
+  // println(formatted(subs(TypeVariable("c"))))
+  // println(formatted(subs(
+  //   LambdaType(List(
+  //     IntType,
+  //     IntType,
+  //   ))
+  // )))
+  // println(formatted(subs(
+  //   LambdaType(List(
+  //     TypeVariable("a"),
+  //     TypeVariable("b"),
+  //     TypeVariable("c"),
+  //   ))
+  // )))

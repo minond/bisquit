@@ -48,6 +48,7 @@ trait Typed(ty: Type) extends Typing {
 sealed trait TypingError
 case class LookupError(id: Id) extends TypingError
 case class CondMismatchError(cond: Cond, pass: Type, fail: Type) extends TypingError
+case class UnificationError(ty1: Type, ty2: Type) extends TypingError
 
 
 case class Substitution(substitutions: MMap[String, Type] = MMap()) {
@@ -65,28 +66,28 @@ case class Substitution(substitutions: MMap[String, Type] = MMap()) {
         apply(substitutions.getOrElse(id, return ty))
     }
 
-  def unify(ty1: Type, ty2: Type, force: Boolean = false): Substitution =
+  def unify(ty1: Type, ty2: Type, force: Boolean = false): Either[TypingError, Substitution] =
     (ty1, ty2) match {
-      case _ if ty1 == ty2 => this
-      case (TypeVariable(id), ty @ TypeVariable) =>
-        if substitutions.contains(id) && !force
-        then unify(ty2, ty1, true)
-        else set(id, ty2)
-      case (TypeVariable(id), ty) =>
-        if substitutions.contains(id) && !force
-        then unify(ty2, ty1, true)
-        else set(id, ty)
-      case (ty, TypeVariable(id)) =>
-        set(id, ty)
-      case (LambdaType(tys1), LambdaType(tys2)) =>
-        tys1.zip(tys2).foldLeft(this) {
-          case (sub, (ty1, ty2)) => sub.unify(ty1, ty2)
-        }
+      case _ if ty1 == ty2 => Right(this)
+      case (TypeVariable(id), _) => unifyMaybe(id, ty1, ty2, force)
+      case (_, TypeVariable(id)) => unifyMaybe(id, ty2, ty1, force)
+      case (LambdaType(tys1), LambdaType(tys2)) => unifyLambda(tys1, tys2)
+      case (ty1, ty2) => Left(UnificationError(ty1, ty2))
     }
+
+  private def unifyLambda(tys1: List[Type], tys2: List[Type]) =
+    for
+      _ <- tys1.zip(tys2).map { unify(_, _) }.squished()
+    yield this
+
+  private def unifyMaybe(id: String, ty1: Type, ty2: Type, force: Boolean) =
+    if substitutions.contains(id) && !force
+    then unify(ty2, ty1, true)
+    else set(id, ty2)
 
   private def set(k: String, v: Type) =
     substitutions.addOne(k, v)
-    this
+    Right(this)
 }
 
 
@@ -114,7 +115,7 @@ def inferApp(fn: Expression, args: List[Expression], env: Environment, sub: Subs
     tySig = if tyArgs.isEmpty
             then List(UnitType)
             else tyArgs
-    _ = sub.unify(tyFn, LambdaType(tySig :+ tyRes))
+    _ <- sub.unify(tyFn, LambdaType(tySig :+ tyRes))
   yield sub(tyRes)
 
 def inferCond(cond: Cond, env: Environment, sub: Substitution) =
