@@ -7,8 +7,8 @@ import typechecker.{Typing, Typed, LambdaType}
 import runtime.{eval, pass1, RuntimeError}
 
 sealed trait Token extends Positioned
-sealed trait Expression extends Token with Typing
-sealed trait IR
+sealed trait Expression extends Positioned with Typing
+sealed trait IR extends Typing
 sealed trait Value extends Expression
 
 case class Id(lexeme: String) extends IR with Expression
