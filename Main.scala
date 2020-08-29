@@ -15,8 +15,12 @@ def main(args: Array[String]): Unit =
                            Binop(Id("+"), Id("a"), Id("b")),
                            Binop(Id("+"), Id("c"), Id("x"))))
 
+  val identity = Lambda(List(Id("a")),
+                        Id("a"))
+
   val scope = Ops ++ Map(
     "addIt" -> addIt,
+    "id" -> identity,
     "x" -> Int(32),
   )
 
@@ -125,6 +129,16 @@ def main(args: Array[String]): Unit =
   exprs += App(Id("+"), List(Int(43), Int(34)))
 
   exprs += App(Id("~"), List(Int(43)))
+
+  exprs += identity
+
+  exprs += App(identity, List(Int(43)))
+
+  exprs += App(identity, List(Str("FDSA")))
+
+  exprs += App(Id("id"), List(Int(43)))
+
+  exprs += App(Id("id"), List(Str("FDSA")))
 
   // exprs += Lambda(List(Id("a").typeTag(IntType), Id("b").typeTag(IntType), Id("c").typeTag(IntType)),
   //                    Binop(Id("+"),
