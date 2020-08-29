@@ -16,13 +16,16 @@ def formatted(expr: Expression, lvl: Integer): String =
     case Binop(Id(op), left, right) => s"${formatted(left, lvl + 1)} $op ${formatted(right, lvl + 1)}"
     case Uniop(Id(op), right) => s"${op}${formatted(right, lvl + 1)}"
     case App(Id(func), args) => s"${func}(${formatted(args, lvl + 1, ", ")})"
-    case App(fn, args) => s"(${formatted(fn, lvl + 1)})(${formatted(args, lvl + 1, ", ")})"
+    case App(fn, args) =>
+      val body = formatted(fn, lvl + 1)
+      val argLvl = body.split("\n").last.size
+      s"(${body})(${formatted(args, argLvl + 3, ", ")})"
     case Bool(v) => if v then "#t" else "#f"
     case Int(num) if num < 0 => s"~${Math.abs(num)}"
     case Int(num) => num.toString
     case Str(str) => str
     case Lambda(params, body, _) =>
-      val indent = " " * (lvl + 1)
+      val indent = " " * lvl
       val spacing = if params.isEmpty then "" else " "
       s"\\${formatted(params, lvl + 1, " ")}$spacing->\n${indent}${formatted(body, lvl + 1)}"
     case _: Builtin => "<builtin>"
