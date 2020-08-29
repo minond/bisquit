@@ -1,6 +1,7 @@
 package bisquit
 package typechecker
 
+import scala.collection.mutable.{Map => MMap}
 import scala.language.implicitConversions
 
 import ast._
@@ -56,7 +57,7 @@ case class LookupError(id: Id) extends TypingError
 case class CondMismatchError(cond: Cond, pass: Type, fail: Type) extends TypingError
 
 
-case class Substitution(substitutions: Map[scala.Int, Type] = Map()) {
+case class Substitution(substitutions: MMap[scala.Int, Type] = MMap()) {
   def apply(ty: Type): Type =
     ty match {
       case ty @ (UnitType | IntType | StrType | BoolType) => ty
@@ -70,11 +71,14 @@ case class Substitution(substitutions: Map[scala.Int, Type] = Map()) {
     (ty1, ty2) match {
       case _ if ty1 == ty2 => this
       case (PlaceholderType(id), ty @ PlaceholderType) =>
-        Substitution(substitutions ++ Map(id -> ty2))
+        substitutions.addOne(id, ty2)
+        this
       case (PlaceholderType(id), ty) =>
-        Substitution(substitutions ++ Map(id -> ty))
+        substitutions.addOne(id, ty)
+        this
       case (ty, PlaceholderType(id)) =>
-        Substitution(substitutions ++ Map(id -> ty))
+        substitutions.addOne(id, ty)
+        this
       case (LambdaType(tys1), LambdaType(tys2)) =>
         tys1.zip(tys2).foldLeft(this) {
           case (sub, (ty1, ty2)) => sub.unify(ty1, ty2)
@@ -82,10 +86,6 @@ case class Substitution(substitutions: Map[scala.Int, Type] = Map()) {
     }
 }
 
-object Substitution {
-  def apply(ty1: Type, ty2: Type): Substitution =
-    Substitution().unify(ty1, ty2)
-}
 
 def infer(expr: IR): Either[TypingError, Type] =
   infer(expr, Environment(), Substitution())
@@ -108,7 +108,7 @@ def inferApp(fn: Expression, args: List[Expression], env: Environment, sub: Subs
     tyArgs <- args.map(pass1).map(infer(_, env, sub)).squished()
     tyFn <- infer(pass1(fn), env, sub)
     tyRes = PlaceholderType.fresh
-    nextSub = sub.unify(tyFn, LambdaType(tyArgs :+ tyRes))
+    _ = sub.unify(tyFn, LambdaType(tyArgs :+ tyRes))
   yield sub(tyRes)
 
 def inferCond(cond: Cond, env: Environment, sub: Substitution) =
@@ -133,7 +133,7 @@ def inferLambda(params: List[Id], body: IR, scope: Environment, env: Environment
   for
     tyBody <- infer(body, lexScope, sub)
   yield
-    LambdaType(paramTys :+ tyBody)
+    LambdaType(paramTys.map(sub(_)) :+ tyBody)
 
 
 def lookup(id: Id, env: Environment, sub: Substitution): Either[TypingError, Type] =

@@ -146,11 +146,10 @@ def main(args: Array[String]): Unit =
       case Left(err) => println(s"error: ${err}\n")
     }
 
-  val subs = Substitution(Map(
-    1 -> IntType,
-    2 -> BoolType,
-    3 -> PlaceholderType(1)
-  ))
+  val subs = Substitution()
+  subs.unify(PlaceholderType(1), IntType)
+  subs.unify(PlaceholderType(2), BoolType)
+  subs.unify(PlaceholderType(3), PlaceholderType(1))
 
   println(formatted(subs(IntType)))
   println(formatted(subs(PlaceholderType(1))))
