@@ -145,6 +145,22 @@ def main(args: Array[String]): Unit =
                            Binop(Id("+"), Id("a"), Id("b")),
                            Binop(Id("+"), Id("c"), Id("x")))).typeTag(IntType)
 
+  exprs += Lambda(List(Id("a")),
+                  Lambda(List(Id("b")),
+                         Lambda(List(Id("c")),
+                                Binop(Id("+"),
+                                      Id("a"),
+                                      Binop(Id("+"), Id("b"), Id("c"))))))
+
+  exprs += Lambda(List(Id("a")),
+                  Lambda(Nil, Id("a")))
+
+  exprs += App(Lambda(List(Id("a")),
+                      Lambda(Nil, Id("a"))), List(Int(42)))
+
+  exprs += App(App(Lambda(List(Id("a")),
+                          Lambda(Nil, Id("a"))), List(Int(42))), Nil)
+
   exprs += App(App(App(App(App(identity, List(identity)), List(identity)), List(identity)), List(identity)), List(Int(42)))
 
   for

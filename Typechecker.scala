@@ -111,7 +111,10 @@ def inferApp(fn: Expression, args: List[Expression], env: Environment, sub: Subs
     tyArgs <- args.map(pass1).map(infer(_, env, sub)).squished()
     tyFn <- infer(pass1(fn), env, sub)
     tyRes = sub.fresh
-    _ = sub.unify(tyFn, LambdaType(tyArgs :+ tyRes))
+    tySig = if tyArgs.isEmpty
+            then List(UnitType)
+            else tyArgs
+    _ = sub.unify(tyFn, LambdaType(tySig :+ tyRes))
   yield sub(tyRes)
 
 def inferCond(cond: Cond, env: Environment, sub: Substitution) =
@@ -135,8 +138,11 @@ def inferLambda(params: List[Id], body: IR, scope: Environment, env: Environment
 
   for
     tyBody <- infer(body, lexScope, sub)
+    tyArgs = if paramTys.isEmpty
+             then List(UnitType)
+             else paramTys.map(sub(_))
   yield
-    LambdaType(paramTys.map(sub(_)) :+ tyBody)
+    LambdaType(tyArgs :+ tyBody)
 
 
 def lookup(id: Id, env: Environment, sub: Substitution): Either[TypingError, Type] =
