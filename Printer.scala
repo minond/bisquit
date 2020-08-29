@@ -23,11 +23,14 @@ def formatted(expr: Expression, lvl: Integer): String =
     case Bool(v) => if v then "#t" else "#f"
     case Int(num) if num < 0 => s"~${Math.abs(num)}"
     case Int(num) => num.toString
-    case Str(str) => str
+    case Str(str) => s""""$str""""
     case Lambda(params, body, _) =>
       val indent = " " * lvl
       val spacing = if params.isEmpty then "" else " "
-      s"\\${formatted(params, lvl + 1, " ")}$spacing->\n${indent}${formatted(body, lvl + 1)}"
+      val sig = if params.isEmpty
+                then ""
+                else s"(${formatted(params, lvl + 1, ", ")})"
+      s"\\$sig- ${formatted(body, lvl + 1)}"
     case _: Builtin => "<builtin>"
     case Let(bindings, body) =>
       val names = bindings.keys
