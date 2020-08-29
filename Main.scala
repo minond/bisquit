@@ -145,6 +145,8 @@ def main(args: Array[String]): Unit =
                            Binop(Id("+"), Id("a"), Id("b")),
                            Binop(Id("+"), Id("c"), Id("x")))).typeTag(IntType)
 
+  exprs += App(App(App(App(App(identity, List(identity)), List(identity)), List(identity)), List(identity)), List(Int(42)))
+
   for
     expr <- exprs
   do
