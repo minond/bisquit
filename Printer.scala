@@ -1,16 +1,33 @@
 package bisquit
 package printer
 
-import ast._
+import scala.collection.mutable.{Map => MMap}
+
+import ast.{Int => _, _}
 import typechecker._
 
-def formatted(exprs: List[Expression], lvl: Integer, sep: String = " "): String =
+
+case class Labeler(labels: MMap[Int, String] = MMap()) {
+  private val nums = LazyList.from(97).sliding(1)
+
+  def apply(id: Int): String =
+    labels.get(id) match {
+      case Some(label) => label
+      case None =>
+        val label = nums.next.head.toChar.toString
+        labels.addOne(id, label)
+        label
+    }
+}
+
+
+def formatted(exprs: List[Expression], lvl: Int, sep: String = " "): String =
   exprs.map(formatted(_, lvl)).mkString(sep)
 
 def formatted(expr: Expression): String =
   formatted(expr, 1)
 
-def formatted(expr: Expression, lvl: Integer): String =
+def formatted(expr: Expression, lvl: Int): String =
   expr match {
     case Id(lexeme) => lexeme
     case Binop(Id(op), left, right) => s"${formatted(left, lvl + 1)} $op ${formatted(right, lvl + 1)}"
@@ -21,8 +38,8 @@ def formatted(expr: Expression, lvl: Integer): String =
       val argLvl = body.split("\n").last.size
       s"(${body})(${formatted(args, argLvl + 3, ", ")})"
     case Bool(v) => if v then "#t" else "#f"
-    case Int(num) if num < 0 => s"~${Math.abs(num)}"
-    case Int(num) => num.toString
+    case ast.Int(num) if num < 0 => s"~${Math.abs(num)}"
+    case ast.Int(num) => num.toString
     case Str(str) => s""""$str""""
     case Lambda(params, body, _) =>
       val indent = " " * lvl
@@ -51,18 +68,18 @@ def formatted(expr: Expression, lvl: Integer): String =
   }
 
 def formatted(ty: Type): String =
-  formatted(ty, false)
+  formatted(ty, Labeler(), false)
 
-def formatted(ty: Type, nested: Boolean): String =
+def formatted(ty: Type, label: Labeler, nested: Boolean): String =
   ty match {
     case UnitType => "Unit"
     case IntType => "Int"
     case StrType => "Str"
     case BoolType => "Bool"
     case LambdaType(tys) =>
-      val s = tys.map(formatted(_, true)).mkString(" -> ")
+      val s = tys.map(formatted(_, label, true)).mkString(" -> ")
       if nested
       then s"($s)"
       else s
-    case TypeVariable(id) => s"$id"
+    case TypeVariable(id) => label(id)
   }
