@@ -185,6 +185,26 @@ def main(args: Array[String]): Unit =
                        Id("+"),
                        Id("b")))
 
+  exprs += Id("+")
+
+  val boolPlusPlus = Lambda(List(Id("a"), Id("b")),
+                            Cond(Id("a"),
+                                 Id("+"),
+                                 Id("b")))
+  exprs += App(boolPlusPlus, List(Bool(true), Id("+")))
+  exprs += App(boolPlusPlus, List(Bool(false), Id("+")))
+  // exprs += App(boolPlusPlus, List(Id("a"), Id("b")))
+
+  exprs += Lambda(List(Id("a"), Id("b"), Id("c")),
+                  Cond(Id("b"),
+                       Id("a"),
+                       Id("c")))
+
+  exprs += Lambda(List(Id("a"), Id("b"), Id("c")),
+                  Cond(Id("b"),
+                       App(Id("+"), List(Id("b"), Id("c"))),
+                       Id("c")))
+
   for
     expr <- exprs
   do
