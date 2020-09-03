@@ -30,7 +30,7 @@ def formatted(expr: Expression, lvl: Integer): String =
       val sig = if params.isEmpty
                 then ""
                 else s"(${formatted(params, lvl + 1, ", ")})"
-      s"\\$sig- ${formatted(body, lvl + 1)}"
+      s"\\$sig- ${formatted(body, lvl + 2)}"
     case _: Builtin => "<builtin>"
     case Let(bindings, body) =>
       val names = bindings.keys
@@ -44,7 +44,10 @@ def formatted(expr: Expression, lvl: Integer): String =
       val scond = formatted(cond, lvl + 1)
       val spass = formatted(pass, lvl + 1)
       val sfail = formatted(fail, lvl + 1)
-      s"if ${scond}\n${indent}then ${spass}\n${indent}else ${sfail}"
+      val header = if lvl > 1
+                   then s"\n$indent"
+                   else ""
+      s"${header}if ${scond}\n${indent}then ${spass}\n${indent}else ${sfail}"
   }
 
 def formatted(ty: Type): String =
