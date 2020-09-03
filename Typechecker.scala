@@ -4,7 +4,7 @@ package typechecker
 import scala.collection.mutable.{Map => MMap}
 import scala.language.implicitConversions
 
-import ast._
+import ast.{Int => _, _}
 import scope._
 import runtime._
 import utils.ensure
@@ -29,7 +29,7 @@ case class LambdaType(tys: List[Type]) extends Type {
     else this
 }
 
-case class TypeVariable(id: String) extends Type
+case class TypeVariable(id: Int) extends Type
 
 
 trait Typing { self =>
@@ -50,9 +50,9 @@ case class LookupError(id: Id) extends TypingError
 case class UnificationError(ty1: Type, ty2: Type) extends TypingError
 
 
-case class Substitution(substitutions: MMap[String, Type] = MMap()) {
-  private val nums = LazyList.from(97).sliding(1)
-  def fresh = TypeVariable(nums.next.head.toChar.toString)
+case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
+  private val nums = LazyList.from(1).sliding(1)
+  def fresh = TypeVariable(nums.next.head)
 
   def apply(ty: Type): Type =
     ty match {
@@ -77,12 +77,12 @@ case class Substitution(substitutions: MMap[String, Type] = MMap()) {
       _ <- tys1.zip(tys2).map { unify(_, _) }.squished()
     yield this
 
-  private def unifyVar(id: String, tyVar: Type, ty: Type) =
+  private def unifyVar(id: Int, tyVar: Type, ty: Type) =
     if substitutions.contains(id)
     then unify(apply(tyVar), ty)
     else set(id, ty)
 
-  private def set(k: String, v: Type) =
+  private def set(k: Int, v: Type) =
     substitutions.addOne(k, v)
     Right(this)
 }
@@ -93,7 +93,7 @@ def infer(expr: IR): Either[TypingError, Type] =
 
 def infer(expr: IR, env: Environment, sub: Substitution): Either[TypingError, Type] =
   expr match {
-    case _: Int => Right(IntType)
+    case _: ast.Int => Right(IntType)
     case _: Str => Right(StrType)
     case _: Bool => Right(BoolType)
     case id : Id => lookup(id, env, sub)

@@ -205,6 +205,16 @@ def main(args: Array[String]): Unit =
                        App(Id("+"), List(Id("b"), Id("c"))),
                        Id("c")))
 
+  exprs += Lambda(List(Id("a")),
+                  Lambda(List(Id("a")),
+                         Lambda(List(Id("a")),
+                                Id("a"))))
+
+  exprs += Lambda(List(Id("a")),
+                  Lambda(Nil,
+                         Lambda(Nil,
+                                Id("a"))))
+
   for
     expr <- exprs
   do
