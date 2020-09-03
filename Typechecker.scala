@@ -63,11 +63,11 @@ case class Substitution(substitutions: MMap[String, Type] = MMap()) {
         apply(substitutions.getOrElse(id, return ty))
     }
 
-  def unify(ty1: Type, ty2: Type, force: Boolean = false): Either[TypingError, Substitution] =
+  def unify(ty1: Type, ty2: Type): Either[TypingError, Substitution] =
     (ty1, ty2) match {
       case _ if ty1 == ty2 => Right(this)
-      case (TypeVariable(id), _) => unifyMaybe(id, ty1, ty2, force)
-      case (_, TypeVariable(id)) => unifyMaybe(id, ty2, ty1, force)
+      case (TypeVariable(id), _) => unifyVar(id, ty1, ty2)
+      case (_, TypeVariable(id)) => unifyVar(id, ty2, ty1)
       case (LambdaType(tys1), LambdaType(tys2)) => unifyLambda(tys1, tys2)
       case (ty1, ty2) => Left(UnificationError(ty1, ty2))
     }
@@ -77,10 +77,10 @@ case class Substitution(substitutions: MMap[String, Type] = MMap()) {
       _ <- tys1.zip(tys2).map { unify(_, _) }.squished()
     yield this
 
-  private def unifyMaybe(id: String, ty1: Type, ty2: Type, force: Boolean) =
-    if substitutions.contains(id) && !force
-    then unify(ty2, ty1, true)
-    else set(id, ty2)
+  private def unifyVar(id: String, tyVar: Type, ty: Type) =
+    if substitutions.contains(id)
+    then unify(apply(tyVar), ty)
+    else set(id, ty)
 
   private def set(k: String, v: Type) =
     substitutions.addOne(k, v)
@@ -115,18 +115,13 @@ def inferApp(fn: Expression, args: List[Expression], env: Environment, sub: Subs
     _ <- sub.unify(tyFn, LambdaType(tySig :+ tyRes))
   yield sub(tyRes)
 
-/** Applying substitutions before unifying so that we're comparing deeply
- *  nested type variables. It's possible that this leads to overriding to
- *  top-most type-variable in cases where unification is possible but has
- *  already been done before on the same variable.
- */
 def inferCond(cond: Cond, env: Environment, sub: Substitution) =
   for
     condTy <- infer(pass1(cond.cond), env, sub)
     _ <- sub.unify(condTy, BoolType)
     passTy <- infer(pass1(cond.pass), env, sub)
     failTy <- infer(pass1(cond.fail), env, sub)
-    _ <- sub.unify(sub(passTy), sub(failTy))
+    _ <- sub.unify(passTy, failTy)
   yield sub(passTy)
 
 def inferLambda(params: List[Id], body: IR, scope: Environment, env: Environment, sub: Substitution) =
