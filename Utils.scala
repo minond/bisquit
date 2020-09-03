@@ -37,13 +37,13 @@ object Implicits {
       *   doIts -> List[X] -> List[Either[L, R]]
       *   squished -> List[Either[L, R]] -> Either[L, List[R]]
       *
-      * The `squished` method lets you convert `List[Either[L, R]]` into an
+      * The `squished` method lets you convert a `List[Either[L, R]]` into an
       * `Either[L, List[R]]`.
       */
     def squished(): Either[L, List[R]] =
-      eithers.foldRight[Either[L, List[R]]](Right(List())) {
-        (x, acc) =>
-          acc.flatMap(xs => x.map(_ +: xs))
+      eithers.foldLeft[Either[L, List[R]]](Right(List())) {
+        (acc, x) =>
+          acc.flatMap(xs => x.map(xs :+ _))
       }
   }
 }
