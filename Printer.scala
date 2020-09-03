@@ -48,11 +48,18 @@ def formatted(expr: Expression, lvl: Integer): String =
   }
 
 def formatted(ty: Type): String =
+  formatted(ty, false)
+
+def formatted(ty: Type, nested: Boolean): String =
   ty match {
     case UnitType => "Unit"
     case IntType => "Int"
     case StrType => "Str"
     case BoolType => "Bool"
-    case LambdaType(tys) => tys.map(formatted(_)).mkString(" -> ")
+    case LambdaType(tys) =>
+      val s = tys.map(formatted(_, true)).mkString(" -> ")
+      if nested
+      then s"($s)"
+      else s
     case TypeVariable(id) => s"$id"
   }

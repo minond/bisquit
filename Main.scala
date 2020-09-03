@@ -165,6 +165,26 @@ def main(args: Array[String]): Unit =
 
   exprs += App(addIt, List(Str("one"), Str("two"), Str("three")))
 
+  exprs += Lambda(List(Id("a")),
+                  Cond(Id("a"),
+                       Int(1),
+                       Int(0)))
+
+  exprs += Lambda(List(Id("a")),
+                  Cond(Id("a"),
+                       Id("a"),
+                       Id("a")))
+
+  exprs += Lambda(List(Id("a"), Id("b")),
+                  Cond(Id("a"),
+                       Id("b"),
+                       Id("a")))
+
+  exprs += Lambda(List(Id("a"), Id("b")),
+                  Cond(Id("a"),
+                       Id("+"),
+                       Id("b")))
+
   for
     expr <- exprs
   do

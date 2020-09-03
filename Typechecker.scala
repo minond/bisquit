@@ -47,7 +47,6 @@ trait Typed(ty: Type) extends Typing {
 
 sealed trait TypingError
 case class LookupError(id: Id) extends TypingError
-case class CondMismatchError(cond: Cond, pass: Type, fail: Type) extends TypingError
 case class UnificationError(ty1: Type, ty2: Type) extends TypingError
 
 
@@ -116,16 +115,19 @@ def inferApp(fn: Expression, args: List[Expression], env: Environment, sub: Subs
     _ <- sub.unify(tyFn, LambdaType(tySig :+ tyRes))
   yield sub(tyRes)
 
+/** Applying substitutions before unifying so that we're comparing deeply
+ *  nested type variables. It's possible that this leads to overriding to
+ *  top-most type-variable in cases where unification is possible but has
+ *  already been done before on the same variable.
+ */
 def inferCond(cond: Cond, env: Environment, sub: Substitution) =
-  def branchesAreOfEqualType(pass: Type, fail: Type) =
-    if pass == fail
-    then Right(None)
-    else Left(CondMismatchError(cond, pass, fail))
   for
-    pass <- infer(pass1(cond.pass), env, sub)
-    fail <- infer(pass1(cond.fail), env, sub)
-    _ <- branchesAreOfEqualType(pass, fail)
-  yield pass
+    condTy <- infer(pass1(cond.cond), env, sub)
+    _ <- sub.unify(condTy, BoolType)
+    passTy <- infer(pass1(cond.pass), env, sub)
+    failTy <- infer(pass1(cond.fail), env, sub)
+    _ <- sub.unify(sub(passTy), sub(failTy))
+  yield sub(passTy)
 
 def inferLambda(params: List[Id], body: IR, scope: Environment, env: Environment, sub: Substitution) =
   val paramTys = params.map { _ => sub.fresh }
