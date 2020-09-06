@@ -34,6 +34,7 @@ val booleanAnd = Builtin(signature(BoolType, BoolType, BoolType), {
     eval(left, scope).flatMap {
       case Bool(true) => eval(right, scope)
       case Bool(false) => Right(Bool(false))
+      case invalid => Left(ArgumentTypeError(pass1(invalid)))
     }
 })
 
