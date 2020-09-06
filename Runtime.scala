@@ -13,11 +13,12 @@ sealed trait RuntimeError
 case class LookupError(id: Id) extends RuntimeError
 case class ArgumentTypeError(arg: IR) extends RuntimeError
 case class ConditionError(cond: IR) extends RuntimeError
+case class RecordLookupError(id: Id, record: Record) extends RuntimeError
+case class ExpectedRecordInstead(got: Value) extends RuntimeError
 
 
 def pass1(expr: Expression): IR with Expression =
   expr match {
-    case ir: (Id | Int | Str | Bool) => ir
     case Uniop(op, a) => App(op, List(pass1(a)))
     case Binop(op, l, r) => App(op, List(pass1(l), pass1(r)))
     case Lambda(params, body, scope) => Lambda(params, pass1(body), scope)
@@ -25,6 +26,7 @@ def pass1(expr: Expression): IR with Expression =
     case Cond(cond, pass, fail) => Cond(pass1(cond), pass1(pass), pass1(fail))
     case Let(bindings, body) => Let(remap(bindings) { pass1 }, pass1(body))
     case Record(fields) => Record(remap(fields) { pass1 })
+    case ir: IR => ir
   }
 
 
@@ -41,12 +43,21 @@ def eval(expr: IR, scope: RuntimeScope): Either[RuntimeError, Value] =
   expr match {
     case Lambda(args, body, _) => Right(Lambda(args, body, scope))
     case Record(fields) => evalRecord(fields, scope)
+    case RecordLookup(rec, field) => evalRecordLookup(rec, field, scope)
     case value: Value => Right(value)
     case id: Id => lookup(id, scope)
     case App(fn, args) => evalCallable(pass1(fn), args.map(pass1), scope)
     case Let(bindings, body) => evalLet(bindings, body, scope)
     case Cond(cond, pass, fail) => evalCond(cond, pass, fail, scope)
   }
+
+def evalRecordLookup(rec: Expression, field: Id, scope: RuntimeScope) =
+  for
+    maybeRecord <- eval(pass1(rec), scope)
+    record <- ensure[RuntimeError, Record](maybeRecord, ExpectedRecordInstead(maybeRecord))
+    expr <- lookup(field, record.fields, RecordLookupError(field, record))
+    value <- eval(pass1(expr), scope)
+  yield value
 
 def evalRecord(fields: Map[Id, Expression], scope: RuntimeScope) =
   for
@@ -86,6 +97,12 @@ def letRec(bindings: Map[String, Expression], scope: RuntimeScope) =
       }
   }
 
+
+def lookup[V, L](id: Id, scope: Map[Id, V], left: => L): Either[L, V] =
+  scope.get(id) match {
+    case None => Left(left)
+    case Some(value) => Right(value)
+  }
 
 def lookup(id: Id, scope: RuntimeScope): Either[LookupError, Value] =
   scope.get(id.lexeme) match {

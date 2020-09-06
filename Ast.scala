@@ -21,6 +21,7 @@ case class Int(value: Integer) extends IR with Value
 case class Str(value: String) extends IR with Value
 case class Bool(value: Boolean) extends IR with Value
 case class Record(fields: Map[Id, Expression]) extends IR with Value
+case class RecordLookup(rec: Expression, field: Id) extends IR with Expression
 
 case class Builtin(sig: LambdaType, fn: Callable.Func)
   extends IR

@@ -38,9 +38,11 @@ def formatted(expr: Expression, lvl: Int): String =
       val argLvl = body.split("\n").last.size
       s"(${body})(${formatted(args, argLvl + 3, ", ")})"
     case Bool(v) => if v then "#t" else "#f"
+    case RecordLookup(rec, field) => s"${formatted(rec, lvl)}.${formatted(field, lvl)}"
     case Record(fields) =>
       val pairs = fields.map { (k, v) => s"${formatted(k)}: ${formatted(v)}" }
-      s"{ ${pairs.mkString("\n  , ")} }"
+      val indent = " " * (lvl - 1)
+      s"{ ${pairs.mkString(s"\n${indent}, ")} }"
     case ast.Int(num) if num < 0 => s"~${Math.abs(num)}"
     case ast.Int(num) => num.toString
     case Str(str) => s""""$str""""
@@ -79,9 +81,18 @@ def formatted(ty: Type, label: Labeler, nested: Boolean): String =
     case IntType => "Int"
     case StrType => "Str"
     case BoolType => "Bool"
+    case rec: RecordVariable =>
+      val pairs = rec.fields.map { (k, v) => s"${formatted(k)}: ${formatted(v, label, nested)}" }
+      val separator = if nested
+                      then ", "
+                      else "\n  , "
+      s"{ ${pairs.mkString(separator)} }"
     case RecordType(fields) =>
-      val pairs = fields.map { (k, v) => s"${formatted(k)}: ${formatted(v)}" }
-      s"{ ${pairs.mkString("\n  , ")} }"
+      val pairs = fields.map { (k, v) => s"${formatted(k)}: ${formatted(v, label, nested)}" }
+      val separator = if nested
+                      then ", "
+                      else "\n  , "
+      s"{ ${pairs.mkString(separator)} }"
     case LambdaType(tys) =>
       val s = tys.map(formatted(_, label, true)).mkString(" -> ")
       if nested
