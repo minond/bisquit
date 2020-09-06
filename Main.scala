@@ -284,6 +284,22 @@ def main(args: Array[String]): Unit =
                           "e" -> Binop(Id("add"), Id("d"), Id("c"))),
                       Id("e")))
 
+  val testfn = Lambda(List(Id("a"), Id("add")),
+                      Let(Map(
+                              "b" -> Binop(Id("+"),
+                                           RecordLookup(Id("a"), Id("age1")),
+                                           RecordLookup(Id("a"), Id("age2"))),
+                              "c" -> Binop(Id("+"),
+                                           RecordLookup(Id("a"), Id("age3")),
+                                           RecordLookup(Id("a"), Id("age4"))),
+                              "d" -> Binop(Id("add"), Id("b"), Id("c"))),
+                          Id("d")))
+  val testrec = Record(Map(Id("age1") -> Int(34),
+                           Id("age2") -> Int(43),
+                           Id("age3") -> Int(43),
+                           Id("age4") -> Int(20)))
+  exprs += App(testfn, List(testrec, Id("+")))
+
   for
     expr <- exprs
   do
