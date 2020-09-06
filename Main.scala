@@ -259,6 +259,8 @@ def main(args: Array[String]): Unit =
                           "d" -> Binop(Id("+"), Id("b"), Id("c"))),
                       Id("a")))
 
+  exprs += Let(Map("a" -> Int(3)), Id("a"))
+
   for
     expr <- exprs
   do

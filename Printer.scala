@@ -21,26 +21,29 @@ case class Labeler(labels: MMap[Int, String] = MMap()) {
 }
 
 
-def formatted(exprs: List[Expression], lvl: Int, sep: String = " "): String =
-  exprs.map(formatted(_, lvl)).mkString(sep)
+def formatted(exprs: List[Expression], lvl: Int, nested: Boolean, sep: String = " "): String =
+  exprs.map(formatted(_, lvl, nested)).mkString(sep)
 
 def formatted(expr: Expression): String =
   formatted(expr, 1)
 
 def formatted(expr: Expression, lvl: Int): String =
+  formatted(expr, lvl, false)
+
+def formatted(expr: Expression, lvl: Int, nested: Boolean): String =
   expr match {
     case Id(lexeme) => lexeme
-    case Binop(Id(op), left, right) => s"${formatted(left, lvl + 1)} $op ${formatted(right, lvl + 1)}"
-    case Uniop(Id(op), right) => s"${op}${formatted(right, lvl + 1)}"
-    case App(Id(func), args) => s"${func}(${formatted(args, lvl + 1, ", ")})"
+    case Binop(Id(op), left, right) => s"${formatted(left, lvl + 1, false)} $op ${formatted(right, lvl + 1, false)}"
+    case Uniop(Id(op), right) => s"${op}${formatted(right, lvl + 1, false)}"
+    case App(Id(func), args) => s"${func}(${formatted(args, lvl + 1, false, ", ")})"
     case App(fn, args) =>
-      val body = formatted(fn, lvl + 1)
+      val body = formatted(fn, lvl + 1, false)
       val argLvl = body.split("\n").last.size
-      s"(${body})(${formatted(args, argLvl + 3, ", ")})"
+      s"(${body})(${formatted(args, argLvl + 3, false, ", ")})"
     case Bool(v) => if v then "#t" else "#f"
-    case RecordLookup(rec, field) => s"${formatted(rec, lvl)}.${formatted(field, lvl)}"
+    case RecordLookup(rec, field) => s"${formatted(rec, lvl, false)}.${formatted(field, lvl, false)}"
     case Record(fields) =>
-      val pairs = fields.map { (k, v) => s"${formatted(k)}: ${formatted(v)}" }
+      val pairs = fields.map { (k, v) => s"${formatted(k, lvl, false)}: ${formatted(v, lvl, nested)}" }
       val indent = " " * (lvl - 1)
       s"{ ${pairs.mkString(s"\n${indent}, ")} }"
     case ast.Int(num) if num < 0 => s"~${Math.abs(num)}"
@@ -51,21 +54,23 @@ def formatted(expr: Expression, lvl: Int): String =
       val spacing = if params.isEmpty then "" else " "
       val sig = if params.isEmpty
                 then ""
-                else s"(${formatted(params, lvl + 1, ", ")})"
-      s"\\$sig- ${formatted(body, lvl + 2)}"
+                else s"(${formatted(params, lvl + 1, false, ", ")})"
+      s"\\$sig- ${formatted(body, lvl + 2, true)}"
     case _: Builtin => "<builtin>"
     case Let(bindings, body) =>
       val names = bindings.keys
-      val values = bindings.values.map { formatted(_, lvl + 2 + 4) }
+      val values = bindings.values.map { formatted(_, lvl + 2 + 4, false) }
       val argIndent = " " * (lvl + 1)
       val indent = " " * (lvl - 1)
       val decls = names.zip(values).map { (n, v) => s"\n${argIndent}$n = $v" }.mkString
-      s"let${decls}\n${indent}in ${formatted(body, lvl + 3)}"
+      if nested
+      then s"\n${indent}let${decls}\n${indent}in ${formatted(body, lvl + 3, false)}"
+      else s"let${decls}\n${indent}in ${formatted(body, lvl + 3, false)}"
     case Cond(cond, pass, fail) =>
       val indent = " " * (lvl - 1)
-      val scond = formatted(cond, lvl + 1)
-      val spass = formatted(pass, lvl + 1)
-      val sfail = formatted(fail, lvl + 1)
+      val scond = formatted(cond, lvl + 1, false)
+      val spass = formatted(pass, lvl + 1, false)
+      val sfail = formatted(fail, lvl + 1, false)
       val header = if lvl > 1
                    then s"\n$indent"
                    else ""
