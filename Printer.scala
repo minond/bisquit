@@ -50,7 +50,7 @@ def formatted(expr: Expression, lvl: Int, nested: Boolean): String =
     case Bool(v) => if v then "#t" else "#f"
     case RecordLookup(rec, field) => s"${formatted(rec, lvl, false)}.${formatted(field, lvl, false)}"
     case Record(fields) =>
-      val pairs = fields.map { (k, v) => s"${formatted(k, lvl, false)}: ${formatted(v, lvl, nested)}" }
+      val pairs = fields.map { (k, v) => s"${formatted(k, lvl, false)} = ${formatted(v, lvl, nested)}" }
       val indent = " " * (lvl - 1)
       s"{ ${pairs.mkString(s"\n${indent}, ")} }"
     case ast.Int(num) if num < 0 => s"~${Math.abs(num)}"
@@ -96,13 +96,13 @@ def formatted(ty: Type, label: Labeler, nested: Boolean): String =
     case StrType => "Str"
     case BoolType => "Bool"
     case rec: RecordVariable =>
-      val pairs = rec.fields.map { (k, v) => s"${formatted(k)}: ${formatted(v, label, nested)}" }
+      val pairs = rec.fields.map { (k, v) => s"${formatted(k)} : ${formatted(v, label, nested)}" }
       val separator = if nested
                       then ", "
                       else "\n  , "
       s"{ ${pairs.mkString(separator)} }"
     case RecordType(fields) =>
-      val pairs = fields.map { (k, v) => s"${formatted(k)}: ${formatted(v, label, nested)}" }
+      val pairs = fields.map { (k, v) => s"${formatted(k)} : ${formatted(v, label, nested)}" }
       val separator = if nested
                       then ", "
                       else "\n  , "
