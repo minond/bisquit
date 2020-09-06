@@ -157,7 +157,7 @@ def infer(expr: IR, env: Environment, sub: Substitution): Either[TypingError, Ty
       for
         _ <- letRec(bindings, env, sub)
         ret <- infer(pass1(body), env ++ bindings, sub)
-      yield ret
+      yield sub(ret)
     case Lambda(params, body, scope) => inferLambda(params, pass1(body), scope, env, sub)
     case App(fn, args) => inferApp(fn, args, env, sub)
     case Record(fields) => inferRecord(fields, env, sub)

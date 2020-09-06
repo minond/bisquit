@@ -237,6 +237,28 @@ def main(args: Array[String]): Unit =
                         RecordLookup(Id("a"), Id("age1")),
                         RecordLookup(Id("a"), Id("age2"))))
 
+  exprs += Lambda(List(Id("a")),
+                  Let(Map(
+                          "b" -> Binop(Id("+"),
+                                       RecordLookup(Id("a"), Id("age1")),
+                                       RecordLookup(Id("a"), Id("age2"))),
+                          "c" -> Binop(Id("+"),
+                                       RecordLookup(Id("a"), Id("age3")),
+                                       RecordLookup(Id("a"), Id("age4"))),
+                          "d" -> Binop(Id("+"), Id("b"), Id("c"))),
+                      RecordLookup(Id("a"), Id("age3"))))
+
+  exprs += Lambda(List(Id("a")),
+                  Let(Map(
+                          "b" -> Binop(Id("+"),
+                                       RecordLookup(Id("a"), Id("age1")),
+                                       RecordLookup(Id("a"), Id("age2"))),
+                          "c" -> Binop(Id("+"),
+                                       RecordLookup(Id("a"), Id("age3")),
+                                       RecordLookup(Id("a"), Id("age4"))),
+                          "d" -> Binop(Id("+"), Id("b"), Id("c"))),
+                      Id("a")))
+
   for
     expr <- exprs
   do
