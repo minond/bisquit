@@ -38,12 +38,12 @@ case class Lambda(
   def apply(args: List[IR], scope: RuntimeScope): Either[RuntimeError, Value] =
     for
       vals <- eval(args, scope)
-      ret <- evalIt(vals)
+      ret <- evalIt(vals, scope)
     yield ret
 
-  def evalIt(vals: List[Value]) =
+  def evalIt(vals: List[Value], scope: RuntimeScope) =
     val argScope = params.map(_.lexeme).zip(vals).toMap
-    val lexScope = boundScope ++ argScope
+    val lexScope = scope ++ boundScope ++ argScope
     if params.size != vals.size
     then Right(curryIt(vals, lexScope))
     else eval(pass1(body), lexScope)

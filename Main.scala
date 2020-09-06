@@ -329,6 +329,26 @@ def main(args: Array[String]): Unit =
                       ),
                       Id("y")))
 
+  exprs += Let(Map(
+                   "fn1" ->
+                     Lambda(List(Id("n"), Id("b")),
+                            Cond(Id("b"),
+                                 Id("n"),
+                                 App(Id("fn2"),
+                                     List(App(Id("-"), List(Id("n"), Int(1))),
+                                          Bool(true))))),
+                   "fn2" ->
+                     Lambda(List(Id("n"), Id("b")),
+                            Cond(Id("b"),
+                                 Id("n"),
+                                 App(Id("fn1"),
+                                     List(App(Id("-"), List(Id("n"), Int(1))),
+                                          Bool(true))))),
+               ),
+               App(Id("fn1"),
+                   List(Int(2), Bool(false)))
+           )
+
 
   for
     expr <- exprs
