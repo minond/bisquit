@@ -153,7 +153,11 @@ def infer(expr: IR, env: Environment, sub: Substitution): Either[TypingError, Ty
     case id : Id => lookup(id, env, sub)
     case Builtin(sig, _) => Right(sig)
     case cond : Cond => inferCond(cond, env, sub)
-    case Let(bindings, body) => infer(pass1(body), env ++ bindings, sub)
+    case Let(bindings, body) =>
+      for
+        _ <- letRec(bindings, env, sub)
+        ret <- infer(pass1(body), env ++ bindings, sub)
+      yield ret
     case Lambda(params, body, scope) => inferLambda(params, pass1(body), scope, env, sub)
     case App(fn, args) => inferApp(fn, args, env, sub)
     case Record(fields) => inferRecord(fields, env, sub)
@@ -210,6 +214,17 @@ def inferLambda(params: List[Id], body: IR, scope: Environment, env: Environment
              else paramTys.map(sub(_))
   yield
     LambdaType(tyArgs :+ tyBody)
+
+
+def letRec(bindings: Map[String, Expression], env: Environment, sub: Substitution) =
+  bindings.foldLeft[Either[TypingError, Environment]](Right(env)) {
+    case (acc, (label, expr)) =>
+      acc.flatMap { recscope =>
+        infer(pass1(expr), recscope, sub).map { v =>
+          recscope ++ Map(label -> expr)
+        }
+      }
+  }
 
 
 def lookup[V, L](id: Id, scope: Map[Id, V], left: => L): Either[L, V] =
