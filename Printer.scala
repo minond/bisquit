@@ -55,7 +55,7 @@ def formatted(expr: Expression, lvl: Int, nested: Boolean): String =
       val sig = if params.isEmpty
                 then ""
                 else s"(${formatted(params, lvl + 1, false, ", ")})"
-      s"\\$sig- ${formatted(body, lvl + 2, true)}"
+      s"\\$sig. ${formatted(body, lvl + 2, true)}"
     case _: Builtin => "<builtin>"
     case Let(bindings, body) =>
       val names = bindings.keys
