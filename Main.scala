@@ -215,6 +215,10 @@ def main(args: Array[String]): Unit =
                          Lambda(Nil,
                                 Id("a"))))
 
+  exprs += Record(Map(Id("first_name") -> Str("Marcos"),
+                      Id("last_name") -> Str("Minond"),
+                      Id("age") -> Binop(Id("+"), Int(20), Int(11))))
+
   for
     expr <- exprs
   do

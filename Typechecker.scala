@@ -7,7 +7,7 @@ import scala.language.implicitConversions
 import ast.{Int => _, _}
 import scope._
 import runtime._
-import utils.ensure
+import utils.{ensure, formap}
 import utils.Implicits.Eithers
 
 sealed trait Type
@@ -15,6 +15,7 @@ case object UnitType extends Type
 case object IntType extends Type
 case object StrType extends Type
 case object BoolType extends Type
+case class RecordType(fields: Map[Id, Type]) extends Type
 
 case class LambdaType(tys: List[Type]) extends Type {
   def apply(args: Type*): Type =
@@ -102,7 +103,14 @@ def infer(expr: IR, env: Environment, sub: Substitution): Either[TypingError, Ty
     case Let(bindings, body) => infer(pass1(body), env ++ bindings, sub)
     case Lambda(params, body, scope) => inferLambda(params, pass1(body), scope, env, sub)
     case App(fn, args) => inferApp(fn, args, env, sub)
+    case Record(fields) => inferRecord(fields, env, sub)
   }
+
+def inferRecord(fields: Map[Id, Expression], env: Environment, sub: Substitution) =
+  for
+    inners <- formap(fields){ v => infer(pass1(v), env, sub) }
+    ret = RecordType(inners)
+  yield ret
 
 def inferApp(fn: Expression, args: List[Expression], env: Environment, sub: Substitution) =
   for

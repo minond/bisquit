@@ -6,7 +6,7 @@ import scala.reflect.ClassTag
 
 import ast._
 import scope._
-import utils.{ensure, remap}
+import utils.{ensure, remap, formap}
 import utils.Implicits.Eithers
 
 sealed trait RuntimeError
@@ -24,6 +24,7 @@ def pass1(expr: Expression): IR with Expression =
     case App(fn, args) => App(fn, args.map(pass1))
     case Cond(cond, pass, fail) => Cond(pass1(cond), pass1(pass), pass1(fail))
     case Let(bindings, body) => Let(remap(bindings) { pass1 }, pass1(body))
+    case Record(fields) => Record(remap(fields) { pass1 })
   }
 
 
@@ -39,12 +40,19 @@ def eval(exprs: List[IR], scope: RuntimeScope): Either[RuntimeError, List[Value]
 def eval(expr: IR, scope: RuntimeScope): Either[RuntimeError, Value] =
   expr match {
     case Lambda(args, body, _) => Right(Lambda(args, body, scope))
+    case Record(fields) => evalRecord(fields, scope)
     case value: Value => Right(value)
     case id: Id => lookup(id, scope)
     case App(fn, args) => evalCallable(pass1(fn), args.map(pass1), scope)
     case Let(bindings, body) => evalLet(bindings, body, scope)
     case Cond(cond, pass, fail) => evalCond(cond, pass, fail, scope)
   }
+
+def evalRecord(fields: Map[Id, Expression], scope: RuntimeScope) =
+  for
+    inners <- formap(fields){ v => eval(pass1(v), scope) }
+    ret = Record(inners)
+  yield ret
 
 def evalCallable(fn: IR, args: List[IR], scope: RuntimeScope) =
   for

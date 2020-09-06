@@ -12,6 +12,15 @@ def remap[K, V1, V2](orig: Map[K, V1])(f: V1 => V2): Map[K, V2] =
     case (acc, (k, v)) => acc ++ Map(k -> f(v))
   }
 
+def formap[K, V, L, R](orig: Map[K, V])(f: V => Either[L, R]): Either[L, Map[K, R]] =
+  orig.foldLeft[Either[L, Map[K, R]]](Right(Map())) {
+    case (Left(l), _) => Left(l)
+    case (Right(acc), (k, v)) =>
+      f(v).flatMap { r =>
+        Right(acc ++ Map(k -> r))
+      }
+  }
+
 /** Compile time _and_ runtime type checking. The returned value will be
   * annotated with the expected type, which ensuring that at runtime the
   * value type checks and type errors are handled.
