@@ -67,6 +67,8 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
       case ty @ (UnitType | IntType | StrType | BoolType | RecordType) => ty
       case rec: RecordVariable =>
         RecordVariable(MMap((remap(rec.fields.toMap) { apply(_) }).toList:_*))
+      case RecordType(fields) =>
+        RecordType(remap(fields.toMap) { apply(_) })
       case LambdaType(tys) =>
         LambdaType(tys.map(apply))
       case TypeVariable(id) =>
@@ -200,7 +202,12 @@ def inferCond(cond: Cond, env: Environment, sub: Substitution) =
   yield sub(passTy)
 
 def inferLambda(params: List[Id], body: IR, scope: Environment, env: Environment, sub: Substitution) =
-  val paramTys = params.map { _ => sub.fresh }
+  val paramTys = params.map { param =>
+    param.ty match {
+      case None => sub.fresh
+      case Some(ty) => ty
+    }
+  }
 
   val lexScope = params.zip(paramTys).foldLeft(env ++ scope) {
     case (acc, (id, ty)) =>

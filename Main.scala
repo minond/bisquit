@@ -28,7 +28,8 @@ def main(args: Array[String]): Unit =
     "x" -> Int(32),
   )
 
-  var exprs: ListBuffer[Expression] = ListBuffer()
+  val subs = Substitution()
+  val exprs: ListBuffer[Expression] = ListBuffer()
 
   // exprs += App(Id("addIt"),
   //              List(Binop(Id("+"), Int(32), Int(53)),
@@ -319,8 +320,15 @@ def main(args: Array[String]): Unit =
                           "e" -> Binop(RecordLookup(Id("a"), Id("-")), Id("d"), Id("c"))),
                       Id("e")))
 
-  exprs += Record(Map(Id("+") -> Id("addTwo"),
-                      Id("-") -> Id("-")))
+  exprs += Lambda(List(Id("a").typeTag(RecordType(Map(Id("sum") -> LambdaType(List(subs.fresh, subs.fresh, subs.fresh))))), Id("b"), Id("c")),
+                  Let(Map(
+                          "x" -> App(RecordLookup(Id("a"), Id("sum")),
+                                     List(Id("b"), Id("c"))),
+                          "y" -> App(Id("+"),
+                                     List(Id("b"), Id("x"))),
+                      ),
+                      Id("y")))
+
 
   for
     expr <- exprs
@@ -332,7 +340,7 @@ def main(args: Array[String]): Unit =
       case Left(err) => println(s"error: ${err}")
     }
 
-    infer(pass1(expr), scope, Substitution()) match {
+    infer(pass1(expr), scope, subs) match {
       case Right(ret) => println(s": ${formatted(ret)}\n")
       case Left(err) => println(s"error: ${err}\n")
     }
