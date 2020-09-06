@@ -5,7 +5,11 @@ import scala.reflect.ClassTag
 
 /** Rebuilds a map by passing each value though a function.
  *
- *    val chars: Map[Int, Char] = remap(Map(1 -> 1)) { _.toChar }
+ *  {{{
+ *  scala> import bisquit.utils._
+ *  scala> val chars: Map[Int, Char] = remap(Map(1 -> 97)) { _.toChar }
+ *  val chars: Map[Int, Char] = Map(1 -> a)
+ *  }}}
  */
 def remap[K, V1, V2](orig: Map[K, V1])(f: V1 => V2): Map[K, V2] =
   orig.foldLeft[Map[K, V2]](Map()) {
@@ -15,6 +19,16 @@ def remap[K, V1, V2](orig: Map[K, V1])(f: V1 => V2): Map[K, V2] =
 /** Applies [[f]] over every value in [[orig]]. [[f]] returns an [[Either]]
  *  type and [[formap]] flattens the return of every call into a single
  *  [[Left]] or [[Right]] value.
+ *
+ *  {{{
+ *  scala> import bisquit.utils._
+ *  scala> import bisquit.ast._
+ *  scala> import bisquit.runtime._
+ *  scala> formap(Map(1 -> Int(43))) { v => eval(pass1(v)) }
+ *  val res0: Either[bisquit.runtime.RuntimeError, Map[Int, bisquit.ast.Value]] = Right(Map(1 -> Int(43)))
+ *  scala> formap(Map(1 -> Id("not_found"))) { v => eval(pass1(v)) }
+ *  val res1: Either[bisquit.runtime.RuntimeError, Map[Int, bisquit.ast.Value]] = Left(LookupError(Id(not_found)))
+ *  }}}
  */
 def formap[K, V, L, R](orig: Map[K, V])(f: V => Either[L, R]): Either[L, Map[K, R]] =
   orig.foldLeft[Either[L, Map[K, R]]](Right(Map())) {
@@ -29,8 +43,13 @@ def formap[K, V, L, R](orig: Map[K, V])(f: V => Either[L, R]): Either[L, Map[K, 
  *  annotated with the expected type, which ensuring that at runtime the
  *  value type checks and type errors are handled.
  *
- *    ensure[String, Int](3344, "expected a number!") // Right(34)
- *    ensure[String, Int]("34", "expected a number!") // Left("expected a number!")
+ *  {{{
+ *  scala> import bisquit.utils._
+ *  scala> ensure[String, Int](3344, "expected a number!")
+ *  val res0: Either[String, Int] = Right(3344)
+ *  scala> ensure[String, Int]("34", "expected a number!")
+ *  val res1: Either[String, Int] = Left(expected a number!)
+ *  }}}
  */
 def ensure[L, R: ClassTag](value: Any, left: => L): Either[L, R] =
   value match {
@@ -42,15 +61,20 @@ object Implicits {
   import scala.language.implicitConversions
 
   implicit class Eithers[L, R](val eithers: List[Either[L, R]]) {
-    /** Allows for the conversion of a list of eithers into an either with a
-     *  list. For example, a list version of a function that returns an either
-     *  would in turn return a list of eithers:
+    /** Lets you convert a [[List[Either[L, R]]]] into an [[Either[L, List[R]]]].
      *
-     *    doIt  -> X -> Either[L, R]
-     *    doIts -> List[X] -> List[Either[L, R]]
-     *    squished -> List[Either[L, R]] -> Either[L, List[R]]
-     *
-     * Lets you convert a [[List[Either[L, R]]]] into an [[Either[L, List[R]]]].
+     *  {{{
+     *  scala> import scala.language.implicitConversions
+     *  scala> import bisquit.utils.Implicits.Eithers
+     *  scala> import bisquit.ast._
+     *  scala> import bisquit.runtime._
+     *  scala> List(Int(43)).map { eval(_) }
+     *  val res0: List[Either[bisquit.runtime.RuntimeError, bisquit.ast.Value]] = List(Right(Int(43)))
+     *  scala> List(Int(43)).map { eval(_) }.squished()
+     *  val res1: Either[bisquit.runtime.RuntimeError, List[bisquit.ast.Value]] = Right(List(Int(43)))
+     *  scala> List(Id("not_found")).map { eval(_) }.squished()
+     *  val res2: Either[bisquit.runtime.RuntimeError, List[bisquit.ast.Value]] = Left(LookupError(Id(not_found)))
+     *  }}}
      */
     def squished(): Either[L, List[R]] =
       eithers.foldLeft[Either[L, List[R]]](Right(List())) {
