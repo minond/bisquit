@@ -66,9 +66,9 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
     ty match {
       case ty @ (UnitType | IntType | StrType | BoolType | RecordType) => ty
       case rec: RecordVariable =>
-        RecordVariable(MMap((remap(rec.fields.toMap) { apply(_) }).toList:_*))
+        RecordVariable(MMap((remap(rec.fields.toMap) { apply }).toList:_*))
       case RecordType(fields) =>
-        RecordType(remap(fields.toMap) { apply(_) })
+        RecordType(remap(fields) { apply })
       case LambdaType(tys) =>
         LambdaType(tys.map(apply))
       case TypeVariable(id) =>
