@@ -12,8 +12,8 @@ sealed trait IR extends Typing
 sealed trait Value extends Expression
 
 case class Id(lexeme: String) extends IR with Expression
-case class Binop(op: Id, left: Expression, right: Expression) extends Expression
-case class Uniop(op: Id, subject: Expression) extends Expression
+case class Binop(op: Expression, left: Expression, right: Expression) extends Expression
+case class Uniop(op: Expression, subject: Expression) extends Expression
 case class App(fn: Expression, args: List[Expression]) extends IR with Expression
 case class Let(bindings: Map[String, Expression], body: Expression) extends IR with Expression
 case class Cond(cond: Expression, pass: Expression, fail: Expression) extends IR with Expression

@@ -33,8 +33,8 @@ def formatted(expr: Expression, lvl: Int): String =
 def formatted(expr: Expression, lvl: Int, nested: Boolean): String =
   expr match {
     case Id(lexeme) => lexeme
-    case Binop(Id(op), left, right) => s"${formatted(left, lvl + 1, false)} $op ${formatted(right, lvl + 1, false)}"
-    case Uniop(Id(op), right) => s"${op}${formatted(right, lvl + 1, false)}"
+    case Binop(op, left, right) => s"${formatted(left, lvl + 1, false)} ${formatted(op)} ${formatted(right, lvl + 1, false)}"
+    case Uniop(op, right) => s"${formatted(op)}${formatted(right, lvl + 1, false)}"
     case App(Id(func), args) => s"${func}(${formatted(args, lvl + 1, false, ", ")})"
     case App(fn, args) =>
       val body = formatted(fn, lvl, false)

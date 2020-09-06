@@ -15,11 +15,15 @@ def main(args: Array[String]): Unit =
                            Binop(Id("+"), Id("a"), Id("b")),
                            Binop(Id("+"), Id("c"), Id("x"))))
 
+  val addTwo = Lambda(List(Id("a"), Id("b")),
+                      Binop(Id("+"), Id("a"), Id("b")))
+
   val identity = Lambda(List(Id("a")),
                         Id("a"))
 
   val scope = Ops ++ Map(
     "addIt" -> addIt,
+    "addTwo" -> addTwo,
     "id" -> identity,
     "x" -> Int(32),
   )
@@ -301,6 +305,22 @@ def main(args: Array[String]): Unit =
                            Id("age4") -> Int(20)))
   exprs += App(testfn, List(testrec, Id("/")))
   exprs += App(testfn, List(testrec, Id("+"), Id("+")))
+  // exprs += App(App(testfn, List(testrec, Id("+"))), List(Id("+")))
+
+  exprs += Lambda(List(Id("a")),
+                  Let(Map(
+                          "b" -> Binop(Id("+"),
+                                       RecordLookup(Id("a"), Id("age1")),
+                                       RecordLookup(Id("a"), Id("age2"))),
+                          "c" -> Binop(Id("+"),
+                                       RecordLookup(Id("a"), Id("age3")),
+                                       RecordLookup(Id("a"), Id("age4"))),
+                          "d" -> Binop(RecordLookup(Id("a"), Id("+")), Id("b"), Id("c")),
+                          "e" -> Binop(RecordLookup(Id("a"), Id("-")), Id("d"), Id("c"))),
+                      Id("e")))
+
+  exprs += Record(Map(Id("+") -> Id("addTwo"),
+                      Id("-") -> Id("-")))
 
   for
     expr <- exprs
