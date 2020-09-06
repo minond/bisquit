@@ -32,7 +32,11 @@ def formatted(expr: Expression, lvl: Int): String =
 
 def formatted(expr: Expression, lvl: Int, nested: Boolean): String =
   expr match {
-    case Id(lexeme) => lexeme
+    case id @ Id(lexeme) =>
+      id.ty match {
+        case None => lexeme
+        case Some(ty) => s"${lexeme} : ${formatted(ty)}"
+      }
     case Binop(op, left, right) => s"${formatted(left, lvl + 1, false)} ${formatted(op)} ${formatted(right, lvl + 1, false)}"
     case Uniop(op, right) => s"${formatted(op)}${formatted(right, lvl + 1, false)}"
     case App(Id(func), args) => s"${func}(${formatted(args, lvl + 1, false, ", ")})"
