@@ -37,9 +37,12 @@ def formatted(expr: Expression, lvl: Int, nested: Boolean): String =
     case Uniop(Id(op), right) => s"${op}${formatted(right, lvl + 1, false)}"
     case App(Id(func), args) => s"${func}(${formatted(args, lvl + 1, false, ", ")})"
     case App(fn, args) =>
-      val body = formatted(fn, lvl + 1, false)
+      val body = formatted(fn, lvl, false)
       val argLvl = body.split("\n").last.size
-      s"(${body})(${formatted(args, argLvl + 3, false, ", ")})"
+      val indent = " " * (lvl - 1)
+      if nested
+      then s"\n${indent}(${body})(${formatted(args, argLvl + 3, false, ", ")})"
+      else s"(${body})(${formatted(args, argLvl + 3, false, ", ")})"
     case Bool(v) => if v then "#t" else "#f"
     case RecordLookup(rec, field) => s"${formatted(rec, lvl, false)}.${formatted(field, lvl, false)}"
     case Record(fields) =>
@@ -55,7 +58,9 @@ def formatted(expr: Expression, lvl: Int, nested: Boolean): String =
       val sig = if params.isEmpty
                 then ""
                 else s"(${formatted(params, lvl + 1, false, ", ")})"
-      s"\\$sig. ${formatted(body, lvl + 2, true)}"
+      if nested
+      then s"\n${indent}\\$sig. ${formatted(body, lvl + 2, true)}"
+      else s"\\$sig. ${formatted(body, lvl + 2, true)}"
     case _: Builtin => "<builtin>"
     case Let(bindings, body) =>
       val names = bindings.keys
