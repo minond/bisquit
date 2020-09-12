@@ -181,7 +181,7 @@ def inferLet(bindings: Map[Id, Expression], body: Expression, env: Environment, 
         infer(pass1(expr), innerscope, sub).map { v =>
           id.ty match {
             case None =>
-              innerscope ++ Map(id.lexeme -> expr)
+              innerscope ++ Map(id.lexeme -> expr.typeTag(v))
             case Some(ty) =>
               innerscope ++ Map(id.lexeme -> expr.typeTag(ty))
           }

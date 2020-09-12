@@ -29,7 +29,7 @@ def main(args: Array[String]): Unit =
   )
 
   val subs = Substitution()
-  val exprs: ListBuffer[Expression] = ListBuffer()
+  var exprs: ListBuffer[Expression] = ListBuffer()
 
   // exprs += App(Id("addIt"),
   //              List(Binop(Id("+"), Int(32), Int(53)),
@@ -330,14 +330,14 @@ def main(args: Array[String]): Unit =
                       Id("y")))
 
   exprs += Let(Map(
-                   Id("fn1").typeTag(LambdaType(List(IntType, BoolType, IntType))) ->
+                   Id("fn1") ->
                      Lambda(List(Id("n"), Id("b")),
                             Cond(Id("b"),
                                  Id("n"),
                                  App(Id("fn2"),
                                      List(App(Id("-"), List(Id("n"), Int(1))),
                                           Bool(true))))),
-                   Id("fn2").typeTag(LambdaType(List(IntType, BoolType, IntType))) ->
+                   Id("fn2") ->
                      Lambda(List(Id("n"), Id("b")),
                             Cond(Id("b"),
                                  Id("n"),
@@ -347,6 +347,17 @@ def main(args: Array[String]): Unit =
                ),
                App(Id("fn1"),
                    List(Int(2), Bool(false)))
+           )
+
+  exprs += Let(Map(
+                   Id("fn1") ->
+                     Lambda(List(Id("b")),
+                            Cond(Id("b"),
+                                 Bool(false),
+                                 App(Id("fn1"),
+                                     List(Bool(true)))))
+               ),
+               Id("fn1")
            )
 
 
