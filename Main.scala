@@ -330,14 +330,14 @@ def main(args: Array[String]): Unit =
                       Id("y")))
 
   exprs += Let(Map(
-                   Id("fn1") ->
+                   Id("fn1").typeTag(LambdaType(List(IntType, BoolType, IntType))) ->
                      Lambda(List(Id("n"), Id("b")),
                             Cond(Id("b"),
                                  Id("n"),
                                  App(Id("fn2"),
                                      List(App(Id("-"), List(Id("n"), Int(1))),
                                           Bool(true))))),
-                   Id("fn2") ->
+                   Id("fn2").typeTag(LambdaType(List(IntType, BoolType, IntType))) ->
                      Lambda(List(Id("n"), Id("b")),
                             Cond(Id("b"),
                                  Id("n"),

@@ -71,7 +71,7 @@ def formatted(expr: Expression, lvl: Int, nested: Boolean): String =
       val values = bindings.values.map { formatted(_, lvl + 2 + 4, false) }
       val argIndent = " " * (lvl + 1)
       val indent = " " * (lvl - 1)
-      val decls = names.zip(values).map { (n, v) => s"\n${argIndent}$n = $v" }.mkString
+      val decls = names.zip(values).map { (n, v) => s"\n${argIndent}${formatted(n)} = $v" }.mkString
       if nested
       then s"\n${indent}let${decls}\n${indent}in ${formatted(body, lvl + 3, false)}"
       else s"let${decls}\n${indent}in ${formatted(body, lvl + 3, false)}"

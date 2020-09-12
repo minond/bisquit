@@ -7,7 +7,7 @@ import scala.language.implicitConversions
 import ast.{Int => _, _}
 import scope._
 import runtime._
-import utils.{ensure, formap, remap, rekey}
+import utils.{ensure, formap, remap}
 import utils.Implicits.Eithers
 
 sealed trait Type
@@ -155,16 +155,44 @@ def infer(expr: IR, env: Environment, sub: Substitution): Either[TypingError, Ty
     case id : Id => lookup(id, env, sub)
     case Builtin(sig, _) => Right(sig)
     case cond : Cond => inferCond(cond, env, sub)
-    case Let(bindings, body) =>
-      for
-        _ <- letRec(bindings, env, sub)
-        ret <- infer(pass1(body), env ++ rekey(bindings) { _.lexeme }, sub)
-      yield sub(ret)
+    case Let(bindings, body) => inferLet(bindings, body, env, sub)
     case Lambda(params, body, scope) => inferLambda(params, pass1(body), scope, env, sub)
     case App(fn, args) => inferApp(fn, args, env, sub)
     case Record(fields) => inferRecord(fields, env, sub)
     case RecordLookup(rec, field) => inferRecordLookup(rec, field, env, sub)
   }
+
+def inferLet(bindings: Map[Id, Expression], body: Expression, env: Environment, sub: Substitution) =
+  val bindingTys = bindings.keys.toList.map { id =>
+    id.ty match {
+      case None => sub.fresh
+      case Some(ty) => ty
+    }
+  }
+
+  val unboundLexScope = bindings.keys.toList.zip(bindingTys).foldLeft(env) {
+    case (acc, (id, ty)) =>
+      acc ++ Map(id.lexeme -> Id(id.lexeme).typeTag(ty))
+  }
+
+  val boundLexScope = bindings.foldLeft[Either[TypingError, Environment]](Right(unboundLexScope)) {
+    case (acc, (id, expr)) =>
+      acc.flatMap { innerscope =>
+        infer(pass1(expr), innerscope, sub).map { v =>
+          id.ty match {
+            case None =>
+              innerscope ++ Map(id.lexeme -> expr)
+            case Some(ty) =>
+              innerscope ++ Map(id.lexeme -> expr.typeTag(ty))
+          }
+        }
+      }
+  }
+
+  for
+    scope <- boundLexScope
+    ret <- infer(pass1(body), scope, sub)
+  yield sub(ret)
 
 def inferRecordLookup(rec: Expression, field: Id, env: Environment, sub: Substitution) =
   for
@@ -221,17 +249,6 @@ def inferLambda(params: List[Id], body: IR, scope: Environment, env: Environment
              else paramTys.map(sub(_))
   yield
     LambdaType(tyArgs :+ tyBody)
-
-
-def letRec(bindings: Map[Id, Expression], env: Environment, sub: Substitution) =
-  bindings.foldLeft[Either[TypingError, Environment]](Right(env)) {
-    case (acc, (id, expr)) =>
-      acc.flatMap { recscope =>
-        infer(pass1(expr), recscope, sub).map { v =>
-          recscope ++ Map(id.lexeme -> expr)
-        }
-      }
-  }
 
 
 def lookup[V, L](id: Id, scope: Map[Id, V], left: => L): Either[L, V] =
