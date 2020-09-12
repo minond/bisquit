@@ -3,6 +3,19 @@ package utils
 
 import scala.reflect.ClassTag
 
+/** Rebuilds a map by passing each key though a function.
+ *
+ *  {{{
+ *  scala> import bisquit.utils._
+ *  scala> val chars: Map[Char, Int] = rekey(Map(97 -> 97)) { _.toChar }
+ *  val chars: Map[Int, Char] = Map(a -> 97)
+ *  }}}
+ */
+def rekey[K1, K2, V](orig: Map[K1, V])(f: K1 => K2): Map[K2, V] =
+  orig.foldLeft[Map[K2, V]](Map()) {
+    case (acc, (k, v)) => acc ++ Map(f(k) -> v)
+  }
+
 /** Rebuilds a map by passing each value though a function.
  *
  *  {{{

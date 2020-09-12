@@ -72,7 +72,7 @@ def evalCallable(fn: IR, args: List[IR], scope: RuntimeScope) =
     ret <- callable.apply(args, scope)
   yield ret
 
-def evalLet(bindings: Map[String, Expression], body: Expression, scope: RuntimeScope) =
+def evalLet(bindings: Map[Id, Expression], body: Expression, scope: RuntimeScope) =
   for
     bound <- letRec(bindings, scope)
     ret <- eval(pass1(body), bound)
@@ -87,12 +87,12 @@ def evalCond(cond: Expression, pass: Expression, fail: Expression, scope: Runtim
   yield ret
 
 
-def letRec(bindings: Map[String, Expression], scope: RuntimeScope) =
+def letRec(bindings: Map[Id, Expression], scope: RuntimeScope) =
   bindings.foldLeft[Either[RuntimeError, RuntimeScope]](Right(scope)) {
-    case (acc, (label, expr)) =>
+    case (acc, (id, expr)) =>
       acc.flatMap { recscope =>
         eval(pass1(expr), recscope).map { v =>
-          recscope ++ Map(label -> v)
+          recscope ++ Map(id.lexeme -> v)
         }
       }
   }

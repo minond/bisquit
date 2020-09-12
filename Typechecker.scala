@@ -7,7 +7,7 @@ import scala.language.implicitConversions
 import ast.{Int => _, _}
 import scope._
 import runtime._
-import utils.{ensure, formap, remap}
+import utils.{ensure, formap, remap, rekey}
 import utils.Implicits.Eithers
 
 sealed trait Type
@@ -158,7 +158,7 @@ def infer(expr: IR, env: Environment, sub: Substitution): Either[TypingError, Ty
     case Let(bindings, body) =>
       for
         _ <- letRec(bindings, env, sub)
-        ret <- infer(pass1(body), env ++ bindings, sub)
+        ret <- infer(pass1(body), env ++ rekey(bindings) { _.lexeme }, sub)
       yield sub(ret)
     case Lambda(params, body, scope) => inferLambda(params, pass1(body), scope, env, sub)
     case App(fn, args) => inferApp(fn, args, env, sub)
@@ -223,12 +223,12 @@ def inferLambda(params: List[Id], body: IR, scope: Environment, env: Environment
     LambdaType(tyArgs :+ tyBody)
 
 
-def letRec(bindings: Map[String, Expression], env: Environment, sub: Substitution) =
+def letRec(bindings: Map[Id, Expression], env: Environment, sub: Substitution) =
   bindings.foldLeft[Either[TypingError, Environment]](Right(env)) {
-    case (acc, (label, expr)) =>
+    case (acc, (id, expr)) =>
       acc.flatMap { recscope =>
         infer(pass1(expr), recscope, sub).map { v =>
-          recscope ++ Map(label -> expr)
+          recscope ++ Map(id.lexeme -> expr)
         }
       }
   }

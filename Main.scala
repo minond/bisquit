@@ -114,13 +114,13 @@ def main(args: Array[String]): Unit =
 
   exprs += Id("~")
 
-  exprs += Let(Map("a" -> Int(343),
-                   "b" -> Id("a"),
-                   "c" -> Binop(Id("+"), Id("a"), Id("b")),
-                   "d" -> Let(Map("x" -> Id("c")), Id("x"))),
+  exprs += Let(Map(Id("a") -> Int(343),
+                   Id("b") -> Id("a"),
+                   Id("c") -> Binop(Id("+"), Id("a"), Id("b")),
+                   Id("d") -> Let(Map(Id("x") -> Id("c")), Id("x"))),
                Binop(Id("+"), Id("d"), Id("d")))
 
-  exprs += Let(Map("a" -> Int(343)),
+  exprs += Let(Map(Id("a") -> Int(343)),
                Id("a"))
 
   exprs += Lambda(List(Id("a")),
@@ -244,60 +244,60 @@ def main(args: Array[String]): Unit =
 
   exprs += Lambda(List(Id("a")),
                   Let(Map(
-                          "b" -> Binop(Id("+"),
+                          Id("b") -> Binop(Id("+"),
                                        RecordLookup(Id("a"), Id("age1")),
                                        RecordLookup(Id("a"), Id("age2"))),
-                          "c" -> Binop(Id("+"),
+                          Id("c") -> Binop(Id("+"),
                                        RecordLookup(Id("a"), Id("age3")),
                                        RecordLookup(Id("a"), Id("age4"))),
-                          "d" -> Binop(Id("+"), Id("b"), Id("c"))),
+                          Id("d") -> Binop(Id("+"), Id("b"), Id("c"))),
                       RecordLookup(Id("a"), Id("age3"))))
 
   exprs += Lambda(List(Id("a")),
                   Let(Map(
-                          "b" -> Binop(Id("+"),
+                          Id("b") -> Binop(Id("+"),
                                        RecordLookup(Id("a"), Id("age1")),
                                        RecordLookup(Id("a"), Id("age2"))),
-                          "c" -> Binop(Id("+"),
+                          Id("c") -> Binop(Id("+"),
                                        RecordLookup(Id("a"), Id("age3")),
                                        RecordLookup(Id("a"), Id("age4"))),
-                          "d" -> Binop(Id("+"), Id("b"), Id("c"))),
+                          Id("d") -> Binop(Id("+"), Id("b"), Id("c"))),
                       Id("a")))
 
-  exprs += Let(Map("a" -> Int(3)), Id("a"))
+  exprs += Let(Map(Id("a") -> Int(3)), Id("a"))
 
   exprs += Lambda(List(Id("a"), Id("add")),
                   Let(Map(
-                          "b" -> Binop(Id("+"),
+                          Id("b") -> Binop(Id("+"),
                                        RecordLookup(Id("a"), Id("age1")),
                                        RecordLookup(Id("a"), Id("age2"))),
-                          "c" -> Binop(Id("+"),
+                          Id("c") -> Binop(Id("+"),
                                        RecordLookup(Id("a"), Id("age3")),
                                        RecordLookup(Id("a"), Id("age4"))),
-                          "d" -> Binop(Id("add"), Id("b"), Id("c"))),
+                          Id("d") -> Binop(Id("add"), Id("b"), Id("c"))),
                       Id("d")))
 
   exprs += Lambda(List(Id("a"), Id("add")),
                   Let(Map(
-                          "b" -> Binop(Id("+"),
+                          Id("b") -> Binop(Id("+"),
                                        RecordLookup(Id("a"), Id("age1")),
                                        RecordLookup(Id("a"), Id("age2"))),
-                          "c" -> Binop(Id("+"),
+                          Id("c") -> Binop(Id("+"),
                                        RecordLookup(Id("a"), Id("age3")),
                                        RecordLookup(Id("a"), Id("age4"))),
-                          "d" -> Binop(Id("add"), Id("b"), Id("c")),
-                          "e" -> Binop(Id("add"), Id("d"), Id("c"))),
+                          Id("d") -> Binop(Id("add"), Id("b"), Id("c")),
+                          Id("e") -> Binop(Id("add"), Id("d"), Id("c"))),
                       Id("e")))
 
   val testfn = Lambda(List(Id("a"), Id("op1"), Id("op2")),
                       Let(Map(
-                              "b" -> Binop(Id("+"),
+                              Id("b") -> Binop(Id("+"),
                                            RecordLookup(Id("a"), Id("age1")),
                                            RecordLookup(Id("a"), Id("age2"))),
-                              "c" -> Binop(Id("+"),
+                              Id("c") -> Binop(Id("+"),
                                            RecordLookup(Id("a"), Id("age3")),
                                            RecordLookup(Id("a"), Id("age4"))),
-                              "d" -> Binop(Id("op1"), Id("b"),
+                              Id("d") -> Binop(Id("op1"), Id("b"),
                                            Binop(Id("op2"), Id("c"), Id("c")))),
                           Id("d")))
   val testrec = Record(Map(Id("age1") -> Int(34),
@@ -310,34 +310,34 @@ def main(args: Array[String]): Unit =
 
   exprs += Lambda(List(Id("a")),
                   Let(Map(
-                          "b" -> Binop(Id("+"),
+                          Id("b") -> Binop(Id("+"),
                                        RecordLookup(Id("a"), Id("age1")),
                                        RecordLookup(Id("a"), Id("age2"))),
-                          "c" -> Binop(Id("+"),
+                          Id("c") -> Binop(Id("+"),
                                        RecordLookup(Id("a"), Id("age3")),
                                        RecordLookup(Id("a"), Id("age4"))),
-                          "d" -> Binop(RecordLookup(Id("a"), Id("+")), Id("b"), Id("c")),
-                          "e" -> Binop(RecordLookup(Id("a"), Id("-")), Id("d"), Id("c"))),
+                          Id("d") -> Binop(RecordLookup(Id("a"), Id("+")), Id("b"), Id("c")),
+                          Id("e") -> Binop(RecordLookup(Id("a"), Id("-")), Id("d"), Id("c"))),
                       Id("e")))
 
   exprs += Lambda(List(Id("a").typeTag(RecordType(Map(Id("sum") -> LambdaType(List(subs.fresh, subs.fresh, subs.fresh))))), Id("b"), Id("c")),
                   Let(Map(
-                          "x" -> App(RecordLookup(Id("a"), Id("sum")),
+                          Id("x") -> App(RecordLookup(Id("a"), Id("sum")),
                                      List(Id("b"), Id("c"))),
-                          "y" -> App(Id("+"),
+                          Id("y") -> App(Id("+"),
                                      List(Id("b"), Id("x"))),
                       ),
                       Id("y")))
 
   exprs += Let(Map(
-                   "fn1" ->
+                   Id("fn1") ->
                      Lambda(List(Id("n"), Id("b")),
                             Cond(Id("b"),
                                  Id("n"),
                                  App(Id("fn2"),
                                      List(App(Id("-"), List(Id("n"), Int(1))),
                                           Bool(true))))),
-                   "fn2" ->
+                   Id("fn2") ->
                      Lambda(List(Id("n"), Id("b")),
                             Cond(Id("b"),
                                  Id("n"),
