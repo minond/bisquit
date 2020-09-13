@@ -40,6 +40,7 @@ def nextToken(
     case ',' => ok(Comma())
     case ':' => ok(Colon())
     case '=' => ok(Equal())
+    case '.' => ok(Dot())
 
     case '"' =>
       takeUntil(source, is('"')) match {
@@ -53,6 +54,10 @@ def nextToken(
         case Failure(_) => err(InvalidInteger(str))
         case Success(i) => ok(ast.Int(i))
       }
+
+    case x =>
+      val str = (x +: takeWhile(source, isIdentifier)).mkString
+      ok(Id(str))
   }
 
 
@@ -62,14 +67,36 @@ case object NotFound extends LookaheadOutcome
 
 type Predicate[T] = T => Boolean
 
-def is[T](x: T): Predicate[T] =
-  (y: T) => x == y
+def ge[T <: Char](x: T) =
+  (c: T) =>
+    c >= x
 
-def not[T](f: Predicate[T]): Predicate[T] =
-  (x: T) => !f(x)
+def le[T <: Char](x: T) =
+  (c: T) =>
+    c <= x
 
-def isDigit(c: Char): Boolean =
-  c >= '0' && c <= '9'
+def is[T](x: T) =
+  (c: T) =>
+    x == c
+
+def not[T](f: Predicate[T]) =
+  (c: T) =>
+    !f(c)
+
+def and[T](fs: Predicate[T]*) =
+  (c: T) =>
+    fs.foldLeft(true) { (res, f) => res && f(c) }
+
+val isDigit = and(ge('0'),
+                  le('9'))
+
+val isIdentifier = and(not(is('(')),
+                       not(is(')')),
+                       not(is(',')),
+                       not(is(':')),
+                       not(is('=')),
+                       not(is('.')),
+                       not(isDigit))
 
 
 def takeUntil(source: Source, pred: Predicate[Char]): (List[Char], LookaheadOutcome) =

@@ -16,8 +16,9 @@ case class OpenParen() extends Token
 case class CloseParen() extends Token
 case class Colon() extends Token
 case class Equal() extends Token
+case class Dot() extends Token
 
-case class Id(lexeme: String) extends IR with Expression
+case class Id(lexeme: String) extends IR with Expression with Token
 case class Binop(op: Expression, left: Expression, right: Expression) extends Expression
 case class Uniop(op: Expression, subject: Expression) extends Expression
 case class App(fn: Expression, args: List[Expression]) extends IR with Expression

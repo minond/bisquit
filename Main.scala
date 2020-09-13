@@ -402,3 +402,5 @@ def main(args: Array[String]): Unit =
 
   println(lex("""("hi 123 423 3")()()((()))""", "stdin").toList)
   println(lex("""123 1 2 3""", "stdin").toList)
+  println(lex("""test.testing""", "stdin").toList)
+  println(lex("""1.454""", "stdin").toList)
