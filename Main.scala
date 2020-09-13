@@ -6,6 +6,7 @@ import ast._
 import prelude.Ops
 import runtime._
 import typechecker._
+import parser._
 import scope.typeScope
 import printer.formatted
 
@@ -361,20 +362,20 @@ def main(args: Array[String]): Unit =
            )
 
 
-  for
-    expr <- exprs
-  do
-    println(s"> ${formatted(expr, 3)}")
-
-    eval(pass1(expr), scope) match {
-      case Right(ret) => println(s"= ${formatted(ret, 3)}")
-      case Left(err) => println(s"error: ${err}")
-    }
-
-    infer(pass1(expr), scope, subs) match {
-      case Right(ret) => println(s": ${formatted(ret)}\n")
-      case Left(err) => println(s"error: ${err}\n")
-    }
+  // for
+  //   expr <- exprs
+  // do
+  //   println(s"> ${formatted(expr, 3)}")
+  //
+  //   eval(pass1(expr), scope) match {
+  //     case Right(ret) => println(s"= ${formatted(ret, 3)}")
+  //     case Left(err) => println(s"error: ${err}")
+  //   }
+  //
+  //   infer(pass1(expr), scope, subs) match {
+  //     case Right(ret) => println(s": ${formatted(ret)}\n")
+  //     case Left(err) => println(s"error: ${err}\n")
+  //   }
 
   // val subs = Substitution()
   // subs.unify(TypeVariable("a"), IntType)
@@ -398,3 +399,6 @@ def main(args: Array[String]): Unit =
   //     TypeVariable("c"),
   //   ))
   // )))
+
+  println(lex("""("hi 123 423 3")()()((()))""", "stdin").toList)
+  println(lex("""123 1 2 3""", "stdin").toList)

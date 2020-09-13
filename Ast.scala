@@ -11,15 +11,21 @@ sealed trait Expression extends Positioned with Typing
 sealed trait IR extends Typing
 sealed trait Value extends Expression
 
+case class Comma() extends Token
+case class OpenParen() extends Token
+case class CloseParen() extends Token
+case class Colon() extends Token
+case class Equal() extends Token
+
 case class Id(lexeme: String) extends IR with Expression
 case class Binop(op: Expression, left: Expression, right: Expression) extends Expression
 case class Uniop(op: Expression, subject: Expression) extends Expression
 case class App(fn: Expression, args: List[Expression]) extends IR with Expression
 case class Let(bindings: Map[Id, Expression], body: Expression) extends IR with Expression
 case class Cond(cond: Expression, pass: Expression, fail: Expression) extends IR with Expression
-case class Int(value: Integer) extends IR with Value
-case class Str(value: String) extends IR with Value
-case class Bool(value: Boolean) extends IR with Value
+case class Int(value: Integer) extends IR with Value with Token
+case class Str(value: String) extends IR with Value with Token
+case class Bool(value: Boolean) extends IR with Value with Token
 case class Record(fields: Map[Id, Expression]) extends IR with Value
 case class RecordLookup(rec: Expression, field: Id) extends IR with Expression
 

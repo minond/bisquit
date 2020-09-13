@@ -3,9 +3,9 @@ package input
 
 import ast.Token
 
-case class Position(file: String, line: Integer, column: Integer) {
+case class Position(file: String, offset: Int) {
   override def toString =
-    s"$file:$column:$line"
+    s"$file:$offset"
 }
 
 open class Positioned { self =>
@@ -16,11 +16,18 @@ open class Positioned { self =>
     this
 }
 
+class Positioner(val file: String) {
+  def apply(token: Token, offset: Int) =
+    token.at(Position(file, offset))
+
+  def at(offset: Int) =
+    Position(file, offset)
+}
+
 object Positioned {
   val stdin = file("<stdin>")
   val input = file("<input>")
 
   def file(file: String) =
-    (token: Token, line: Integer, column: Integer) =>
-      token.at(Position(file, line, column))
+    Positioner(file)
 }
