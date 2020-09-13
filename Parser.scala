@@ -121,45 +121,6 @@ def takeWhile(source: Source, pred: Predicate[Char]): List[Char] =
       else buff
   aux(List.empty)
 
-      // // TODO This needs to be a little stricter when it comes to the
-      // // various types of characters that can be used depending on the type
-      // // of number.
-      // case n
-      //     if isDigit(n) || (is('-')(n) &&
-      //       src.hasNext &&
-      //       isDigit(src.head._1)) =>
-      //   val num = n + consumeWhile(src, isNumeric).mkString
-      //   Num(num, deriveNumKind(num), file, pos)
-      //
-      // case c if isLetter(c) =>
-      //   Identifier(
-      //     c + consumeWhile(src, isIdentifierTail).mkString,
-      //     file,
-      //     pos
-      //   )
-      //
-      // case c =>
-      //   UnknownToken(c + consumeWhile(src, isWord).mkString, file, pos)
-
-// def nextString(
-//     chars: BufferedIterator[(Char, Int)],
-//     file: String,
-//     pos: Int
-// ): Token =
-//   val str = consumeWhile(chars, not(is('"'))).mkString
-//   if (!chars.hasNext)
-//     EOF(file, str.size + pos)
-//   else
-//     chars.next match {
-//       case (_end, _) if _end == end => Str(str, file, pos)
-//       case (bad, _) =>
-//         UnexpectedToken(
-//           bad.toString,
-//           s"expecting ${end} at end of string",
-//           file,
-//           pos
-//         )
-//     }
 
 // import scala.reflect.{classTag, ClassTag}
 //
@@ -456,53 +417,3 @@ def takeWhile(source: Source, pred: Predicate[Char]): List[Char] =
 //         case got => Left(InvalidExpr(got))
 //       }
 //     }
-//
-//   type Predicate[T] = T => Boolean
-//
-//
-//   // XXX This needs some work...
-//   def deriveNumKind(str: String): NumKind =
-//     if (str.contains("0x")) Hex
-//     else if (str.contains("0b")) Bin
-//     else if (str.contains(".")) Real
-//     else Int
-//
-//   def consumeWhile[T](
-//       src: BufferedIterator[(T, Int)],
-//       predicate: Predicate[T]
-//   ): Iterator[T] = {
-//     def aux(buff: List[T]): List[T] =
-//       if (src.hasNext && predicate(src.head._1)) {
-//         val curr = src.head._1
-//         src.next
-//         aux(buff :+ curr)
-//       } else buff
-//
-//     aux(List.empty).toIterator
-//   }
-//
-//   def isIdentifierTail(c: Char): Boolean =
-//     isLetter(c) || isDigit(c) || c == '_'
-//
-//   def isNumeric(c: Char): Boolean =
-//     isDigit(c) || c == '.' || c == 'a' || c == 'b' || c == 'c' || c == 'd' ||
-//       c == 'e' || c == 'f' || c == 'x'
-//
-//   def isDigit(c: Char): Boolean =
-//     c >= '0' && c <= '9'
-//
-//   def isLetter(c: Char): Boolean =
-//     (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
-//
-//   def isParen(c: Char): Boolean =
-//     c == '(' || c == ')'
-//
-//   def isWord(c: Char): Boolean =
-//     !c.isWhitespace && !isParen(c)
-//
-//   def is[T](x: T): Predicate[T] =
-//     (y: T) => x == y
-//
-//   def not[T](f: Predicate[T]): Predicate[T] =
-//     (x: T) => !f(x)
-// }
