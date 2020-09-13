@@ -95,4 +95,12 @@ object Implicits {
           acc.flatMap(xs => x.map(xs :+ _))
       }
   }
+
+  implicit class EithersIterator[L, R](val eithers: Iterator[Either[L, R]]) {
+    def squished(): Either[L, List[R]] =
+      eithers.toList.foldLeft[Either[L, List[R]]](Right(List())) {
+        (acc, x) =>
+          acc.flatMap(xs => x.map(xs :+ _))
+      }
+  }
 }

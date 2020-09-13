@@ -3,16 +3,37 @@ package parser
 
 import ast.{Int => _, _}
 import input.{Position, Positioned, Positioner}
+import utils.Implicits.EithersIterator
 
 import scala.util.{Try, Success, Failure}
 
 
 type Source = BufferedIterator[(Char, Int)]
+type Tokens = BufferedIterator[Token]
 
 
 trait ParsingError extends Positioned
 case class StringNotClosed() extends ParsingError
 case class InvalidInteger(lexeme: String) extends ParsingError
+
+
+def parse(string: String, fileName: String): Iterator[Either[ParsingError, Expression]] =
+  lex(string, fileName).squished() match {
+    case Left(err) => List(Left(err)).iterator
+    case Right(tokens) => parse(tokens.iterator.buffered)
+  }
+
+
+def parse(tokens: Tokens): Iterator[Either[ParsingError, Expression]] =
+  for
+    token <- tokens
+  yield
+    token match {
+      case expr: Expression => Right(expr)
+      case _ =>
+        println(s"got something else: $token")
+        ???
+    }
 
 
 def lex(string: String, fileName: String): Iterator[Either[ParsingError, Token]] =
