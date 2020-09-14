@@ -11,6 +11,7 @@ sealed trait Expression extends Positioned with Typing
 sealed trait IR extends Typing
 sealed trait Value extends Expression
 
+case class Eof() extends Token
 case class Comma() extends Token
 case class OpenParen() extends Token
 case class CloseParen() extends Token

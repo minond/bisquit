@@ -411,6 +411,7 @@ def main(args: Array[String]): Unit =
     """
     let
       a = 2
+      b = a
     in
-      a
+      b
     """, "stdin").toList)

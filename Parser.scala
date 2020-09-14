@@ -61,7 +61,14 @@ def parseBindings(tokens: Tokens): Either[ParsingError, List[(Id, Expression)]] 
   for
     binding <- parseBinding(tokens)
   yield
-    List(binding)
+    lookahead(tokens) match {
+      case next if next == Keywords.In => List(binding)
+      case next =>
+        parseBindings(tokens) match {
+          case Left(err) => return Left(err)
+          case Right(bindings) => binding +: bindings
+        }
+    }
 
 def parseBinding(tokens: Tokens): Either[ParsingError, (Id, Expression)] =
   for
@@ -84,6 +91,7 @@ def parseExpression(token: Token, tokens: Tokens): Either[ParsingError, Expressi
     case id: Id => Right(id)
   }
 
+
 def eat[T: ClassTag](tokens: Tokens): Either[ParsingError, T] =
   if tokens.isEmpty
   then Left(UnexpectedEOF())
@@ -97,6 +105,11 @@ def eat[T: ClassTag](expected: T, tokens: Tokens): Either[ParsingError, T] =
     if next == expected
     then Right(next.asInstanceOf[T])
     else Left(UnexpectedToken[T]())
+
+def lookahead(tokens: Tokens): Token =
+  if tokens.hasNext
+  then tokens.head
+  else Eof()
 
 
 def lex(string: String, fileName: String): Iterator[Either[ParsingError, Token]] =
