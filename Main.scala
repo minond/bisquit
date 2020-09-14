@@ -404,6 +404,13 @@ def main(args: Array[String]): Unit =
   // println(lex("""123 1 2 3""", "stdin").toList)
   // println(lex("""test.testing""", "stdin").toList)
   // println(lex("""1.454""", "stdin").toList)
-  println(parse("""12""", "stdin").toList)
-  println(parse("""hi""", "stdin").toList)
-  println(parse(""""hi"""", "stdin").toList)
+  // println(parse("""12""", "stdin").toList)
+  // println(parse("""hi""", "stdin").toList)
+  // println(parse(""""hi"""", "stdin").toList)
+  println(parse(
+    """
+    let
+      a = 2
+    in
+      a
+    """, "stdin").toList)
