@@ -407,11 +407,44 @@ def main(args: Array[String]): Unit =
   // println(parse("""12""", "stdin").toList)
   // println(parse("""hi""", "stdin").toList)
   // println(parse(""""hi"""", "stdin").toList)
-  println(parse(
+  // println(parse(
+  //   """
+  //   let
+  //     a = 2
+  //     b = a
+  //   in
+  //     b
+  //   """, "stdin").toList)
+
+  var examples: ListBuffer[String] = ListBuffer()
+
+  examples +=
     """
     let
       a = 2
       b = a
     in
       b
-    """, "stdin").toList)
+    """
+
+  for example <- examples do
+    for parsed <- parse(example, "<example>") do
+      parsed match {
+        case Left(err) =>
+          println(s"parse error: $err")
+        case Right(expr) =>
+          println(s"> ${formatted(expr, 3)}")
+
+          val ir = pass1(expr)
+          val res = eval(ir, scope)
+          val ty = infer(ir, scope, subs)
+
+          (res, ty) match {
+            case (_, Left(err)) =>
+              println(s"type error: $err")
+            case (Left(err), _) =>
+              println(s"runtime error: $err")
+            case (Right(res), Right(ty)) =>
+              println(s"= ${formatted(res, 3)} : ${formatted(ty)}")
+          }
+      }
