@@ -91,6 +91,8 @@ def parseExpression(token: Token, tokens: Tokens): Either[ParsingError, Expressi
     case Keywords.Let => parseLet(tokens)
     case Keywords.Fn => parseLambda(tokens)
     case Keywords.If => parseCond(tokens)
+    case Id("true") => Right(Bool(true))
+    case Id("false") => Right(Bool(false))
     case str: Str => Right(str)
     case int: ast.Int => Right(int)
     case id: Id =>
