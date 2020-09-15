@@ -369,8 +369,11 @@ def main(args: Array[String]): Unit =
     let
       a = +(20, 22)
       b = a
+      x = fn (x) = +(x, x)
     in
-      -(+(a, b), b)
+      x(-(+(a, b), b))
+
+    fn (a) = +(a, a)
     """
 
   for example <- examples do

@@ -4,7 +4,7 @@ package parser
 import ast.{Int => _, _}
 import input.{Position, Positioned, Positioner}
 import utils.ensure
-import utils.Implicits.EithersIterator
+import utils.Implicits.{Lists, Iterators}
 
 import scala.util.{Try, Success, Failure}
 import scala.reflect.ClassTag
@@ -28,6 +28,7 @@ object Keywords {
   val If = Id("if")
   val Then = Id("then")
   val Else = Id("else")
+  val Fn = Id("fn")
 
   def isKeyword(token: Token) =
        token != Let
@@ -35,6 +36,7 @@ object Keywords {
     && token != If
     && token != Then
     && token != Else
+    && token != Fn
 }
 
 
@@ -87,6 +89,7 @@ def parseExpression(tokens: Tokens): Either[ParsingError, Expression] =
 def parseExpression(token: Token, tokens: Tokens): Either[ParsingError, Expression] =
   token match {
     case Keywords.Let => parseLet(tokens)
+    case Keywords.Fn => parseLambda(tokens)
     case str: Str => Right(str)
     case int: ast.Int => Right(int)
     case id: Id =>
@@ -94,6 +97,16 @@ def parseExpression(token: Token, tokens: Tokens): Either[ParsingError, Expressi
       then parseApp(id, tokens)
       else Right(id)
   }
+
+def parseLambda(tokens: Tokens): Either[ParsingError, Lambda] =
+  for
+    _ <- eat(OpenParen(), tokens)
+    maybeParams <- parseByUntil(tokens, Comma(), CloseParen())
+    params <- maybeParams.ensureItems[ParsingError, Id](UnexpectedToken[Id]())
+    _ <- eat(Equal(), tokens)
+    body <- parseExpression(tokens)
+  yield
+    Lambda(params, body)
 
 def parseApp(id: Id, tokens: Tokens): Either[ParsingError, App] =
   for

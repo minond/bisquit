@@ -73,6 +73,15 @@ def ensure[L, R: ClassTag](value: Any, left: => L): Either[L, R] =
 object Implicits {
   import scala.language.implicitConversions
 
+  implicit class Lists[T](items: List[T]) {
+    def ensureItems[L, V: ClassTag](l: => L): Either[L, List[V]] =
+      Right(items.map[V] { item =>
+        if item.isInstanceOf[V]
+        then item.asInstanceOf[V]
+        else return Left(l)
+      })
+  }
+
   implicit class Eithers[L, R](val eithers: List[Either[L, R]]) {
     /** Lets you convert a [[List[Either[L, R]]]] into an [[Either[L, List[R]]]].
      *
@@ -96,7 +105,7 @@ object Implicits {
       }
   }
 
-  implicit class EithersIterator[L, R](val eithers: Iterator[Either[L, R]]) {
+  implicit class Iterators[L, R](val eithers: Iterator[Either[L, R]]) {
     def squished(): Either[L, List[R]] =
       eithers.toList.foldLeft[Either[L, List[R]]](Right(List())) {
         (acc, x) =>
