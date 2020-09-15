@@ -19,6 +19,7 @@ case class UnexpectedToken[Expected: ClassTag]() extends ParsingError
 case class UnexpectedEOF() extends ParsingError
 case class StringNotClosed() extends ParsingError
 case class InvalidInteger(lexeme: String) extends ParsingError
+case class InvalidCharacter(c: Char) extends ParsingError
 
 
 object Keywords {
@@ -152,9 +153,11 @@ def nextToken(
         case Success(i) => ok(ast.Int(i))
       }
 
-    case x =>
-      val str = (x +: takeWhile(source, isIdentifier)).mkString
+    case x if isIdentifierHead(x) =>
+      val str = (x +: takeWhile(source, isIdentifierTail)).mkString
       ok(Id(str))
+
+    case invalid => err(InvalidCharacter(invalid))
   }
 
 
@@ -186,14 +189,16 @@ def and[T](fs: Predicate[T]*) =
 
 val isWhitespace = (c: Char) => c.isWhitespace
 val isDigit = and(ge('0'), le('9'))
-val isIdentifier = and(not(is('(')),
-                       not(is(')')),
-                       not(is(',')),
-                       not(is(':')),
-                       not(is('=')),
-                       not(is('.')),
-                       not(isWhitespace),
-                       not(isDigit))
+val isIdentifierTail = and(not(isWhitespace),
+                           not(is('(')),
+                           not(is(')')),
+                           not(is(',')),
+                           not(is(':')))
+val isIdentifierHead = and(isIdentifierTail,
+                           not(is(':')),
+                           not(is('=')),
+                           not(is('.')),
+                           not(isDigit))
 
 
 def takeUntil(source: Source, pred: Predicate[Char]): (List[Char], LookaheadOutcome) =
