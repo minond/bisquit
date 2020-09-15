@@ -26,8 +26,8 @@ class RuntimeTests extends AnyFlatSpec with should.Matchers {
     //    b = 54.0
     //  in \->
     //       a + b)()
-    val expr = App(Let(Map("a" -> Int(343),
-                           "b" -> Int(54)),
+    val expr = App(Let(Map(Id("a") -> Int(343),
+                           Id("b") -> Int(54)),
                        Lambda(Nil, Binop(Id("+"), Id("a"), Id("b")))),
                    Nil)
 
@@ -46,11 +46,11 @@ class RuntimeTests extends AnyFlatSpec with should.Matchers {
     //             a + b + x)())())())(43.0)
     //
     // # => 608 : num
-    val expr = App(App(App(App(Let(Map("a" -> Int(222),
-                                       "b" -> Int(999999),
-                                       "x" -> Int(999999)),
-                                   Let(Map("b" -> Int(343),
-                                           "x" -> Int(999999)),
+    val expr = App(App(App(App(Let(Map(Id("a") -> Int(222),
+                                       Id("b") -> Int(999999),
+                                       Id("x") -> Int(999999)),
+                                   Let(Map(Id("b") -> Int(343),
+                                           Id("x") -> Int(999999)),
                                        Lambda(List(Id("x")),
                                               Binop(Id("+"),
                                                     Id("a"),
@@ -71,7 +71,7 @@ class RuntimeTests extends AnyFlatSpec with should.Matchers {
     // in if id(#f)
     //    then 1.0
     //    else 2.0
-    val expr = Let(Map("id" -> Lambda(List(Id("x")), Id("x"))),
+    val expr = Let(Map(Id("id") -> Lambda(List(Id("x")), Id("x"))),
                    Cond(App(Id("id"), List(Bool(true))),
                         Int(1),
                         Int(2)))
@@ -85,7 +85,7 @@ class RuntimeTests extends AnyFlatSpec with should.Matchers {
     // in if id(#t)
     //    then 1.0
     //    else 2.0
-    val expr = Let(Map("id" -> Lambda(List(Id("x")), Id("x"))),
+    val expr = Let(Map(Id("id") -> Lambda(List(Id("x")), Id("x"))),
                    Cond(App(Id("id"), List(Bool(false))),
                         Int(1),
                         Int(2)))
