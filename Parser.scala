@@ -89,9 +89,42 @@ def parseExpression(token: Token, tokens: Tokens): Either[ParsingError, Expressi
     case Keywords.Let => parseLet(tokens)
     case str: Str => Right(str)
     case int: ast.Int => Right(int)
-    case id: Id => Right(id)
+    case id: Id =>
+      if lookahead(tokens) == OpenParen()
+      then parseApp(id, tokens)
+      else Right(id)
   }
 
+def parseApp(id: Id, tokens: Tokens): Either[ParsingError, App] =
+  for
+    _ <- eat(OpenParen(), tokens)
+    args <- parseByUntil(tokens, Comma(), CloseParen())
+  yield
+    App(id, args)
+
+def parseByUntil(
+    tokens: Tokens,
+    sep: Token,
+    until: Token,
+    acc: List[Expression] = List.empty,
+): Either[ParsingError, List[Expression]] =
+  next(tokens) match {
+    case Left(err) => Left(err)
+    case Right(token) =>
+      if token == until
+      then Right(acc)
+      else if token == sep
+      then parseByUntil(tokens, sep, until, acc)
+      else parseExpression(token, tokens).flatMap { expr =>
+        parseByUntil(tokens, sep, until, acc :+ expr)
+      }
+  }
+
+
+def next(tokens: Tokens): Either[ParsingError, Token] =
+  if tokens.isEmpty
+  then Left(UnexpectedEOF())
+  else Right(tokens.next)
 
 def eat[T: ClassTag](tokens: Tokens): Either[ParsingError, T] =
   if tokens.isEmpty

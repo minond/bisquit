@@ -367,10 +367,10 @@ def main(args: Array[String]): Unit =
   examples +=
     """
     let
-      a = 2
+      a = +(20, 22)
       b = a
     in
-      b
+      -(+(a, b), b)
     """
 
   for example <- examples do
