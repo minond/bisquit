@@ -21,8 +21,12 @@ case class StringNotClosed() extends ParsingError
 case class InvalidInteger(lexeme: String) extends ParsingError
 case class InvalidCharacter(c: Char) extends ParsingError
 
+object Word {
+  val True = Id("true")
+  val False = Id("false")
+}
 
-object Keywords {
+object Keyword {
   val Let = Id("let")
   val In = Id("in")
   val If = Id("if")
@@ -55,7 +59,7 @@ def parse(tokens: Tokens): Iterator[Either[ParsingError, Expression]] =
 def parseLet(tokens: Tokens): Either[ParsingError, Let] =
   for
     bindings <- parseBindings(tokens)
-    _ <- eat(Keywords.In, tokens)
+    _ <- eat(Keyword.In, tokens)
     body <- parseExpression(tokens)
   yield
     Let(bindings.toMap, body)
@@ -65,7 +69,7 @@ def parseBindings(tokens: Tokens): Either[ParsingError, List[(Id, Expression)]] 
     binding <- parseBinding(tokens)
   yield
     lookahead(tokens) match {
-      case next if next == Keywords.In => List(binding)
+      case next if next == Keyword.In => List(binding)
       case next =>
         parseBindings(tokens) match {
           case Left(err) => return Left(err)
@@ -88,11 +92,11 @@ def parseExpression(tokens: Tokens): Either[ParsingError, Expression] =
 
 def parseExpression(token: Token, tokens: Tokens): Either[ParsingError, Expression] =
   token match {
-    case Keywords.Let => parseLet(tokens)
-    case Keywords.Fn => parseLambda(tokens)
-    case Keywords.If => parseCond(tokens)
-    case Id("true") => Right(Bool(true))
-    case Id("false") => Right(Bool(false))
+    case Word.True => Right(Bool(true))
+    case Word.False => Right(Bool(false))
+    case Keyword.Let => parseLet(tokens)
+    case Keyword.Fn => parseLambda(tokens)
+    case Keyword.If => parseCond(tokens)
     case str: Str => Right(str)
     case int: ast.Int => Right(int)
     case id: Id =>
@@ -104,9 +108,9 @@ def parseExpression(token: Token, tokens: Tokens): Either[ParsingError, Expressi
 def parseCond(tokens: Tokens): Either[ParsingError, Cond] =
   for
     cond <- parseExpression(tokens)
-    _ <- eat(Keywords.Then, tokens)
+    _ <- eat(Keyword.Then, tokens)
     pass <- parseExpression(tokens)
-    _ <- eat(Keywords.Else, tokens)
+    _ <- eat(Keyword.Else, tokens)
     fail <- parseExpression(tokens)
   yield
     Cond(cond, pass, fail)
