@@ -374,6 +374,11 @@ def main(args: Array[String]): Unit =
       x(-(+(a, b), b))
 
     fn (a) = +(a, a)
+
+    fn (a, b, c) =
+      if a
+      then b
+      else c
     """
 
   for example <- examples do

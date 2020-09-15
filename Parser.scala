@@ -90,6 +90,7 @@ def parseExpression(token: Token, tokens: Tokens): Either[ParsingError, Expressi
   token match {
     case Keywords.Let => parseLet(tokens)
     case Keywords.Fn => parseLambda(tokens)
+    case Keywords.If => parseCond(tokens)
     case str: Str => Right(str)
     case int: ast.Int => Right(int)
     case id: Id =>
@@ -97,6 +98,16 @@ def parseExpression(token: Token, tokens: Tokens): Either[ParsingError, Expressi
       then parseApp(id, tokens)
       else Right(id)
   }
+
+def parseCond(tokens: Tokens): Either[ParsingError, Cond] =
+  for
+    cond <- parseExpression(tokens)
+    _ <- eat(Keywords.Then, tokens)
+    pass <- parseExpression(tokens)
+    _ <- eat(Keywords.Else, tokens)
+    fail <- parseExpression(tokens)
+  yield
+    Cond(cond, pass, fail)
 
 def parseLambda(tokens: Tokens): Either[ParsingError, Lambda] =
   for
