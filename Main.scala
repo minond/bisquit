@@ -399,6 +399,6 @@ def main(args: Array[String]): Unit =
             case (Left(err), _) =>
               println(s"runtime error: $err")
             case (Right(res), Right(ty)) =>
-              println(s"= ${formatted(res, 3)} : ${formatted(ty)}")
+              println(s"= ${formatted(res, lvl = 3, short = true)} : ${formatted(ty)}")
           }
       }

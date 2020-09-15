@@ -21,16 +21,10 @@ case class Labeler(labels: MMap[Int, String] = MMap()) {
 }
 
 
-def formatted(exprs: List[Expression], lvl: Int, nested: Boolean, sep: String = " "): String =
+def formattedAll(exprs: List[Expression], lvl: Int, nested: Boolean, sep: String = " "): String =
   exprs.map(formatted(_, lvl, nested)).mkString(sep)
 
-def formatted(expr: Expression): String =
-  formatted(expr, 1)
-
-def formatted(expr: Expression, lvl: Int): String =
-  formatted(expr, lvl, false)
-
-def formatted(expr: Expression, lvl: Int, nested: Boolean): String =
+def formatted(expr: Expression, lvl: Int = 1, nested: Boolean = false, short: Boolean = false): String =
   expr match {
     case id @ Id(lexeme) =>
       id.ty match {
@@ -39,14 +33,14 @@ def formatted(expr: Expression, lvl: Int, nested: Boolean): String =
       }
     case Binop(op, left, right) => s"${formatted(left, lvl + 1, false)} ${formatted(op)} ${formatted(right, lvl + 1, false)}"
     case Uniop(op, right) => s"${formatted(op)}${formatted(right, lvl + 1, false)}"
-    case App(Id(func), args) => s"${func}(${formatted(args, lvl + 1, false, ", ")})"
+    case App(Id(func), args) => s"${func}(${formattedAll(args, lvl + 1, false, ", ")})"
     case App(fn, args) =>
       val body = formatted(fn, lvl, false)
       val argLvl = body.split("\n").last.size
       val indent = " " * (lvl - 1)
       if nested
-      then s"\n${indent}(${body})(${formatted(args, argLvl + 3, false, ", ")})"
-      else s"(${body})(${formatted(args, argLvl + 3, false, ", ")})"
+      then s"\n${indent}(${body})(${formattedAll(args, argLvl + 3, false, ", ")})"
+      else s"(${body})(${formattedAll(args, argLvl + 3, false, ", ")})"
     case Bool(v) => if v then "#t" else "#f"
     case RecordLookup(rec, field) => s"${formatted(rec, lvl, false)}.${formatted(field, lvl, false)}"
     case Record(fields) =>
@@ -57,14 +51,18 @@ def formatted(expr: Expression, lvl: Int, nested: Boolean): String =
     case ast.Int(num) => num.toString
     case Str(str) => s""""$str""""
     case Lambda(params, body, _) =>
-      val indent = " " * lvl
-      val spacing = if params.isEmpty then "" else " "
-      val sig = if params.isEmpty
-                then ""
-                else s"(${formatted(params, lvl + 1, false, ", ")})"
-      if nested
-      then s"\n${indent}\\$sig. ${formatted(body, lvl + 2, true)}"
-      else s"fn $sig = ${formatted(body, lvl + 2, true)}"
+      if short
+      then
+        "<lambda>"
+      else
+        val indent = " " * lvl
+        val spacing = if params.isEmpty then "" else " "
+        val sig = if params.isEmpty
+                  then ""
+                  else s"(${formattedAll(params, lvl + 1, false, ", ")})"
+        if nested
+        then s"\n${indent}\\$sig. ${formatted(body, lvl + 2, true)}"
+        else s"fn $sig = ${formatted(body, lvl + 2, true)}"
     case _: Builtin => "<builtin>"
     case Let(bindings, body) =>
       val names = bindings.keys
