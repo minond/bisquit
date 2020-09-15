@@ -64,7 +64,7 @@ def formatted(expr: Expression, lvl: Int, nested: Boolean): String =
                 else s"(${formatted(params, lvl + 1, false, ", ")})"
       if nested
       then s"\n${indent}\\$sig. ${formatted(body, lvl + 2, true)}"
-      else s"\\$sig. ${formatted(body, lvl + 2, true)}"
+      else s"fn $sig = ${formatted(body, lvl + 2, true)}"
     case _: Builtin => "<builtin>"
     case Let(bindings, body) =>
       val names = bindings.keys
