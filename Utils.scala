@@ -74,11 +74,11 @@ object Implicits {
   import scala.language.implicitConversions
 
   implicit class Lists[T](items: List[T]) {
-    def ensureItems[L, V: ClassTag](l: => L): Either[L, List[V]] =
+    def ensureItems[L, V: ClassTag](l: T => L): Either[L, List[V]] =
       Right(items.map[V] { item =>
         if item.isInstanceOf[V]
         then item.asInstanceOf[V]
-        else return Left(l)
+        else return Left(l(item))
       })
   }
 

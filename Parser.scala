@@ -15,7 +15,8 @@ type Tokens = BufferedIterator[Token]
 
 
 trait ParsingError extends Positioned
-case class UnexpectedToken[Expected: ClassTag]() extends ParsingError
+case class UnexpectedToken[Expected: ClassTag](got: Token) extends ParsingError
+case class UnexpectedExpression[Expected: ClassTag](got: Expression) extends ParsingError
 case class UnexpectedEOF() extends ParsingError
 case class StringNotClosed() extends ParsingError
 case class InvalidInteger(lexeme: String) extends ParsingError
@@ -154,7 +155,7 @@ def parseLambda(tokens: Tokens): Either[ParsingError, Lambda] =
   for
     _ <- eat(OpenParen(), tokens)
     maybeParams <- parseByUntil(tokens, Comma(), CloseParen())
-    params <- maybeParams.ensureItems[ParsingError, Id](UnexpectedToken[Id]())
+    params <- maybeParams.ensureItems[ParsingError, Id]({ err => UnexpectedExpression[Id](err) })
     _ <- eat(Equal(), tokens)
     body <- parseExpression(tokens)
   yield
@@ -194,7 +195,9 @@ def next(tokens: Tokens): Either[ParsingError, Token] =
 def eat[T: ClassTag](tokens: Tokens): Either[ParsingError, T] =
   if tokens.isEmpty
   then Left(UnexpectedEOF())
-  else ensure[ParsingError, T](tokens.next, UnexpectedToken[T]())
+  else
+    val next = tokens.next
+    ensure[ParsingError, T](next, UnexpectedToken[T](next))
 
 def eat[T: ClassTag](expected: T, tokens: Tokens): Either[ParsingError, T] =
   if tokens.isEmpty
@@ -203,7 +206,7 @@ def eat[T: ClassTag](expected: T, tokens: Tokens): Either[ParsingError, T] =
     val next = tokens.next
     if next == expected
     then Right(next.asInstanceOf[T])
-    else Left(UnexpectedToken[T]())
+    else Left(UnexpectedToken[T](next))
 
 def lookahead(tokens: Tokens): Token =
   if tokens.hasNext
