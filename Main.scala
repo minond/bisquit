@@ -388,8 +388,16 @@ def main(args: Array[String]): Unit =
     let
       a = fn () = { b = 1, c = "hi 1 2 3", a = fn (a, c, +2, ???) = ???(+2(+(a, 43), c)) }
       id = fn (a) = a
+      b = a().a(3, 4, +, id)
+      parent = {
+        c1 = {
+          c2 = {
+            c3 = "hi hi hi"
+          }
+        }
+      }
     in
-      a().a(3, 4, +, id)
+      parent.c1.c2.c3
     """
 
   for example <- examples do
