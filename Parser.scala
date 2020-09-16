@@ -126,8 +126,7 @@ def parseExpression(token: Token, tokens: Tokens): Either[ParsingError, Expressi
     case Keyword.Fn => parseExpressionContinuation(parseLambda(tokens), tokens)
     case Keyword.If => parseCond(tokens)
     case OpenCurlyBraket() => parseExpressionContinuation(parseRecord(tokens), tokens)
-    case str: Str => Right(str)
-    case int: ast.Int => Right(int)
+    case scalar: (Str | ast.Int) => Right(scalar)
     case id: Id => parseExpressionContinuation(id, tokens)
   }
 
