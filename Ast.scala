@@ -15,6 +15,8 @@ case class Eof() extends Token
 case class Comma() extends Token
 case class OpenParen() extends Token
 case class CloseParen() extends Token
+case class OpenCurlyBraket() extends Token
+case class CloseCurlyBraket() extends Token
 case class Colon() extends Token
 case class Equal() extends Token
 case class Dot() extends Token

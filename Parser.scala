@@ -64,6 +64,27 @@ def parseLet(tokens: Tokens): Either[ParsingError, Let] =
   yield
     Let(bindings.toMap, body)
 
+def parseRecord(tokens: Tokens): Either[ParsingError, Record] =
+  for
+    fields <- parseFields(tokens)
+    _ <- eat(CloseCurlyBraket(), tokens)
+  yield
+    Record(fields.toMap)
+
+def parseFields(tokens: Tokens): Either[ParsingError, List[(Id, Expression)]] =
+  for
+    binding <- parseBinding(tokens)
+  yield
+    lookahead(tokens) match {
+      case next if next == CloseCurlyBraket() => List(binding)
+      case next if next == Comma() =>
+        tokens.next
+        parseFields(tokens) match {
+          case Left(err) => return Left(err)
+          case Right(bindings) => binding +: bindings
+        }
+    }
+
 def parseBindings(tokens: Tokens): Either[ParsingError, List[(Id, Expression)]] =
   for
     binding <- parseBinding(tokens)
@@ -97,6 +118,7 @@ def parseExpression(token: Token, tokens: Tokens): Either[ParsingError, Expressi
     case Keyword.Let => parseLet(tokens)
     case Keyword.Fn => parseLambda(tokens)
     case Keyword.If => parseCond(tokens)
+    case OpenCurlyBraket() => parseRecord(tokens)
     case str: Str => Right(str)
     case int: ast.Int => Right(int)
     case id: Id =>
@@ -198,6 +220,8 @@ def nextToken(
   char match {
     case '(' => ok(OpenParen())
     case ')' => ok(CloseParen())
+    case '{' => ok(OpenCurlyBraket())
+    case '}' => ok(CloseCurlyBraket())
     case ',' => ok(Comma())
     case ':' => ok(Colon())
     case '=' => ok(Equal())
@@ -255,6 +279,8 @@ val isDigit = and(ge('0'), le('9'))
 val isIdentifierTail = and(not(isWhitespace),
                            not(is('(')),
                            not(is(')')),
+                           not(is('{')),
+                           not(is('}')),
                            not(is(',')),
                            not(is(':')))
 val isIdentifierHead = and(isIdentifierTail,

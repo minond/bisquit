@@ -370,8 +370,13 @@ def main(args: Array[String]): Unit =
       a = +(20, 22)
       b = a
       x = fn (x) = +(x, x)
+      y = let
+            a = 23
+          in let
+               b = a
+             in b
     in
-      x(-(+(a, b), b))
+      x(-(+(a, b), y))
 
     fn (a) = +(a, a)
 
@@ -379,6 +384,11 @@ def main(args: Array[String]): Unit =
       if a
       then b
       else c
+
+    let
+      a = { b = 1, c = "hi 1 2 3", a = fn (a, c, +2, ???) = ???(+2(+(a, 43), c)) }
+    in
+      a
     """
 
   for example <- examples do
