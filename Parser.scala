@@ -135,11 +135,11 @@ def parseExpressionContinuation(headRes: Either[ParsingError, Expression], token
   headRes.flatMap { head => parseExpressionContinuation(head, tokens) }
 
 def parseExpressionContinuation(head: Expression, tokens: Tokens): Either[ParsingError, Expression] =
-  if lookahead(tokens) == OpenParen()
-  then parseExpressionContinuation(parseApp(head, tokens), tokens)
-  else if lookahead(tokens) == Dot()
-  then parseExpressionContinuation(parseRecordLookup(head, tokens), tokens)
-  else Right(head)
+  lookahead(tokens) match {
+    case OpenParen() => parseExpressionContinuation(parseApp(head, tokens), tokens)
+    case Dot() => parseExpressionContinuation(parseRecordLookup(head, tokens), tokens)
+    case _ => Right(head)
+  }
 
 def parseCond(tokens: Tokens): Either[ParsingError, Cond] =
   for
