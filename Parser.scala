@@ -116,16 +116,21 @@ def parseExpression(token: Token, tokens: Tokens): Either[ParsingError, Expressi
     case Word.True => Right(Bool(true))
     case Word.False => Right(Bool(false))
     case Keyword.Let => parseLet(tokens)
-    case Keyword.Fn => parseLambda(tokens)
+    case Keyword.Fn => parseExpressionContinuation(parseLambda(tokens), tokens)
     case Keyword.If => parseCond(tokens)
-    case OpenCurlyBraket() => parseRecord(tokens)
+    case OpenCurlyBraket() => parseExpressionContinuation(parseRecord(tokens), tokens)
     case str: Str => Right(str)
     case int: ast.Int => Right(int)
-    case id: Id =>
-      if lookahead(tokens) == OpenParen()
-      then parseApp(id, tokens)
-      else Right(id)
+    case id: Id => parseExpressionContinuation(id, tokens)
   }
+
+def parseExpressionContinuation(headRes: Either[ParsingError, Expression], tokens: Tokens): Either[ParsingError, Expression] =
+  headRes.flatMap { head => parseExpressionContinuation(head, tokens) }
+
+def parseExpressionContinuation(head: Expression, tokens: Tokens): Either[ParsingError, Expression] =
+  if lookahead(tokens) == OpenParen()
+  then parseApp(head, tokens)
+  else Right(head)
 
 def parseCond(tokens: Tokens): Either[ParsingError, Cond] =
   for
@@ -147,12 +152,12 @@ def parseLambda(tokens: Tokens): Either[ParsingError, Lambda] =
   yield
     Lambda(params, body)
 
-def parseApp(id: Id, tokens: Tokens): Either[ParsingError, App] =
+def parseApp(callee: Expression, tokens: Tokens): Either[ParsingError, App] =
   for
     _ <- eat(OpenParen(), tokens)
     args <- parseByUntil(tokens, Comma(), CloseParen())
   yield
-    App(id, args)
+    App(callee, args)
 
 def parseByUntil(
     tokens: Tokens,
