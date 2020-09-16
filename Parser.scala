@@ -64,6 +64,13 @@ def parseLet(tokens: Tokens): Either[ParsingError, Let] =
   yield
     Let(bindings.toMap, body)
 
+def parseRecordLookup(rec: Expression, tokens: Tokens): Either[ParsingError, RecordLookup] =
+  for
+    _ <- eat(Dot(), tokens)
+    field <- eat[Id](tokens)
+  yield
+    RecordLookup(rec, field)
+
 def parseRecord(tokens: Tokens): Either[ParsingError, Record] =
   for
     fields <- parseFields(tokens)
@@ -130,6 +137,8 @@ def parseExpressionContinuation(headRes: Either[ParsingError, Expression], token
 def parseExpressionContinuation(head: Expression, tokens: Tokens): Either[ParsingError, Expression] =
   if lookahead(tokens) == OpenParen()
   then parseApp(head, tokens)
+  else if lookahead(tokens) == Dot()
+  then parseRecordLookup(head, tokens)
   else Right(head)
 
 def parseCond(tokens: Tokens): Either[ParsingError, Cond] =
@@ -287,6 +296,7 @@ val isIdentifierTail = and(not(isWhitespace),
                            not(is('{')),
                            not(is('}')),
                            not(is(',')),
+                           not(is('.')),
                            not(is(':')))
 val isIdentifierHead = and(isIdentifierTail,
                            not(is(':')),

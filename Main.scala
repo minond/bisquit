@@ -388,7 +388,7 @@ def main(args: Array[String]): Unit =
     let
       a = { b = 1, c = "hi 1 2 3", a = fn (a, c, +2, ???) = ???(+2(+(a, 43), c)) }
     in
-      a
+      a.a
     """
 
   for example <- examples do
