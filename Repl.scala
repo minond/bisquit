@@ -33,29 +33,36 @@ class Repl(
         case "" =>
         case "exit" => return
         case code =>
-          buff.clear
-          for res <- parse(code, fileName) do
-            res match {
-              case Left(err) =>
-                out.println(s"parse error: $err")
-                out.println("")
-              case Right(expr) =>
-                val ir = pass1(expr)
-                infer(ir, scope, subs) match {
-                  case Left(err) =>
-                    out.println(s"type error: $err")
-                    out.println("")
-                  case Right(ty) =>
-                    eval(ir, scope) match {
-                      case Left(err) =>
-                        out.println(s"runtime error: $err")
-                        out.println("")
-                      case Right(value) =>
-                        out.println(s"= ${formatted(value, lvl = 3, short = true)} : ${formatted(ty)}")
-                        out.println("")
-                    }
-                }
-            }
+          if process(code)
+          then buff.clear
       }
     }
+
+  def process(code: String): Boolean =
+    for res <- parse(code, fileName) do
+      res match {
+        case Left(_: UnexpectedEOF) =>
+          return false
+        case Left(err) =>
+          out.println(s"parse error: $err")
+          out.println("")
+        case Right(expr) =>
+          val ir = pass1(expr)
+          infer(ir, scope, subs) match {
+            case Left(err) =>
+              out.println(s"type error: $err")
+              out.println("")
+            case Right(ty) =>
+              eval(ir, scope) match {
+                case Left(err) =>
+                  out.println(s"runtime error: $err")
+                  out.println("")
+                case Right(value) =>
+                  out.println(s"= ${formatted(value, lvl = 3, short = true)} : ${formatted(ty)}")
+                  out.println("")
+              }
+          }
+      }
+
+    return true
 }
