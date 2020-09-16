@@ -386,9 +386,10 @@ def main(args: Array[String]): Unit =
       else c
 
     let
-      a = { b = 1, c = "hi 1 2 3", a = fn (a, c, +2, ???) = ???(+2(+(a, 43), c)) }
+      a = fn () = { b = 1, c = "hi 1 2 3", a = fn (a, c, +2, ???) = ???(+2(+(a, 43), c)) }
+      id = fn (a) = a
     in
-      a.a
+      a().a(3, 4, +, id)
     """
 
   for example <- examples do
