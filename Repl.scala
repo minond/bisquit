@@ -35,6 +35,7 @@ class Repl(
         case code =>
           if process(code)
           then buff.clear
+          else buff.append("\n")
       }
     }
 
