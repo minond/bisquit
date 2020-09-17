@@ -42,6 +42,7 @@ def eval(exprs: List[IR], scope: RuntimeScope): Either[RuntimeError, List[Value]
 def eval(expr: IR, scope: RuntimeScope): Either[RuntimeError, Value] =
   expr match {
     case Lambda(args, body, _) => Right(Lambda(args, body, scope))
+    case Tuple(fields) => evalTuple(fields, scope)
     case Record(fields) => evalRecord(fields, scope)
     case RecordLookup(rec, field) => evalRecordLookup(rec, field, scope)
     case value: Value => Right(value)
@@ -50,6 +51,11 @@ def eval(expr: IR, scope: RuntimeScope): Either[RuntimeError, Value] =
     case Let(bindings, body) => evalLet(bindings, body, scope)
     case Cond(cond, pass, fail) => evalCond(cond, pass, fail, scope)
   }
+
+def evalTuple(fields: List[Expression], scope: RuntimeScope) =
+  for
+    inners <- fields.map { v => eval(pass1(v), scope) }.squished()
+  yield Tuple(inners)
 
 def evalRecordLookup(rec: Expression, field: Id, scope: RuntimeScope) =
   for

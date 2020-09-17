@@ -15,6 +15,7 @@ case object UnitType extends Type
 case object IntType extends Type
 case object StrType extends Type
 case object BoolType extends Type
+case class TupleType(fields: List[Type]) extends Type
 case class RecordType(fields: Map[Id, Type] = Map()) extends Type
 
 case class LambdaType(tys: List[Type]) extends Type {
@@ -65,6 +66,8 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
   def apply(ty: Type): Type =
     ty match {
       case ty @ (UnitType | IntType | StrType | BoolType | RecordType) => ty
+      case TupleType(fields) =>
+        TupleType(fields.map(apply))
       case rec: RecordVariable =>
         RecordVariable(MMap((remap(rec.fields.toMap) { apply }).toList:_*))
       case RecordType(fields) =>
@@ -158,9 +161,24 @@ def infer(expr: IR, env: Environment, sub: Substitution): Either[TypingError, Ty
     case Let(bindings, body) => inferLet(bindings, body, env, sub)
     case Lambda(params, body, scope) => inferLambda(params, pass1(body), scope, env, sub)
     case App(fn, args) => inferApp(fn, args, env, sub)
+    case Tuple(fields) => inferTuple(fields, env, sub)
     case Record(fields) => inferRecord(fields, env, sub)
     case RecordLookup(rec, field) => inferRecordLookup(rec, field, env, sub)
   }
+
+def inferAll(exprs: List[Expression], env: Environment, sub: Substitution) =
+  for
+    tyExprs <- exprs.map(pass1).map(infer(_, env, sub)).squished()
+  yield
+    tyExprs
+
+def inferTuple(fields: List[Expression], env: Environment, sub: Substitution) =
+  for
+    tys <- inferAll(fields, env, sub)
+  yield
+    if tys.size == 0
+    then UnitType
+    else TupleType(tys)
 
 def inferLet(bindings: Map[Id, Expression], body: Expression, env: Environment, sub: Substitution) =
   val bindingTys = bindings.keys.toList.map { id =>

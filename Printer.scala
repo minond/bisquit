@@ -42,6 +42,8 @@ def formatted(expr: Expression, lvl: Int = 1, nested: Boolean = false, short: Bo
       then s"\n${indent}(${body})(${formattedAll(args, argLvl + 3, false, ", ")})"
       else s"(${body})(${formattedAll(args, argLvl + 3, false, ", ")})"
     case Bool(v) => if v then "#t" else "#f"
+    case Tuple(fields) =>
+      s"(${formattedAll(fields, lvl, nested, ", ")})"
     case RecordLookup(rec, field) => s"${formatted(rec, lvl, false)}.${formatted(field, lvl, false)}"
     case Record(fields) =>
       val pairs = fields.map { (k, v) => s"${formatted(k, lvl, false)} = ${formatted(v, lvl, nested)}" }
@@ -93,6 +95,9 @@ def formatted(ty: Type, label: Labeler, nested: Boolean): String =
     case IntType => "Int"
     case StrType => "Str"
     case BoolType => "Bool"
+    case TupleType(fields) =>
+      val tys = fields.map{ field => formatted(field, label, nested) }
+      s"(${tys.mkString(" * ")})"
     case rec: RecordVariable =>
       val pairs = rec.fields.map { (k, v) => s"${formatted(k)} : ${formatted(v, label, nested)}" }
       val separator = if nested

@@ -30,6 +30,7 @@ case class Cond(cond: Expression, pass: Expression, fail: Expression) extends IR
 case class Int(value: Integer) extends IR with Value with Token
 case class Str(value: String) extends IR with Value with Token
 case class Bool(value: Boolean) extends IR with Value with Token
+case class Tuple(fields: List[Expression]) extends IR with Value
 case class Record(fields: Map[Id, Expression]) extends IR with Value
 case class RecordLookup(rec: Expression, field: Id) extends IR with Expression
 

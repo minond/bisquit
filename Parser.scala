@@ -72,6 +72,14 @@ def parseRecordLookup(rec: Expression, tokens: Tokens): Either[ParsingError, Rec
   yield
     RecordLookup(rec, field)
 
+def parseTuple(tokens: Tokens): Either[ParsingError, Expression] =
+  for
+    fields <- parseByUntil(tokens, Comma(), CloseParen())
+  yield
+    if fields.size == 1
+    then fields.head
+    else Tuple(fields)
+
 def parseRecord(tokens: Tokens): Either[ParsingError, Record] =
   for
     fields <- parseFields(tokens)
@@ -130,6 +138,7 @@ def parseExpression(token: Token, tokens: Tokens): Either[ParsingError, Expressi
     case Keyword.Let => parseLet(tokens)
     case Keyword.Fn => parseExpressionContinuation(parseLambda(tokens), tokens)
     case Keyword.If => parseCond(tokens)
+    case OpenParen() => parseExpressionContinuation(parseTuple(tokens), tokens)
     case OpenCurlyBraket() => parseExpressionContinuation(parseRecord(tokens), tokens)
     case scalar: (Str | ast.Int) => Right(scalar)
     case id: Id => parseExpressionContinuation(id, tokens)
