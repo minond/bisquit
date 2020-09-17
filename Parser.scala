@@ -80,18 +80,22 @@ def parseRecord(tokens: Tokens): Either[ParsingError, Record] =
     Record(fields.toMap)
 
 def parseFields(tokens: Tokens): Either[ParsingError, List[(Id, Expression)]] =
-  for
-    binding <- parseBinding(tokens)
-  yield
-    lookahead(tokens) match {
-      case next if next == CloseCurlyBraket() => List(binding)
-      case next if next == Comma() =>
-        tokens.next
-        parseFields(tokens) match {
-          case Left(err) => return Left(err)
-          case Right(bindings) => binding +: bindings
-        }
-    }
+  lookahead(tokens) match {
+      case next if next == CloseCurlyBraket() => Right(List.empty)
+      case _ =>
+        for
+          binding <- parseBinding(tokens)
+        yield
+          lookahead(tokens) match {
+            case next if next == CloseCurlyBraket() => List(binding)
+            case next if next == Comma() =>
+              tokens.next
+              parseFields(tokens) match {
+                case Left(err) => return Left(err)
+                case Right(bindings) => binding +: bindings
+              }
+          }
+  }
 
 def parseBindings(tokens: Tokens): Either[ParsingError, List[(Id, Expression)]] =
   for
