@@ -1,6 +1,7 @@
 package bisquit
 package repl
 
+import ast._
 import parser._
 import printer._
 import runtime._
@@ -14,6 +15,11 @@ class Repl(
     in: InputStream = System.in,
     out: PrintStream = System.out,
 ) {
+  enum Mode {
+    case Parse
+    case Eval
+  }
+
   val promptPrefix = ""
   val promptStart = s"${promptPrefix}> "
   val promptCont = s"${" " * promptPrefix.size}| "
@@ -39,31 +45,57 @@ class Repl(
       }
     }
 
-  def process(code: String): Boolean =
+  def process(origCode: String): Boolean =
+    mode(origCode) match {
+      case (Mode.Parse, code) =>
+        parseIt(code) { expr =>
+          out.println(expr)
+          out.println("")
+        }
+
+      case (Mode.Eval, code) =>
+        parseIt(code)(doIt)
+    }
+
+  def doIt(expr: Expression) =
+    val ir = pass1(expr)
+    infer(ir, scope, subs) match {
+      case Left(err) =>
+        out.println(s"type error: $err")
+        out.println("")
+
+      case Right(ty) =>
+        eval(ir, scope) match {
+          case Left(err) =>
+            out.println(s"runtime error: $err")
+            out.println("")
+          case Right(value) =>
+            out.println(s"= ${formatted(value, lvl = 3, short = true)} : ${formatted(ty)}")
+            out.println("")
+        }
+    }
+
+  def parseIt(code: String)(ok: Expression => Unit): Boolean = {
     for res <- parse(code, fileName) do
       res match {
         case Left(_: UnexpectedEOF) =>
           return false
+
         case Left(err) =>
           out.println(s"parse error: $err")
           out.println("")
+          return true
+
         case Right(expr) =>
-          val ir = pass1(expr)
-          infer(ir, scope, subs) match {
-            case Left(err) =>
-              out.println(s"type error: $err")
-              out.println("")
-            case Right(ty) =>
-              eval(ir, scope) match {
-                case Left(err) =>
-                  out.println(s"runtime error: $err")
-                  out.println("")
-                case Right(value) =>
-                  out.println(s"= ${formatted(value, lvl = 3, short = true)} : ${formatted(ty)}")
-                  out.println("")
-              }
-          }
+          ok(expr)
       }
 
-    return true
+    true
+  }
+
+  def mode(code: String): (Mode, String) =
+    (code.split(" ").toList) match {
+      case (":parse" :: rest) => (Mode.Parse, rest.mkString(" "))
+      case _ => (Mode.Eval, code)
+    }
 }
