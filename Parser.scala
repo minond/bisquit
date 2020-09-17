@@ -303,11 +303,9 @@ val isIdentifierTail = and(not(isWhitespace),
                            not(is('}')),
                            not(is(',')),
                            not(is('.')),
+                           not(is('=')),
                            not(is(':')))
 val isIdentifierHead = and(isIdentifierTail,
-                           not(is(':')),
-                           not(is('=')),
-                           not(is('.')),
                            not(isDigit))
 
 
