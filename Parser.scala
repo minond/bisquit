@@ -142,6 +142,7 @@ def parseExpression(token: Token, tokens: Tokens): Either[ParsingError, Expressi
     case OpenCurlyBraket() => parseExpressionContinuation(parseRecord(tokens), tokens)
     case scalar: (Str | ast.Int) => Right(scalar)
     case id: Id => parseExpressionContinuation(id, tokens)
+    case unexpected => Left(UnexpectedToken[Token](unexpected))
   }
 
 def parseExpressionContinuation(headRes: Either[ParsingError, Expression], tokens: Tokens): Either[ParsingError, Expression] =
