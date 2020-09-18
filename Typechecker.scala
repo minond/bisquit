@@ -75,14 +75,40 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
       case LambdaType(tys) =>
         LambdaType(tys.map(apply))
       case TypeVariable(id) =>
-        apply(substitutions.getOrElse(id, return ty))
+        substitutions.get(id) match {
+          case None => ty
+          case Some(sub1) =>
+            sub1 match {
+              case next @ TypeVariable(id2) =>
+                substitutions.get(id2) match {
+                  case Some(TypeVariable(id3)) if id3 == id => ty
+                  case Some(ty2: TypeVariable) => apply(ty2)
+                  case Some(ty2) => apply(ty2)
+                  case None => apply(next)
+                }
+
+              case nextTy => apply(nextTy)
+            }
+        }
     }
 
   def unify(ty1: Type, ty2: Type): Either[TypingError, Substitution] =
     (ty1, ty2) match {
       case _ if ty1 == ty2 => Right(this)
-      case (TypeVariable(id), _) => unifyVar(id, ty1, ty2)
-      case (_, TypeVariable(id)) => unifyVar(id, ty2, ty1)
+      case (TypeVariable(id), TypeVariable(_)) => unifyVar(id, ty1, ty2)
+      case (TypeVariable(id), ty) =>
+        substitutions.get(id) match {
+          case None => set(id, ty)
+          case Some(tyVar : TypeVariable) =>
+            set(id, ty)
+            unify(tyVar, ty)
+          case Some(ty2) =>
+            unify(ty, ty2)
+        }
+
+      case (ty, tyVar : TypeVariable) =>
+        unify(tyVar, ty)
+
       case (LambdaType(tys1), LambdaType(tys2)) => unifyLambda(tys1, tys2)
       case (record: RecordType, recVar: RecordVariable) => unifyRecordToRecVar(record, recVar)
       case (s1: RecordVariable, s2: RecordVariable) => unifyRecVarToRecVar(s1, s2, None)
@@ -116,8 +142,16 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
                }
            }.squished()
       _ <- if id.isDefined
-           then set(id.get, s1)
-           else Right(this)
+           then {
+             substitutions.get(id.get) match {
+               case None =>
+                 set(id.get, s1)
+               case Some(tyVar : TypeVariable) =>
+                 unify(tyVar, s1)
+               case Some(ty) =>
+                 unify(s1, ty)
+             }
+           } else Right(this)
     yield this
 
   private def unifyRecordToRecVar(record: RecordType, recVar: RecordVariable) =
@@ -137,9 +171,20 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
     yield this
 
   private def unifyVar(id: Int, tyVar: Type, ty: Type) =
-    if substitutions.contains(id)
-    then unify(apply(tyVar), ty, id)
-    else set(id, ty)
+    substitutions.get(id) match {
+      case None => set(id, ty)
+      case Some(ty2 @ TypeVariable(id2)) =>
+        substitutions.get(id2) match {
+          case None => unify(ty2, ty, id)
+
+          case Some(ty3 @ TypeVariable(id3)) =>
+            if id3 == id
+            then Right(this)
+            else unify(apply(tyVar), ty, id)
+        }
+
+      case Some(next) => unify(next, ty, id)
+    }
 
   private def set(k: Int, v: Type) =
     substitutions.addOne(k, v)
