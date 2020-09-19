@@ -75,8 +75,10 @@ class Repl(
               out.println("")
             }
           case stmt: Statement =>
-            out.println(s": ${formatted(UnitType)}")
-            out.println("")
+            typeIt(stmt.asExpression) { (_, ty) =>
+              out.println(s": ${formatted(ty)}")
+              out.println("")
+            }
         }
 
       case (Mode.Eval, code) =>
