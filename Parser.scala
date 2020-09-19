@@ -35,6 +35,8 @@ object Word {
   val False = Id("false")
 
   val Def = Id("def")
+  val Import = Id("import")
+  val Exposing = Id("exposing")
 
   def isKeyword(token: Token) =
        token != Let
@@ -60,13 +62,29 @@ def parse(tokens: Tokens): Iterator[Either[ParsingError, Expression | Statement]
 
 def parseTopLevel(token: Token, tokens: Tokens): Either[ParsingError, Expression | Statement] =
   token match {
-    case Word.Def => parseStatement(token, tokens)
+    case Word.Def | Word.Import => parseStatement(token, tokens)
     case _ => parseExpression(token, tokens)
   }
 
 def parseStatement(token: Token, tokens: Tokens): Either[ParsingError, Statement] =
   token match {
     case Word.Def => parseDefinition(tokens)
+    case Word.Import => parseImport(tokens)
+  }
+
+def parseImport(tokens: Tokens): Either[ParsingError, Import] =
+  (eat[Id](tokens), lookahead(tokens)) match {
+    case (Left(err), _) => Left(err)
+
+    case (Right(name), Word.Exposing) =>
+      for
+        _ <- eat[OpenParen](drop1(tokens))
+        maybeExposing <- parseByUntil(tokens, Comma(), CloseParen())
+        exposing <- maybeExposing.ensureItems[ParsingError, Id]({ err => UnexpectedExpression[Id](err) })
+      yield
+        Import(name, exposing)
+
+    case (Right(name), _) => Right(Import(name, List.empty))
   }
 
 def parseDefinition(tokens: Tokens): Either[ParsingError, Definition] =

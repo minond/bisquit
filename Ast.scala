@@ -89,3 +89,7 @@ trait Calling(fn: Callable.Func) {
 case class Definition(name: Id, value: Expression) extends Statement {
   def asExpression = value
 }
+
+case class Import(name: Id, exposing: List[Id]) extends Statement {
+  def asExpression = Bool(true)
+}

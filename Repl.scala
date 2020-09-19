@@ -3,6 +3,7 @@ package repl
 
 import ast._
 import parser._
+import prelude._
 import printer._
 import runtime._
 import scope._
@@ -20,7 +21,7 @@ enum Mode {
 
 
 class Repl(
-    var scope: Scope,
+    var scope: Scope = Map(),
     in: InputStream = System.in,
     out: PrintStream = System.out,
 ) {
@@ -34,6 +35,8 @@ class Repl(
   val fileName = "<repl>"
 
   val subs = Substitution()
+
+  var modules: Modules = Prelude
 
   def run(): Unit =
     while (true) {
@@ -139,9 +142,10 @@ class Repl(
     }
 
   def doIt(stmt: Statement)(ok: Unit) =
-    eval(stmt, scope) match {
-      case Right(newScope) =>
+    eval(stmt, scope, modules) match {
+      case Right((newScope, newModules)) =>
         scope = newScope
+        modules = newModules
       case Left(err) =>
         out.println(s"runtime error: $err")
         out.println("")

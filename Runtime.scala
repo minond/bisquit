@@ -6,7 +6,7 @@ import scala.reflect.ClassTag
 
 import ast._
 import scope._
-import utils.{ensure, remap, formap}
+import utils.{ensure, remap, rekey, formap}
 import utils.Implicits.Eithers
 
 sealed trait RuntimeError
@@ -30,13 +30,32 @@ def pass1(expr: Expression): IR with Expression =
   }
 
 
-def eval(stmt: Statement, scope: Scope): Either[RuntimeError, Scope] =
+def eval(stmt: Statement, scope: Scope, modules: Modules): Either[RuntimeError, (Scope, Modules)] =
   stmt match {
     case Definition(name, value) =>
       for
         evaled <- eval(pass1(value), scope)
       yield
-        scope ++ Map(name.lexeme -> evaled)
+        (scope ++ Map(name.lexeme -> evaled), modules)
+
+    case Import(name, exposing) =>
+      modules.get(name.lexeme) match {
+        case None => /** TODO import module */ ???
+        case Some(module) =>
+          if exposing.isEmpty
+          then
+            val fields = rekey(module.scope) { Id(_) }
+            val record = Record(fields)
+            Right((scope ++ Map(name.lexeme -> record), modules))
+          else
+            val needs = exposing.map(_.lexeme)
+            val fields = module.scope.foldLeft[Map[String, Value]](Map()) {
+              case (acc, (name, value)) if needs.contains(name) =>
+                acc ++ Map(name -> value)
+              case (acc, _) => acc
+            }
+            Right((scope ++ fields, modules))
+      }
   }
 
 def eval(exprs: List[IR]): Either[RuntimeError, List[Value]] =

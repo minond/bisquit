@@ -3,7 +3,8 @@ package prelude
 
 import ast._
 import runtime._
-import typechecker.{BoolType, IntType, LambdaType, Type}
+import scope._
+import typechecker._
 import utils.ensure
 
 def signature(tys: Type*) =
@@ -47,13 +48,15 @@ val booleanOr = Builtin(signature(BoolType, BoolType, BoolType), {
 })
 
 
-val Ops = Map(
-  "+" -> numericBinaryBuiltin(_ + _),
-  "-" -> numericBinaryBuiltin(_ - _),
-  "*" -> numericBinaryBuiltin(_ * _),
-  "/" -> numericBinaryBuiltin(_ / _),
-  "%" -> numericBinaryBuiltin(_ % _),
-  "~" -> numericUnaryBuiltin(-_),
-  "||" -> booleanOr,
-  "&&" -> booleanAnd,
+val Prelude: Modules = Map(
+  "Prelude" -> Module("Prelude", Map(
+    "+" -> numericBinaryBuiltin(_ + _),
+    "-" -> numericBinaryBuiltin(_ - _),
+    "*" -> numericBinaryBuiltin(_ * _),
+    "/" -> numericBinaryBuiltin(_ / _),
+    "%" -> numericBinaryBuiltin(_ % _),
+    "~" -> numericUnaryBuiltin(-_),
+    "||" -> booleanOr,
+    "&&" -> booleanAnd,
+  ))
 )
