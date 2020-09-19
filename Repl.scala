@@ -20,7 +20,7 @@ enum Mode {
 
 
 class Repl(
-    var scope: RuntimeScope,
+    var scope: Scope,
     in: InputStream = System.in,
     out: PrintStream = System.out,
 ) {

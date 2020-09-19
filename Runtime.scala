@@ -30,7 +30,7 @@ def pass1(expr: Expression): IR with Expression =
   }
 
 
-def eval(stmt: Statement, scope: RuntimeScope): Either[RuntimeError, RuntimeScope] =
+def eval(stmt: Statement, scope: Scope): Either[RuntimeError, Scope] =
   stmt match {
     case Definition(name, value) =>
       for
@@ -45,10 +45,10 @@ def eval(exprs: List[IR]): Either[RuntimeError, List[Value]] =
 def eval(expr: IR): Either[RuntimeError, Value] =
   eval(expr, Map())
 
-def eval(exprs: List[IR], scope: RuntimeScope): Either[RuntimeError, List[Value]] =
+def eval(exprs: List[IR], scope: Scope): Either[RuntimeError, List[Value]] =
   exprs.map { eval(_, scope) }.squished()
 
-def eval(expr: IR, scope: RuntimeScope): Either[RuntimeError, Value] =
+def eval(expr: IR, scope: Scope): Either[RuntimeError, Value] =
   expr match {
     case Lambda(args, body, _) => Right(Lambda(args, body, scope))
     case Tuple(fields) => evalTuple(fields, scope)
@@ -61,12 +61,12 @@ def eval(expr: IR, scope: RuntimeScope): Either[RuntimeError, Value] =
     case Cond(cond, pass, fail) => evalCond(cond, pass, fail, scope)
   }
 
-def evalTuple(fields: List[Expression], scope: RuntimeScope) =
+def evalTuple(fields: List[Expression], scope: Scope) =
   for
     inners <- fields.map { v => eval(pass1(v), scope) }.squished()
   yield Tuple(inners)
 
-def evalRecordLookup(rec: Expression, field: Id, scope: RuntimeScope) =
+def evalRecordLookup(rec: Expression, field: Id, scope: Scope) =
   for
     maybeRecord <- eval(pass1(rec), scope)
     record <- ensure[RuntimeError, Record](maybeRecord, ExpectedRecordInstead(maybeRecord))
@@ -74,26 +74,26 @@ def evalRecordLookup(rec: Expression, field: Id, scope: RuntimeScope) =
     value <- eval(pass1(expr), scope)
   yield value
 
-def evalRecord(fields: Map[Id, Expression], scope: RuntimeScope) =
+def evalRecord(fields: Map[Id, Expression], scope: Scope) =
   for
     inners <- formap(fields){ v => eval(pass1(v), scope) }
     ret = Record(inners)
   yield ret
 
-def evalCallable(fn: IR, args: List[IR], scope: RuntimeScope) =
+def evalCallable(fn: IR, args: List[IR], scope: Scope) =
   for
     maybeCallable <- eval(fn, scope)
     callable <- ensure[RuntimeError, Callable](maybeCallable, ArgumentTypeError(fn))
     ret <- callable.apply(args, scope)
   yield ret
 
-def evalLet(bindings: Map[Id, Expression], body: Expression, scope: RuntimeScope) =
+def evalLet(bindings: Map[Id, Expression], body: Expression, scope: Scope) =
   for
     bound <- letRec(bindings, scope)
     ret <- eval(pass1(body), bound)
   yield ret
 
-def evalCond(cond: Expression, pass: Expression, fail: Expression, scope: RuntimeScope) =
+def evalCond(cond: Expression, pass: Expression, fail: Expression, scope: Scope) =
   for
     res <- eval(pass1(cond), scope)
     bool <- ensure[RuntimeError, Bool](res, ConditionError(pass1(cond)))
@@ -102,8 +102,8 @@ def evalCond(cond: Expression, pass: Expression, fail: Expression, scope: Runtim
   yield ret
 
 
-def letRec(bindings: Map[Id, Expression], scope: RuntimeScope) =
-  bindings.foldLeft[Either[RuntimeError, RuntimeScope]](Right(scope)) {
+def letRec(bindings: Map[Id, Expression], scope: Scope) =
+  bindings.foldLeft[Either[RuntimeError, Scope]](Right(scope)) {
     case (acc, (id, expr)) =>
       acc.flatMap { recscope =>
         eval(pass1(expr), recscope).map { v =>
@@ -119,7 +119,7 @@ def lookup[V, L](id: Id, scope: Map[Id, V], left: => L): Either[L, V] =
     case Some(value) => Right(value)
   }
 
-def lookup(id: Id, scope: RuntimeScope): Either[LookupError, Value] =
+def lookup(id: Id, scope: Scope): Either[LookupError, Value] =
   scope.get(id.lexeme) match {
     case None => Left(LookupError(id))
     case Some(value) => Right(value)

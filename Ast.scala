@@ -45,22 +45,22 @@ case class Builtin(sig: LambdaType, fn: Callable.Func)
 case class Lambda(
   params: List[Id],
   body: Expression,
-  boundScope: RuntimeScope = Map(),
+  boundScope: Scope = Map(),
 ) extends IR with Value with Callable {
-  def apply(args: List[IR], scope: RuntimeScope): Either[RuntimeError, Value] =
+  def apply(args: List[IR], scope: Scope): Either[RuntimeError, Value] =
     for
       vals <- eval(args, scope)
       ret <- evalIt(vals, scope)
     yield ret
 
-  def evalIt(vals: List[Value], scope: RuntimeScope) =
+  def evalIt(vals: List[Value], scope: Scope) =
     val argScope = params.map(_.lexeme).zip(vals).toMap
     val lexScope = scope ++ boundScope ++ argScope
     if params.size != vals.size
     then Right(curryIt(vals, lexScope))
     else eval(pass1(body), lexScope)
 
-  def curryIt(bindings: List[Value], lexScope: RuntimeScope) =
+  def curryIt(bindings: List[Value], lexScope: Scope) =
     Lambda(params = params.drop(bindings.size),
            body = App(fn = Lambda(params = params.take(bindings.size),
                                   body = body,
@@ -71,17 +71,17 @@ case class Lambda(
 
 
 object Callable {
-  type Func = (List[IR], RuntimeScope) =>
+  type Func = (List[IR], Scope) =>
     Either[RuntimeError, Value]
 }
 
 trait Callable {
-  def apply(args: List[IR], scope: RuntimeScope):
+  def apply(args: List[IR], scope: Scope):
     Either[RuntimeError, Value]
 }
 
 trait Calling(fn: Callable.Func) {
-  def apply(args: List[IR], scope: RuntimeScope) =
+  def apply(args: List[IR], scope: Scope) =
     fn(args, scope)
 }
 

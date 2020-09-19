@@ -4,7 +4,7 @@ package scope
 import ast._
 import typechecker.Type
 
-type RuntimeScope = Map[String, Value]
+type Scope = Map[String, Value]
 type Environment = Map[String, Expression]
 
 object Environment {
