@@ -193,7 +193,7 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
 
 
 def infer(expr: IR): Either[TypingError, Type] =
-  infer(expr, Environment(), Substitution())
+  infer(expr, Map(), Substitution())
 
 def infer(expr: IR, env: Environment, sub: Substitution): Either[TypingError, Type] =
   expr match {
