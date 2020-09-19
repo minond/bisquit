@@ -2,15 +2,15 @@ package bisquit
 package ast
 
 import scope._
-import input.Positioned
-import typechecker.{Typing, Typed, LambdaType}
-import runtime.{eval, pass1, RuntimeError}
+import input._
+import typechecker._
+import runtime._
 
 sealed trait Token extends Positioned
 sealed trait Expression extends Positioned with Typing
 sealed trait IR extends Typing
 sealed trait Value extends Expression
-sealed trait Statement { def asExpression: Expression }
+sealed trait Statement { def asExpression(scope: Scope, modules: Modules): Expression }
 
 case class Eof() extends Token
 case class Comma() extends Token
@@ -87,9 +87,11 @@ trait Calling(fn: Callable.Func) {
 
 
 case class Definition(name: Id, value: Expression) extends Statement {
-  def asExpression = value
+  def asExpression(scope: Scope, modules: Modules) =
+    value
 }
 
 case class Import(name: Id, exposing: List[Id]) extends Statement {
-  def asExpression = Bool(true)
+  def asExpression(scope: Scope, modules: Modules) =
+    Bool(true)
 }

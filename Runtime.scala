@@ -15,6 +15,7 @@ case class ArgumentTypeError(arg: IR) extends RuntimeError
 case class ConditionError(cond: IR) extends RuntimeError
 case class RecordLookupError(id: Id, record: Record) extends RuntimeError
 case class ExpectedRecordInstead(got: Value) extends RuntimeError
+case class UnexportedModuleValue(name: String, module: Module) extends RuntimeError
 
 
 def pass1(expr: Expression): IR with Expression =
@@ -49,12 +50,18 @@ def eval(stmt: Statement, scope: Scope, modules: Modules): Either[RuntimeError, 
             Right((scope ++ Map(name.lexeme -> record), modules))
           else
             val needs = exposing.map(_.lexeme)
-            val fields = module.scope.foldLeft[Map[String, Value]](Map()) {
-              case (acc, (name, value)) if needs.contains(name) =>
-                acc ++ Map(name -> value)
-              case (acc, _) => acc
-            }
-            Right((scope ++ fields, modules))
+            val missing = needs.diff(module.scope.keys.toList)
+
+            if !missing.isEmpty
+            then Left(UnexportedModuleValue(missing.head, module))
+            else
+              val fields = module.scope.foldLeft[Map[String, Value]](Map()) {
+                case (acc, (name, value)) if needs.contains(name) =>
+                  acc ++ Map(name -> value)
+                case (acc, _) => acc
+              }
+
+              Right((scope ++ fields, modules))
       }
   }
 

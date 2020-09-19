@@ -78,7 +78,7 @@ class Repl(
               out.println("")
             }
           case stmt: Statement =>
-            typeIt(stmt.asExpression) { (_, ty) =>
+            typeIt(stmt.asExpression(scope, modules)) { (_, ty) =>
               out.println(s": ${formatted(ty)}")
               out.println("")
             }
@@ -94,9 +94,9 @@ class Repl(
               }
             }
           case stmt: Statement =>
-            typeIt(stmt.asExpression) { (_, ty) =>
+            typeIt(stmt.asExpression(scope, modules)) { (_, ty) =>
               doIt(stmt) {
-                out.println(s"= ${formatted(stmt.asExpression, lvl = 3, short = true)} : ${formatted(ty)}")
+                out.println(s"= ${formatted(stmt.asExpression(scope, modules), lvl = 3, short = true)} : ${formatted(ty)}")
                 out.println("")
               }
             }
