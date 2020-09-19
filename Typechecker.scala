@@ -264,7 +264,7 @@ def inferRecordLookup(rec: Expression, field: Id, env: Environment, sub: Substit
     recTy = sub.freshRecord(field -> fieldTy)
     _ <- sub.unify(record, recTy)
     ty <- lookup(field, recTy.fields.toMap, RecordLookupError(field, record))
-  yield ty
+  yield sub(ty)
 
 def inferRecord(fields: Map[Id, Expression], env: Environment, sub: Substitution) =
   for
