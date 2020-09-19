@@ -10,6 +10,7 @@ sealed trait Token extends Positioned
 sealed trait Expression extends Positioned with Typing
 sealed trait IR extends Typing
 sealed trait Value extends Expression
+sealed trait Statement { def asExpression: Expression }
 
 case class Eof() extends Token
 case class Comma() extends Token
@@ -82,4 +83,9 @@ trait Callable {
 trait Calling(fn: Callable.Func) {
   def apply(args: List[IR], scope: RuntimeScope) =
     fn(args, scope)
+}
+
+
+case class Definition(name: Id, value: Expression) extends Statement {
+  def asExpression = value
 }

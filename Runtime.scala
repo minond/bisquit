@@ -30,6 +30,15 @@ def pass1(expr: Expression): IR with Expression =
   }
 
 
+def eval(stmt: Statement, scope: RuntimeScope): Either[RuntimeError, RuntimeScope] =
+  stmt match {
+    case Definition(name, value) =>
+      for
+        evaled <- eval(pass1(value), scope)
+      yield
+        scope ++ Map(name.lexeme -> evaled)
+  }
+
 def eval(exprs: List[IR]): Either[RuntimeError, List[Value]] =
   eval(exprs, Map())
 

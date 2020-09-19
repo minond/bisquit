@@ -58,31 +58,47 @@ class Repl(
         }
 
       case (Mode.Ir, code) =>
-        parseIt(code) { expr =>
-          out.println(pass1(expr))
-          out.println("")
+        parseIt(code) {
+          case expr: Expression =>
+            out.println(pass1(expr))
+            out.println("")
+          case stmt: Statement =>
+            out.println(stmt)
+            out.println("")
         }
 
       case (Mode.Type, code) =>
-        parseIt(code) { expr =>
-          typeIt(expr) { (_, ty) =>
-            out.println(s": ${formatted(ty)}")
+        parseIt(code) {
+          case expr: Expression =>
+            typeIt(expr) { (_, ty) =>
+              out.println(s": ${formatted(ty)}")
+              out.println("")
+            }
+          case stmt: Statement =>
+            out.println(s": ${formatted(UnitType)}")
             out.println("")
-          }
         }
 
       case (Mode.Eval, code) =>
-        parseIt(code) { expr =>
-          typeIt(expr) { (_, ty) =>
-            evalIt(expr) { value =>
-              out.println(s"= ${formatted(value, lvl = 3, short = true)} : ${formatted(ty)}")
-              out.println("")
+        parseIt(code) {
+          case expr: Expression =>
+            typeIt(expr) { (_, ty) =>
+              evalIt(expr) { value =>
+                out.println(s"= ${formatted(value, lvl = 3, short = true)} : ${formatted(ty)}")
+                out.println("")
+              }
             }
-          }
+          case stmt: Statement =>
+            typeIt(stmt.asExpression) { (_, ty) =>
+              doIt(stmt) {
+                out.println(s"= ${formatted(stmt.asExpression, lvl = 3, short = true)} : ${formatted(ty)}")
+                out.println("")
+              }
+            }
         }
     }
 
-  def parseIt(code: String)(ok: Expression => Unit): Boolean = {
+  def parseIt(code: String)(ok: (Expression | Statement) => Unit): Boolean = {
     for res <- parse(code, fileName) do
       res match {
         case Right(expr) => ok(expr)
@@ -115,6 +131,15 @@ class Repl(
     eval(ir, scope) match {
       case Right(value) => ok(value)
 
+      case Left(err) =>
+        out.println(s"runtime error: $err")
+        out.println("")
+    }
+
+  def doIt(stmt: Statement)(ok: Unit) =
+    eval(stmt, scope) match {
+      case Right(newScope) =>
+        scope = newScope
       case Left(err) =>
         out.println(s"runtime error: $err")
         out.println("")

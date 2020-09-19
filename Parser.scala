@@ -34,6 +34,8 @@ object Word {
   val True = Id("true")
   val False = Id("false")
 
+  val Def = Id("def")
+
   def isKeyword(token: Token) =
        token != Let
     && token != In
@@ -44,17 +46,67 @@ object Word {
 }
 
 
-def parse(string: String, fileName: String): Iterator[Either[ParsingError, Expression]] =
+def parse(string: String, fileName: String): Iterator[Either[ParsingError, Expression | Statement]] =
   lex(string.trim, fileName).squished() match {
     case Left(err) => List(Left(err)).iterator
     case Right(tokens) => parse(tokens.iterator.buffered)
   }
 
-def parse(tokens: Tokens): Iterator[Either[ParsingError, Expression]] =
+def parse(tokens: Tokens): Iterator[Either[ParsingError, Expression | Statement]] =
   for
     token <- tokens
   yield
-    parseExpression(token, tokens)
+    parseTopLevel(token, tokens)
+
+def parseTopLevel(token: Token, tokens: Tokens): Either[ParsingError, Expression | Statement] =
+  token match {
+    case Word.Def => parseStatement(token, tokens)
+    case _ => parseExpression(token, tokens)
+  }
+
+def parseStatement(token: Token, tokens: Tokens): Either[ParsingError, Statement] =
+  token match {
+    case Word.Def => parseDefinition(tokens)
+  }
+
+def parseDefinition(tokens: Tokens): Either[ParsingError, Definition] =
+  (eat[Id](tokens), lookahead(tokens)) match {
+    case (Left(err), _) => Left(err)
+
+    case (Right(name), Equal()) =>
+      for
+        value <- parseExpression(drop1(tokens))
+      yield
+        Definition(name, value)
+
+    case (Right(name), OpenParen()) =>
+      for
+        value <- parseLambda(tokens)
+      yield
+        Definition(name, value)
+
+    case (Right(name), invalid) =>
+      Left(UnexpectedToken[Equal | OpenParen](invalid))
+  }
+
+def parseExpression(tokens: Tokens): Either[ParsingError, Expression] =
+  if tokens.isEmpty
+  then Left(UnexpectedEOF())
+  else parseExpression(tokens.next, tokens)
+
+def parseExpression(token: Token, tokens: Tokens): Either[ParsingError, Expression] =
+  token match {
+    case Word.True => Right(Bool(true))
+    case Word.False => Right(Bool(false))
+    case Word.Let => parseLet(tokens)
+    case Word.Fn => parseExpressionContinuation(parseLambda(tokens), tokens)
+    case Word.If => parseCond(tokens)
+    case OpenParen() => parseExpressionContinuation(parseTuple(tokens), tokens)
+    case OpenCurlyBraket() => parseExpressionContinuation(parseRecord(tokens), tokens)
+    case scalar: (Str | ast.Int) => Right(scalar)
+    case id: Id => parseExpressionContinuation(id, tokens)
+    case unexpected => Left(UnexpectedToken[Token](unexpected))
+  }
 
 def parseLet(tokens: Tokens): Either[ParsingError, Let] =
   for
@@ -125,25 +177,6 @@ def parseBinding(tokens: Tokens): Either[ParsingError, (Id, Expression)] =
   yield
     (name, value)
 
-def parseExpression(tokens: Tokens): Either[ParsingError, Expression] =
-  if tokens.isEmpty
-  then Left(UnexpectedEOF())
-  else parseExpression(tokens.next, tokens)
-
-def parseExpression(token: Token, tokens: Tokens): Either[ParsingError, Expression] =
-  token match {
-    case Word.True => Right(Bool(true))
-    case Word.False => Right(Bool(false))
-    case Word.Let => parseLet(tokens)
-    case Word.Fn => parseExpressionContinuation(parseLambda(tokens), tokens)
-    case Word.If => parseCond(tokens)
-    case OpenParen() => parseExpressionContinuation(parseTuple(tokens), tokens)
-    case OpenCurlyBraket() => parseExpressionContinuation(parseRecord(tokens), tokens)
-    case scalar: (Str | ast.Int) => Right(scalar)
-    case id: Id => parseExpressionContinuation(id, tokens)
-    case unexpected => Left(UnexpectedToken[Token](unexpected))
-  }
-
 def parseExpressionContinuation(headRes: Either[ParsingError, Expression], tokens: Tokens): Either[ParsingError, Expression] =
   headRes.flatMap { head => parseExpressionContinuation(head, tokens) }
 
@@ -199,6 +232,10 @@ def parseByUntil(
       }
   }
 
+
+def drop1(tokens: Tokens): Tokens =
+  tokens.next
+  tokens
 
 def next(tokens: Tokens): Either[ParsingError, Token] =
   if tokens.isEmpty
