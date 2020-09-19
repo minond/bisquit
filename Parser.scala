@@ -22,18 +22,17 @@ case class StringNotClosed() extends ParsingError
 case class InvalidInteger(lexeme: String) extends ParsingError
 case class InvalidCharacter(c: Char) extends ParsingError
 
-object Word {
-  val True = Id("true")
-  val False = Id("false")
-}
 
-object Keyword {
+object Word {
   val Let = Id("let")
   val In = Id("in")
   val If = Id("if")
   val Then = Id("then")
   val Else = Id("else")
   val Fn = Id("fn")
+
+  val True = Id("true")
+  val False = Id("false")
 
   def isKeyword(token: Token) =
        token != Let
@@ -60,7 +59,7 @@ def parse(tokens: Tokens): Iterator[Either[ParsingError, Expression]] =
 def parseLet(tokens: Tokens): Either[ParsingError, Let] =
   for
     bindings <- parseBindings(tokens)
-    _ <- eat(Keyword.In, tokens)
+    _ <- eat(Word.In, tokens)
     body <- parseExpression(tokens)
   yield
     Let(bindings.toMap, body)
@@ -110,7 +109,7 @@ def parseBindings(tokens: Tokens): Either[ParsingError, List[(Id, Expression)]] 
     binding <- parseBinding(tokens)
   yield
     lookahead(tokens) match {
-      case next if next == Keyword.In => List(binding)
+      case next if next == Word.In => List(binding)
       case next =>
         parseBindings(tokens) match {
           case Left(err) => return Left(err)
@@ -135,9 +134,9 @@ def parseExpression(token: Token, tokens: Tokens): Either[ParsingError, Expressi
   token match {
     case Word.True => Right(Bool(true))
     case Word.False => Right(Bool(false))
-    case Keyword.Let => parseLet(tokens)
-    case Keyword.Fn => parseExpressionContinuation(parseLambda(tokens), tokens)
-    case Keyword.If => parseCond(tokens)
+    case Word.Let => parseLet(tokens)
+    case Word.Fn => parseExpressionContinuation(parseLambda(tokens), tokens)
+    case Word.If => parseCond(tokens)
     case OpenParen() => parseExpressionContinuation(parseTuple(tokens), tokens)
     case OpenCurlyBraket() => parseExpressionContinuation(parseRecord(tokens), tokens)
     case scalar: (Str | ast.Int) => Right(scalar)
@@ -158,9 +157,9 @@ def parseExpressionContinuation(head: Expression, tokens: Tokens): Either[Parsin
 def parseCond(tokens: Tokens): Either[ParsingError, Cond] =
   for
     cond <- parseExpression(tokens)
-    _ <- eat(Keyword.Then, tokens)
+    _ <- eat(Word.Then, tokens)
     pass <- parseExpression(tokens)
-    _ <- eat(Keyword.Else, tokens)
+    _ <- eat(Word.Else, tokens)
     fail <- parseExpression(tokens)
   yield
     Cond(cond, pass, fail)
