@@ -9,8 +9,8 @@ import matchers._
 
 import ast._
 import scope._
-import prelude.Ops
-import runtime.eval
+import prelude._
+import runtime._
 
 class RuntimeTests extends AnyFlatSpec with should.Matchers {
   it should "evaluate scalars" in {
@@ -31,7 +31,7 @@ class RuntimeTests extends AnyFlatSpec with should.Matchers {
                        Lambda(Nil, Binop(Id("+"), Id("a"), Id("b")))),
                    Nil)
 
-    eval(expr, Ops) should be (Right(Int(397)))
+    eval(expr, PreludeFunctions) should be (Right(Int(397)))
   }
 
   it should "use lexically scope bindings" in {
@@ -62,7 +62,7 @@ class RuntimeTests extends AnyFlatSpec with should.Matchers {
                        Nil),
                    List(Int(43)))
 
-    eval(expr, prelude.Ops) should be (Right(Int(608)))
+    eval(expr, PreludeFunctions) should be (Right(Int(608)))
   }
 
   it should "branch to the then body" in {
@@ -76,7 +76,7 @@ class RuntimeTests extends AnyFlatSpec with should.Matchers {
                         Int(1),
                         Int(2)))
 
-    eval(expr, prelude.Ops) should be (Right(Int(1)))
+    eval(expr, PreludeFunctions) should be (Right(Int(1)))
   }
 
   it should "branch to the else body" in {
@@ -90,6 +90,6 @@ class RuntimeTests extends AnyFlatSpec with should.Matchers {
                         Int(1),
                         Int(2)))
 
-    eval(expr, prelude.Ops) should be (Right(Int(2)))
+    eval(expr, PreludeFunctions) should be (Right(Int(2)))
   }
 }
