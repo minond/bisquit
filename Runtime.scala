@@ -65,6 +65,12 @@ def eval(stmt: Statement, scope: Scope, modules: Modules): Either[LoadError, (Sc
           yield
             (nextScope, modules)
       }
+
+    case Module(name, _, _) =>
+      modules.get(name) match {
+        case None => Right((Map(), modules))
+        case Some(Module(_, _, newScope)) => Right((newScope, modules))
+      }
   }
 
 def eval(exprs: List[IR]): Either[RuntimeError, List[Value]] =

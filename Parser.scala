@@ -36,6 +36,7 @@ object Word {
 
   val Def = Id("def")
   val Import = Id("import")
+  val Module = Id("module")
   val Exposing = Id("exposing")
 
   def isKeyword(token: Token) =
@@ -62,7 +63,7 @@ def parse(tokens: Tokens): Iterator[Either[ParsingError, Expression | Statement]
 
 def parseTopLevel(token: Token, tokens: Tokens): Either[ParsingError, Expression | Statement] =
   token match {
-    case Word.Def | Word.Import => parseStatement(token, tokens)
+    case Word.Def | Word.Import | Word.Module => parseStatement(token, tokens)
     case _ => parseExpression(token, tokens)
   }
 
@@ -70,6 +71,22 @@ def parseStatement(token: Token, tokens: Tokens): Either[ParsingError, Statement
   token match {
     case Word.Def => parseDefinition(tokens)
     case Word.Import => parseImport(tokens)
+    case Word.Module => parseModule(tokens)
+  }
+
+def parseModule(tokens: Tokens): Either[ParsingError, Module] =
+  (eat[Id](tokens), lookahead(tokens)) match {
+    case (Left(err), _) => Left(err)
+
+    case (Right(name), Word.Exposing) =>
+      for
+        _ <- eat[OpenParen](drop1(tokens))
+        maybeExposing <- parseByUntil(tokens, Comma(), CloseParen())
+        exposing <- maybeExposing.ensureItems[ParsingError, Id]({ err => UnexpectedExpression[Id](err) })
+      yield
+        Module(name, exposing.toSet, Map())
+
+    case (Right(name), _) => Right(Module(name, Set.empty, Map()))
   }
 
 def parseImport(tokens: Tokens): Either[ParsingError, Import] =

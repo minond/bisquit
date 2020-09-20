@@ -89,10 +89,23 @@ class Repl(
               }
             }
           case stmt: Statement =>
-            typeIt(stmt.asExpression(scope, modules)) { (_, ty) =>
-              doIt(stmt) {
-                out.println(s": ${formatted(ty)}")
-              }
+            stmt match {
+              case module: Module =>
+                doIt(module) {
+                  out.println("< ok")
+                }
+
+              case ymport: Import =>
+                doIt(ymport) {
+                  out.println("< ok")
+                }
+
+              case stmt =>
+                typeIt(stmt.asExpression(scope, modules)) { (_, ty) =>
+                  doIt(stmt) {
+                    out.println(s": ${formatted(ty)}")
+                  }
+                }
             }
         }
     }
