@@ -49,7 +49,7 @@ val booleanOr = Builtin(signature(BoolType, BoolType, BoolType), {
 
 
 val Prelude: Modules = Map(
-  Id("Prelude") -> Module("Prelude", Map(
+  Id("Prelude") -> Module(Id("Prelude"), Map(
     Id("+") -> numericBinaryBuiltin(_ + _),
     Id("-") -> numericBinaryBuiltin(_ - _),
     Id("*") -> numericBinaryBuiltin(_ * _),

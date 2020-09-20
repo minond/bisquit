@@ -8,4 +8,4 @@ type Modules = Map[Id, Module]
 type Scope = Map[Id, Value]
 type Environment = Map[Id, Expression]
 
-case class Module(name: String, scope: Scope)
+case class Module(name: Id, scope: Scope)
