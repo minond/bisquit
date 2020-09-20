@@ -24,7 +24,7 @@ case class ArgumentTypeError(arg: IR) extends RuntimeError
 case class ConditionError(cond: IR) extends RuntimeError
 case class RecordLookupError(id: Id, record: Record) extends RuntimeError
 case class ExpectedRecordInstead(got: Value) extends RuntimeError
-case class UnexportedModuleValue(id: Id, module: Module) extends RuntimeError
+case class ModuleValueNotExposed(id: Id, module: Module) extends RuntimeError
 case class DuplicateExposeName(id: Id) extends RuntimeError
 case class IncorrectModuleName(found: Id, expected: Id) extends RuntimeError
 

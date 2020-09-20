@@ -110,7 +110,7 @@ case class Import(name: Id, exposing: List[Id]) extends Statement {
     }
 }
 
-case class Module(name: Id, exposing: Set[Id], scope: Scope) extends Statement {
+case class Module(name: Id, exposes: Set[Id], scope: Scope) extends Statement {
   def asExpression(scope: Scope, modules: Modules) =
     Bool(true)
 
@@ -126,12 +126,12 @@ case class Module(name: Id, exposing: Set[Id], scope: Scope) extends Statement {
       Right(lexScope ++ Map(name -> record))
     else
       val dups = exposing.diff(exposing.distinct).distinct
-      val missing = exposing.diff(scope.keys.toList)
+      val missing = exposing.diff(exposes.toList)
 
       if !dups.isEmpty
       then Left(DuplicateExposeName(dups.head))
       else if !missing.isEmpty
-      then Left(UnexportedModuleValue(missing.head, this))
+      then Left(ModuleValueNotExposed(missing.head, this))
       else
         val fields = scope.foldLeft[Map[Id, Value]](Map()) {
           case (acc, (name, value)) if exposing.contains(name) =>
