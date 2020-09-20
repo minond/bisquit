@@ -54,7 +54,7 @@ case class Lambda(
     yield ret
 
   def evalIt(vals: List[Value], scope: Scope) =
-    val argScope = params.map(_.lexeme).zip(vals).toMap
+    val argScope = params.zip(vals).toMap
     val lexScope = scope ++ boundScope ++ argScope
     if params.size != vals.size
     then Right(curryIt(vals, lexScope))
@@ -97,8 +97,8 @@ case class Import(name: Id, exposing: List[Id]) extends Statement {
       case None => Bool(false)
       case Some(module) =>
         val fields = module.scope.foldLeft[Map[Id, Expression]](Map()) {
-          case (acc, (name, value)) if exposing.isEmpty || exposing.contains(Id(name)) =>
-            acc ++ Map(Id(name) -> value)
+          case (acc, (name, value)) if exposing.isEmpty || exposing.contains(name) =>
+            acc ++ Map(name -> value)
           case (acc, _) => acc
         }
         Record(fields)

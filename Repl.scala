@@ -8,7 +8,6 @@ import printer._
 import runtime._
 import scope._
 import typechecker._
-import utils.rekey
 
 import java.io._
 
@@ -123,7 +122,7 @@ class Repl(
 
   def typeIt(expr: Expression)(ok: (Expression, Type) => Unit) = {
     val ir = pass1(expr)
-    infer(ir, rekey(scope) { Id(_) }, subs) match {
+    infer(ir, scope, subs) match {
       case Right(ty) => ok(expr, ty)
 
       case Left(err) =>

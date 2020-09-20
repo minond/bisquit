@@ -7,7 +7,7 @@ import scala.language.implicitConversions
 import ast.{Int => _, _}
 import scope._
 import runtime._
-import utils.{ensure, formap, rekey, remap}
+import utils.{ensure, formap, remap}
 import utils.Implicits.Eithers
 
 sealed trait Type
@@ -300,7 +300,7 @@ def inferLambda(params: List[Id], body: IR, scope: Scope, env: Environment, sub:
     }
   }
 
-  val lexScope = params.zip(paramTys).foldLeft(env ++ rekey(scope) { Id(_) }) {
+  val lexScope = params.zip(paramTys).foldLeft(env ++ scope) {
     case (acc, (id, ty)) =>
       acc ++ Map(id -> Id(id.lexeme).typeTag(ty))
   }

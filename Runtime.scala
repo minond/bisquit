@@ -6,7 +6,7 @@ import scala.reflect.ClassTag
 
 import ast._
 import scope._
-import utils.{ensure, remap, rekey, formap}
+import utils.{ensure, remap, formap}
 import utils.Implicits.Eithers
 
 sealed trait RuntimeError
@@ -15,8 +15,8 @@ case class ArgumentTypeError(arg: IR) extends RuntimeError
 case class ConditionError(cond: IR) extends RuntimeError
 case class RecordLookupError(id: Id, record: Record) extends RuntimeError
 case class ExpectedRecordInstead(got: Value) extends RuntimeError
-case class UnexportedModuleValue(name: String, module: Module) extends RuntimeError
-case class DuplicateExposeName(name: String) extends RuntimeError
+case class UnexportedModuleValue(id: Id, module: Module) extends RuntimeError
+case class DuplicateExposeName(id: Id) extends RuntimeError
 
 
 def pass1(expr: Expression): IR with Expression =
@@ -38,7 +38,7 @@ def eval(stmt: Statement, scope: Scope, modules: Modules): Either[RuntimeError, 
       for
         evaled <- eval(pass1(value), scope)
       yield
-        (scope ++ Map(name.lexeme -> evaled), modules)
+        (scope ++ Map(name -> evaled), modules)
 
     case Import(name, exposing) =>
       modules.get(name.lexeme) match {
@@ -46,21 +46,20 @@ def eval(stmt: Statement, scope: Scope, modules: Modules): Either[RuntimeError, 
         case Some(module) =>
           if exposing.isEmpty
           then
-            val fields = rekey(module.scope) { Id(_) }
+            val fields = module.scope
             val record = Record(fields)
-            Right((scope ++ Map(name.lexeme -> record), modules))
+            Right((scope ++ Map(name -> record), modules))
           else
-            val needs = exposing.map(_.lexeme)
-            val dups = needs.diff(needs.distinct).distinct
-            val missing = needs.diff(module.scope.keys.toList)
+            val dups = exposing.diff(exposing.distinct).distinct
+            val missing = exposing.diff(module.scope.keys.toList)
 
             if !dups.isEmpty
             then Left(DuplicateExposeName(dups.head))
             else if !missing.isEmpty
             then Left(UnexportedModuleValue(missing.head, module))
             else
-              val fields = module.scope.foldLeft[Map[String, Value]](Map()) {
-                case (acc, (name, value)) if needs.contains(name) =>
+              val fields = module.scope.foldLeft[Map[Id, Value]](Map()) {
+                case (acc, (name, value)) if exposing.contains(name) =>
                   acc ++ Map(name -> value)
                 case (acc, _) => acc
               }
@@ -137,7 +136,7 @@ def letRec(bindings: Map[Id, Expression], scope: Scope) =
     case (acc, (id, expr)) =>
       acc.flatMap { recscope =>
         eval(pass1(expr), recscope).map { v =>
-          recscope ++ Map(id.lexeme -> v)
+          recscope ++ Map(id -> v)
         }
       }
   }
@@ -150,7 +149,7 @@ def lookup[V, L](id: Id, scope: Map[Id, V], left: => L): Either[L, V] =
   }
 
 def lookup(id: Id, scope: Scope): Either[LookupError, Value] =
-  scope.get(id.lexeme) match {
+  scope.get(id) match {
     case None => Left(LookupError(id))
     case Some(value) => Right(value)
   }
