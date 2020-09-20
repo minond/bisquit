@@ -26,6 +26,7 @@ case class RecordLookupError(id: Id, record: Record) extends RuntimeError
 case class ExpectedRecordInstead(got: Value) extends RuntimeError
 case class UnexportedModuleValue(id: Id, module: Module) extends RuntimeError
 case class DuplicateExposeName(id: Id) extends RuntimeError
+case class IncorrectModuleName(found: Id, expected: Id) extends RuntimeError
 
 
 def pass1(expr: Expression): IR with Expression =
@@ -169,10 +170,10 @@ def load(fileName: String, currModules: Modules = Prelude): Either[LoadError, (M
       val scanner = Scanner(handle)
       val buffer = StringBuilder()
       val name = Id(moduleNameFromFileName(fileName))
-      val exposing: Set[Id] = Set.empty
 
       var scope: Scope = Map()
       var modules: Modules = currModules
+      var exposing: Set[Id] = Set.empty
 
       while (scanner.hasNextLine()) {
         buffer.append(s"${scanner.nextLine()}\n")
@@ -194,6 +195,16 @@ def load(fileName: String, currModules: Modules = Prelude): Either[LoadError, (M
             }
 
           case Right(stmt: Statement) =>
+            stmt match {
+              case Module(_name, _exposing, _) if name == _name =>
+                exposing = _exposing
+
+              case Module(badName, _, _) =>
+                return Left(IncorrectModuleName(badName, name))
+
+              case _ =>
+            }
+
             val ir = pass1(stmt.asExpression(scope, modules))
             infer(ir, scope, Substitution()) match {
               case Left(err) => return Left(err)

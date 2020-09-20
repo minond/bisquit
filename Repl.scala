@@ -145,11 +145,12 @@ class Repl(
         out.println(s"runtime error: $err")
     }
 
-  def doIt(stmt: Statement)(ok: Unit) =
+  def doIt(stmt: Statement)(ok: => Unit) =
     eval(stmt, scope, modules) match {
       case Right((newScope, newModules)) =>
         scope = newScope
         modules = newModules
+        ok
       case Left(err) =>
         out.println(s"runtime error: $err")
     }
