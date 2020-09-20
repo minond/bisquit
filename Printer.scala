@@ -55,16 +55,14 @@ def formatted(expr: Expression, lvl: Int = 1, nested: Boolean = false, short: Bo
     case Lambda(params, body, _) =>
       if short
       then
-        "<lambda>"
+        "<fn>"
       else
         val indent = " " * lvl
         val spacing = if params.isEmpty then "" else " "
-        val sig = if params.isEmpty
-                  then ""
-                  else s"(${formattedAll(params, lvl + 1, false, ", ")})"
+        val args = formattedAll(params, lvl + 1, false, ", ")
         if nested
-        then s"\n${indent}\\$sig. ${formatted(body, lvl + 2, true)}"
-        else s"fn $sig = ${formatted(body, lvl + 2, true)}"
+        then s"\n${indent}fn ($args) = ${formatted(body, lvl + 2, true)}"
+        else s"fn ($args) = ${formatted(body, lvl + 2, true)}"
     case _: Builtin => "<builtin>"
     case Let(bindings, body) =>
       val names = bindings.keys

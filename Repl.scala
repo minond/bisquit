@@ -40,6 +40,7 @@ class Repl(
 
   def run(): Unit =
     while (true) {
+      out.println("")
       out.print(if (buff.isEmpty) promptStart else promptCont)
 
       buff.append(reader.readLine()).toString match {
@@ -57,17 +58,14 @@ class Repl(
       case (Mode.Parse, code) =>
         parseIt(code) { expr =>
           out.println(expr)
-          out.println("")
         }
 
       case (Mode.Ir, code) =>
         parseIt(code) {
           case expr: Expression =>
             out.println(pass1(expr))
-            out.println("")
           case stmt: Statement =>
             out.println(stmt)
-            out.println("")
         }
 
       case (Mode.Type, code) =>
@@ -75,12 +73,10 @@ class Repl(
           case expr: Expression =>
             typeIt(expr) { (_, ty) =>
               out.println(s": ${formatted(ty)}")
-              out.println("")
             }
           case stmt: Statement =>
             typeIt(stmt.asExpression(scope, modules)) { (_, ty) =>
               out.println(s": ${formatted(ty)}")
-              out.println("")
             }
         }
 
@@ -90,14 +86,12 @@ class Repl(
             typeIt(expr) { (_, ty) =>
               evalIt(expr) { value =>
                 out.println(s"= ${formatted(value, lvl = 3, short = true)} : ${formatted(ty)}")
-                out.println("")
               }
             }
           case stmt: Statement =>
             typeIt(stmt.asExpression(scope, modules)) { (_, ty) =>
               doIt(stmt) {
                 out.println(s": ${formatted(ty)}")
-                out.println("")
               }
             }
         }
@@ -113,7 +107,6 @@ class Repl(
 
         case Left(err) =>
           out.println(s"parse error: $err")
-          out.println("")
           return true
       }
 
@@ -127,7 +120,6 @@ class Repl(
 
       case Left(err) =>
         out.println(s"type error: $err")
-        out.println("")
     }
   }
 
@@ -138,7 +130,6 @@ class Repl(
 
       case Left(err) =>
         out.println(s"runtime error: $err")
-        out.println("")
     }
 
   def doIt(stmt: Statement)(ok: Unit) =
@@ -148,7 +139,6 @@ class Repl(
         modules = newModules
       case Left(err) =>
         out.println(s"runtime error: $err")
-        out.println("")
     }
 
   def mode(code: String): (Mode, String) =
