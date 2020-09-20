@@ -93,7 +93,7 @@ case class Definition(name: Id, value: Expression) extends Statement {
 
 case class Import(name: Id, exposing: List[Id]) extends Statement {
   def asExpression(scope: Scope, modules: Modules) =
-    modules.get(name.lexeme) match {
+    modules.get(name) match {
       case None => Bool(false)
       case Some(module) =>
         val fields = module.scope.foldLeft[Map[Id, Expression]](Map()) {

@@ -41,7 +41,7 @@ def eval(stmt: Statement, scope: Scope, modules: Modules): Either[RuntimeError, 
         (scope ++ Map(name -> evaled), modules)
 
     case Import(name, exposing) =>
-      modules.get(name.lexeme) match {
+      modules.get(name) match {
         case None => /** TODO import module */ ???
         case Some(module) =>
           if exposing.isEmpty

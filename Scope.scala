@@ -4,7 +4,7 @@ package scope
 import ast._
 import typechecker.Type
 
-type Modules = Map[String, Module]
+type Modules = Map[Id, Module]
 type Scope = Map[Id, Value]
 type Environment = Map[Id, Expression]
 
