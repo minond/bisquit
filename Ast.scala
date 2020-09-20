@@ -121,7 +121,7 @@ case class Module(name: Id, exposes: Set[Id], scope: Scope) extends Statement {
   ): Either[RuntimeError, Scope] =
     if exposing.isEmpty
     then
-      val fields = scope
+      val fields = scope.filter { (name, _) => exposes.contains(name) }
       val record = Record(fields)
       Right(lexScope ++ Map(name -> record))
     else
@@ -133,11 +133,6 @@ case class Module(name: Id, exposes: Set[Id], scope: Scope) extends Statement {
       else if !missing.isEmpty
       then Left(ModuleValueNotExposed(missing.head, this))
       else
-        val fields = scope.foldLeft[Map[Id, Value]](Map()) {
-          case (acc, (name, value)) if exposing.contains(name) =>
-            acc ++ Map(name -> value)
-          case (acc, _) => acc
-        }
-
+        val fields = scope.filter { (name, _) => exposes.contains(name) }
         Right(lexScope ++ fields)
 }

@@ -95,8 +95,8 @@ class Repl(
                   out.println("< ok")
                 }
 
-              case ymport: Import =>
-                doIt(ymport) {
+              case ymport @ Import(name, _) =>
+                doIt(ymport, modules.removed(name)) {
                   out.println("< ok")
                 }
 
@@ -145,8 +145,8 @@ class Repl(
         out.println(s"runtime error: $err")
     }
 
-  def doIt(stmt: Statement)(ok: => Unit) =
-    eval(stmt, scope, modules) match {
+  def doIt(stmt: Statement, currModules: Modules = modules)(ok: => Unit) =
+    eval(stmt, scope, currModules) match {
       case Right((newScope, newModules)) =>
         scope = newScope
         modules = newModules
