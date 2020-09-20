@@ -163,6 +163,7 @@ def load(fileName: String, currModules: Modules = Prelude): Either[LoadError, (M
       val scanner = Scanner(handle)
       val buffer = StringBuilder()
       val name = Id(moduleNameFromFileName(fileName))
+      val exposing: Set[Id] = Set.empty
 
       var scope: Scope = Map()
       var modules: Modules = currModules
@@ -200,7 +201,7 @@ def load(fileName: String, currModules: Modules = Prelude): Either[LoadError, (M
             }
         }
 
-      val module = Module(name, scope)
+      val module = Module(name, exposing, scope)
       Right((module, modules ++ Map(name -> module)))
   }
 

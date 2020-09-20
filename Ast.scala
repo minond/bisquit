@@ -96,18 +96,24 @@ case class Definition(name: Id, value: Expression) extends Statement {
 case class Import(name: Id, exposing: List[Id]) extends Statement {
   def asExpression(scope: Scope, modules: Modules) =
     modules.get(name) match {
-      case None => Bool(false)
+      case None =>
+        Bool(true)
+
       case Some(module) =>
         val fields = module.scope.foldLeft[Map[Id, Expression]](Map()) {
           case (acc, (name, value)) if exposing.isEmpty || exposing.contains(name) =>
             acc ++ Map(name -> value)
           case (acc, _) => acc
         }
+
         Record(fields)
     }
 }
 
-case class Module(name: Id, scope: Scope) {
+case class Module(name: Id, exposing: Set[Id], scope: Scope) extends Statement {
+  def asExpression(scope: Scope, modules: Modules) =
+    Bool(true)
+
   def expose(
       lexScope: Scope,
       modules: Modules,
