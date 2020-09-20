@@ -96,7 +96,7 @@ class Repl(
           case stmt: Statement =>
             typeIt(stmt.asExpression(scope, modules)) { (_, ty) =>
               doIt(stmt) {
-                out.println(s"= ${formatted(stmt.asExpression(scope, modules), lvl = 3, short = true)} : ${formatted(ty)}")
+                out.println(s": ${formatted(ty)}")
                 out.println("")
               }
             }

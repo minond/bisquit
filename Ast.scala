@@ -32,7 +32,7 @@ case class Int(value: Integer) extends IR with Value with Token
 case class Str(value: String) extends IR with Value with Token
 case class Bool(value: Boolean) extends IR with Value with Token
 case class Tuple(fields: List[Expression]) extends IR with Value
-case class Record(fields: Map[Id, Expression]) extends IR with Value
+case class Record(fields: Map[Id, Expression] = Map()) extends IR with Value
 case class RecordLookup(rec: Expression, field: Id) extends IR with Expression
 
 case class Builtin(sig: LambdaType, fn: Callable.Func)
@@ -93,5 +93,14 @@ case class Definition(name: Id, value: Expression) extends Statement {
 
 case class Import(name: Id, exposing: List[Id]) extends Statement {
   def asExpression(scope: Scope, modules: Modules) =
-    Bool(true)
+    modules.get(name.lexeme) match {
+      case None => Bool(false)
+      case Some(module) =>
+        val fields = module.scope.foldLeft[Map[Id, Expression]](Map()) {
+          case (acc, (name, value)) if exposing.isEmpty || exposing.contains(Id(name)) =>
+            acc ++ Map(Id(name) -> value)
+          case (acc, _) => acc
+        }
+        Record(fields)
+    }
 }
