@@ -5,11 +5,20 @@ import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 import ast._
+import parser._
+import prelude._
 import scope._
+import typechecker._
+
 import utils.{ensure, remap, formap}
 import utils.Implicits.Eithers
 
-sealed trait RuntimeError
+import java.io.File
+import java.util.Scanner
+
+case class FileNotFound(name: String) extends LoadError
+
+sealed trait RuntimeError extends LoadError
 case class LookupError(id: Id) extends RuntimeError
 case class ArgumentTypeError(arg: IR) extends RuntimeError
 case class ConditionError(cond: IR) extends RuntimeError
@@ -32,7 +41,7 @@ def pass1(expr: Expression): IR with Expression =
   }
 
 
-def eval(stmt: Statement, scope: Scope, modules: Modules): Either[RuntimeError, (Scope, Modules)] =
+def eval(stmt: Statement, scope: Scope, modules: Modules): Either[LoadError, (Scope, Modules)] =
   stmt match {
     case Definition(name, value) =>
       for
@@ -42,29 +51,19 @@ def eval(stmt: Statement, scope: Scope, modules: Modules): Either[RuntimeError, 
 
     case Import(name, exposing) =>
       modules.get(name) match {
-        case None => /** TODO import module */ ???
+        case None =>
+          for
+            ret <- load(fileNameFromModuleName(name.lexeme), modules)
+            (module, nextModules) = ret
+            nextScope <- module.expose(scope, nextModules, exposing)
+          yield
+            (nextScope, nextModules)
+
         case Some(module) =>
-          if exposing.isEmpty
-          then
-            val fields = module.scope
-            val record = Record(fields)
-            Right((scope ++ Map(name -> record), modules))
-          else
-            val dups = exposing.diff(exposing.distinct).distinct
-            val missing = exposing.diff(module.scope.keys.toList)
-
-            if !dups.isEmpty
-            then Left(DuplicateExposeName(dups.head))
-            else if !missing.isEmpty
-            then Left(UnexportedModuleValue(missing.head, module))
-            else
-              val fields = module.scope.foldLeft[Map[Id, Value]](Map()) {
-                case (acc, (name, value)) if exposing.contains(name) =>
-                  acc ++ Map(name -> value)
-                case (acc, _) => acc
-              }
-
-              Right((scope ++ fields, modules))
+          for
+            nextScope <- module.expose(scope, modules, exposing)
+          yield
+            (nextScope, modules)
       }
   }
 
@@ -153,3 +152,60 @@ def lookup(id: Id, scope: Scope): Either[LookupError, Value] =
     case None => Left(LookupError(id))
     case Some(value) => Right(value)
   }
+
+
+def load(fileName: String, currModules: Modules = Prelude): Either[LoadError, (Module, Modules)] =
+  File(fileName) match {
+    case handle if !handle.isFile =>
+      Left(FileNotFound(fileName))
+
+    case handle =>
+      val scanner = Scanner(handle)
+      val buffer = StringBuilder()
+      val name = Id(moduleNameFromFileName(fileName))
+
+      var scope: Scope = Map()
+      var modules: Modules = currModules
+
+      while (scanner.hasNextLine()) {
+        buffer.append(s"${scanner.nextLine()}\n")
+      }
+
+      for res <- parse(buffer.mkString, fileName) do
+        res match {
+          case Left(err) => return Left(err)
+
+          case Right(expr: Expression) =>
+            val ir = pass1(expr)
+            infer(ir, scope, Substitution()) match {
+              case Left(err) => return Left(err)
+              case Right(_) =>
+                eval(ir, scope) match {
+                  case Left(err) => return Left(err)
+                  case Right(_) =>
+                }
+            }
+
+          case Right(stmt: Statement) =>
+            val ir = pass1(stmt.asExpression(scope, modules))
+            infer(ir, scope, Substitution()) match {
+              case Left(err) => return Left(err)
+              case Right(_) =>
+                eval(stmt, scope, modules) match {
+                  case Left(err) => return Left(err)
+                  case Right((newScope, newModules)) =>
+                    scope = newScope
+                    modules = newModules
+                }
+            }
+        }
+
+      val module = Module(name, scope)
+      Right((module, modules ++ Map(name -> module)))
+  }
+
+def moduleNameFromFileName(fileName: String): String =
+  fileName.split("/").last.split("\\.").head
+
+def fileNameFromModuleName(moduleName: String): String =
+  moduleName.replaceAll("\\.", "/") + ".bisquit"

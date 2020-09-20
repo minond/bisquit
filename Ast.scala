@@ -6,6 +6,8 @@ import input._
 import typechecker._
 import runtime._
 
+trait LoadError
+
 sealed trait Token extends Positioned
 sealed trait Expression extends Positioned with Typing
 sealed trait IR extends Typing
@@ -103,4 +105,33 @@ case class Import(name: Id, exposing: List[Id]) extends Statement {
         }
         Record(fields)
     }
+}
+
+case class Module(name: Id, scope: Scope) {
+  def expose(
+      lexScope: Scope,
+      modules: Modules,
+      exposing: List[Id],
+  ): Either[RuntimeError, Scope] =
+    if exposing.isEmpty
+    then
+      val fields = scope
+      val record = Record(fields)
+      Right(lexScope ++ Map(name -> record))
+    else
+      val dups = exposing.diff(exposing.distinct).distinct
+      val missing = exposing.diff(scope.keys.toList)
+
+      if !dups.isEmpty
+      then Left(DuplicateExposeName(dups.head))
+      else if !missing.isEmpty
+      then Left(UnexportedModuleValue(missing.head, this))
+      else
+        val fields = scope.foldLeft[Map[Id, Value]](Map()) {
+          case (acc, (name, value)) if exposing.contains(name) =>
+            acc ++ Map(name -> value)
+          case (acc, _) => acc
+        }
+
+        Right(lexScope ++ fields)
 }

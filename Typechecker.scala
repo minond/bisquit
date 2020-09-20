@@ -48,7 +48,7 @@ trait Typed(ty: Type) extends Typing {
 }
 
 
-sealed trait TypingError
+sealed trait TypingError extends LoadError
 case class LookupError(id: Id) extends TypingError
 case class UnificationError(ty1: Type, ty2: Type) extends TypingError
 case class ExpectedRecordInstead(got: Type) extends TypingError

@@ -14,7 +14,7 @@ type Source = BufferedIterator[(Char, Int)]
 type Tokens = BufferedIterator[Token]
 
 
-trait ParsingError extends Positioned
+trait ParsingError extends Positioned with LoadError
 case class UnexpectedToken[Expected: ClassTag](got: Token) extends ParsingError
 case class UnexpectedExpression[Expected: ClassTag](got: Expression) extends ParsingError
 case class UnexpectedEOF() extends ParsingError
