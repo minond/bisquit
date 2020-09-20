@@ -95,6 +95,11 @@ class Repl(
                   out.println("< ok")
                 }
 
+              case ymport @ Import(name, _) if name == PreludeModuleName =>
+                doIt(ymport) {
+                  out.println("< ok")
+                }
+
               case ymport @ Import(name, _) =>
                 doIt(ymport, modules.removed(name)) {
                   out.println("< ok")
