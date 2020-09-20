@@ -7,7 +7,7 @@ import scala.language.implicitConversions
 import ast.{Int => _, _}
 import scope._
 import runtime._
-import utils.{ensure, formap, remap}
+import utils.{ensure, formap, rekey, remap}
 import utils.Implicits.Eithers
 
 sealed trait Type
@@ -235,7 +235,7 @@ def inferLet(bindings: Map[Id, Expression], body: Expression, env: Environment, 
 
   val unboundLexScope = bindings.keys.toList.zip(bindingTys).foldLeft(env) {
     case (acc, (id, ty)) =>
-      acc ++ Map(id.lexeme -> Id(id.lexeme).typeTag(ty))
+      acc ++ Map(id -> Id(id.lexeme).typeTag(ty))
   }
 
   val boundLexScope = bindings.foldLeft[Either[TypingError, Environment]](Right(unboundLexScope)) {
@@ -244,9 +244,9 @@ def inferLet(bindings: Map[Id, Expression], body: Expression, env: Environment, 
         infer(pass1(expr), innerscope, sub).map { v =>
           id.ty match {
             case None =>
-              innerscope ++ Map(id.lexeme -> expr.typeTag(v))
+              innerscope ++ Map(id -> expr.typeTag(v))
             case Some(ty) =>
-              innerscope ++ Map(id.lexeme -> expr.typeTag(ty))
+              innerscope ++ Map(id -> expr.typeTag(ty))
           }
         }
       }
@@ -292,7 +292,7 @@ def inferCond(cond: Cond, env: Environment, sub: Substitution) =
     _ <- sub.unify(passTy, failTy)
   yield sub(passTy)
 
-def inferLambda(params: List[Id], body: IR, scope: Environment, env: Environment, sub: Substitution) =
+def inferLambda(params: List[Id], body: IR, scope: Scope, env: Environment, sub: Substitution) =
   val paramTys = params.map { param =>
     param.ty match {
       case None => sub.fresh
@@ -300,9 +300,9 @@ def inferLambda(params: List[Id], body: IR, scope: Environment, env: Environment
     }
   }
 
-  val lexScope = params.zip(paramTys).foldLeft(env ++ scope) {
+  val lexScope = params.zip(paramTys).foldLeft(env ++ rekey(scope) { Id(_) }) {
     case (acc, (id, ty)) =>
-      acc ++ Map(id.lexeme -> Id(id.lexeme).typeTag(ty))
+      acc ++ Map(id -> Id(id.lexeme).typeTag(ty))
   }
 
   for
@@ -321,7 +321,7 @@ def lookup[V, L](id: Id, scope: Map[Id, V], left: => L): Either[L, V] =
   }
 
 def lookup(id: Id, env: Environment, sub: Substitution): Either[TypingError, Type] =
-  env.get(id.lexeme) match {
+  env.get(id) match {
     case None => Left(LookupError(id))
     case Some(value) =>
       value.ty match {
