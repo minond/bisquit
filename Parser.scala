@@ -240,7 +240,7 @@ def parseLambda(tokens: Tokens): Either[ParsingError, Lambda] =
     _ <- eat(Equal(), tokens)
     body <- parseExpression(tokens)
   yield
-    Lambda(params, body)
+    Lambda(params, body, None)
 
 def parseApp(callee: Expression, tokens: Tokens): Either[ParsingError, App] =
   for

@@ -47,7 +47,7 @@ case class Builtin(sig: LambdaType, fn: Callable.Func)
 case class Lambda(
   params: List[Id],
   body: Expression,
-  boundScope: Scope = Map(),
+  boundScope: Option[Scope],
 ) extends IR with Value with Callable {
   def apply(args: List[IR], scope: Scope): Either[RuntimeError, Value] =
     for
@@ -57,7 +57,7 @@ case class Lambda(
 
   def evalIt(vals: List[Value], scope: Scope) =
     val argScope = params.zip(vals).toMap
-    val lexScope = scope ++ boundScope ++ argScope
+    val lexScope = scope ++ boundScope.getOrElse(scope) ++ argScope
     if params.size != vals.size
     then Right(curryIt(vals, lexScope))
     else eval(pass1(body), lexScope)
@@ -68,7 +68,7 @@ case class Lambda(
                                   body = body,
                                   boundScope = boundScope),
                       args = bindings),
-           boundScope = lexScope)
+           boundScope = Some(lexScope))
 }
 
 

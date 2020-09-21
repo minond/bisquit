@@ -85,7 +85,8 @@ def eval(exprs: List[IR], scope: Scope): Either[RuntimeError, List[Value]] =
 
 def eval(expr: IR, scope: Scope): Either[RuntimeError, Value] =
   expr match {
-    case Lambda(args, body, _) => Right(Lambda(args, body, scope))
+    case Lambda(args, body, None) => Right(Lambda(args, body, Some(scope)))
+    case Lambda(args, body, Some(scope)) => Right(Lambda(args, body, Some(scope)))
     case Tuple(fields) => evalTuple(fields, scope)
     case Record(fields) => evalRecord(fields, scope)
     case RecordLookup(rec, field) => evalRecordLookup(rec, field, scope)

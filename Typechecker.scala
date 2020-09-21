@@ -204,7 +204,7 @@ def infer(expr: IR, env: Environment, sub: Substitution): Either[TypingError, Ty
     case Builtin(sig, _) => Right(sig)
     case cond : Cond => inferCond(cond, env, sub)
     case Let(bindings, body) => inferLet(bindings, body, env, sub)
-    case Lambda(params, body, scope) => inferLambda(params, pass1(body), scope, env, sub)
+    case Lambda(params, body, scope) => inferLambda(params, pass1(body), scope.getOrElse(Map()), env, sub)
     case App(fn, args) => inferApp(fn, args, env, sub)
     case Tuple(fields) => inferTuple(fields, env, sub)
     case Record(fields) => inferRecord(fields, env, sub)
