@@ -57,7 +57,7 @@ case class Lambda(
 
   def evalIt(vals: List[Value], scope: Scope) =
     val argScope = params.zip(vals).toMap
-    val lexScope = scope ++ boundScope.getOrElse(scope) ++ argScope
+    val lexScope = scope ++ boundScope.getOrElse(Map()) ++ argScope
     if params.size != vals.size
     then Right(curryIt(vals, lexScope))
     else eval(pass1(body), lexScope)
