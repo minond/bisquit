@@ -37,11 +37,17 @@ class Repl(
   val subs = Substitution()
 
   var modules: Modules = Prelude
+  var newLine: Boolean = false
 
   def run(): Unit =
     while (true) {
-      out.println("")
-      out.print(if (buff.isEmpty) promptStart else promptCont)
+      if newLine
+      then out.print("\n")
+
+      newLine = false
+
+      if buff.isEmpty
+      then out.print(promptStart)
 
       buff.append(reader.readLine()).toString match {
         case "" =>
@@ -58,14 +64,17 @@ class Repl(
       case (Mode.Parse, code) =>
         parseIt(code) { expr =>
           out.println(expr)
+          newLine = true
         }
 
       case (Mode.Ir, code) =>
         parseIt(code) {
           case expr: Expression =>
             out.println(pass1(expr))
+            newLine = true
           case stmt: Statement =>
             out.println(stmt)
+            newLine = true
         }
 
       case (Mode.Type, code) =>
@@ -73,10 +82,12 @@ class Repl(
           case expr: Expression =>
             typeIt(expr) { (_, ty) =>
               out.println(s": ${formatted(ty)}")
+              newLine = true
             }
           case stmt: Statement =>
             typeIt(stmt.asExpression(scope, modules)) { (_, ty) =>
               out.println(s": ${formatted(ty)}")
+              newLine = true
             }
         }
 
@@ -86,6 +97,7 @@ class Repl(
             typeIt(expr) { (_, ty) =>
               evalIt(expr) { value =>
                 out.println(s"= ${formatted(value, lvl = 3, short = true)} : ${formatted(ty)}")
+                newLine = true
               }
             }
           case stmt: Statement =>
@@ -93,22 +105,26 @@ class Repl(
               case module: Module =>
                 doIt(module) {
                   out.println("< ok")
+                  newLine = true
                 }
 
               case ymport @ Import(name, _) if name == PreludeModuleName =>
                 doIt(ymport) {
                   out.println("< ok")
+                  newLine = true
                 }
 
               case ymport @ Import(name, _) =>
                 doIt(ymport, modules.removed(name)) {
                   out.println("< ok")
+                  newLine = true
                 }
 
               case stmt =>
                 typeIt(stmt.asExpression(scope, modules)) { (_, ty) =>
                   doIt(stmt) {
                     out.println(s": ${formatted(ty)}")
+                    newLine = true
                   }
                 }
             }
@@ -125,6 +141,7 @@ class Repl(
 
         case Left(err) =>
           out.println(s"parse error: $err")
+          newLine = true
           return true
       }
 
@@ -138,6 +155,7 @@ class Repl(
 
       case Left(err) =>
         out.println(s"type error: $err")
+        newLine = true
     }
   }
 
@@ -148,6 +166,7 @@ class Repl(
 
       case Left(err) =>
         out.println(s"runtime error: $err")
+        newLine = true
     }
 
   def doIt(stmt: Statement, currModules: Modules = modules)(ok: => Unit) =
@@ -158,6 +177,7 @@ class Repl(
         ok
       case Left(err) =>
         out.println(s"runtime error: $err")
+        newLine = true
     }
 
   def mode(code: String): (Mode, String) =
