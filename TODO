@@ -1,6 +1,9 @@
 - Tests
 - ADTs
 
+- Parse type tags
+- Parse type vars
+
 - Polymorphic types should grow:
 
   Currently they can be compared to a smaller type:
