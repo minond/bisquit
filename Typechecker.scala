@@ -114,6 +114,9 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
       case _ if ty1 == ty2 => Right(this)
       case _ if ty2.contains(ty1) => Right(this)
 
+      case (ty1 : PolymorphicType, ty2 : TypeVariable) =>
+        unify(ty2, ty1)
+
       case (ty1 @ PolymorphicType(None, _), _) =>
         substitutions.get(ty1.tyVar.id) match {
           case None =>
@@ -372,8 +375,12 @@ def inferLambda(params: List[Id], body: IR, scope: Scope, env: Environment, sub:
     tyArgs = if paramTys.isEmpty
              then List(UnitType)
              else paramTys.map(sub(_))
+    tyVars = tyBody match {
+               case poly : PolymorphicType => List(poly)
+               case _ => List.empty
+             }
   yield
-    LambdaType(tyArgs :+ tyBody)
+    LambdaType(tyArgs :+ tyBody, tyVars)
 
 
 def lookup[V, L](id: Id, scope: Map[Id, V], left: => L): Either[L, V] =
