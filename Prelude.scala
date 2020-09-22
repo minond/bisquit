@@ -12,24 +12,35 @@ val polyNum = PolymorphicType(Some(NumType))
 def signature(tys: List[Type], vars: List[PolymorphicType] = List.empty) =
   LambdaType(tys, vars)
 
-def numericBinaryBuiltin(f: (Integer, Integer) => Integer): Builtin =
+// TODO Add ArgumentTypeError back:
+// num <- ensure[RuntimeError, Int](value, ArgumentTypeError(expr))
+def numericBinaryBuiltin(f: (Double, Double) => Double): Builtin =
   Builtin(signature(List(polyNum, polyNum, polyNum), List(polyNum)), {
     case (l :: r :: Nil, scope) =>
       for
         leftVal <- eval(l, scope)
-        leftInt <- ensure[RuntimeError, Int](leftVal, ArgumentTypeError(l))
         rightVal <- eval(r, scope)
-        rightInt <- ensure[RuntimeError, Int](rightVal, ArgumentTypeError(r))
-      yield Int(f(leftInt.value, rightInt.value))
+      yield
+        (leftVal, rightVal) match {
+          case (Int(left), Int(right)) => Int(f(left.toDouble, right.toDouble).toInt)
+          case (Real(left), Real(right)) => Real(f(left, right))
+          case (Int(left), Real(right)) => Real(f(left.toDouble, right))
+          case (Real(left), Int(right)) => Real(f(left, right.toDouble))
+        }
   })
 
-def numericUnaryBuiltin(f: Integer => Integer): Builtin =
+// TODO Add ArgumentTypeError back:
+// num <- ensure[RuntimeError, Int](value, ArgumentTypeError(expr))
+def numericUnaryBuiltin(f: Double => Double): Builtin =
   Builtin(signature(List(polyNum, polyNum)), {
     case (expr :: Nil, scope) =>
       for
         value <- eval(expr, scope)
-        num <- ensure[RuntimeError, Int](value, ArgumentTypeError(expr))
-      yield Int(f(num.value))
+      yield
+        value match {
+          case Int(num) => Int(f(num.toDouble).toInt)
+          case Real(num) => Real(f(num))
+        }
   })
 
 val booleanAnd = Builtin(signature(List(BoolType, BoolType, BoolType)), {
