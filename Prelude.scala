@@ -7,9 +7,9 @@ import scope._
 import typechecker._
 import utils.ensure
 
-val polyNum = PolomorphicType(NumType)
+val polyNum = PolymorphicType(NumType)
 
-def signature(tys: List[Type], vars: List[PolomorphicType] = List.empty) =
+def signature(tys: List[Type], vars: List[PolymorphicType] = List.empty) =
   LambdaType(tys, vars)
 
 def numericBinaryBuiltin(f: (Integer, Integer) => Integer): Builtin =

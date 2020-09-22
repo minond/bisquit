@@ -111,7 +111,7 @@ def formatted(ty: Type, label: Labeler, nested: Boolean): String =
       s"{ ${pairs.mkString(separator)} }"
     case LambdaType(tys, vars) =>
       val subbedTys = tys.map {
-        case ty : PolomorphicType => ty.tyVar
+        case ty : PolymorphicType => ty.tyVar
         case ty => ty
       }
       val sig = subbedTys.map(formatted(_, label, true)).mkString(" -> ")
@@ -125,6 +125,6 @@ def formatted(ty: Type, label: Labeler, nested: Boolean): String =
       then s"($whole)"
       else whole
     case TypeVariable(id) => label(id)
-    case ty @ PolomorphicType(parent) =>
+    case ty @ PolymorphicType(parent) =>
       s"${formatted(ty.tyVar, label, false)} < ${formatted(parent, label, true)}"
   }

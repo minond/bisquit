@@ -16,7 +16,7 @@ sealed trait Type(containedSets: Type*) {
     ty == this || containedSets.takeWhile(!_.contains(ty)).size != containedSetsSize
 }
 
-case class PolomorphicType(concreteType: Type) extends Type() {
+case class PolymorphicType(concreteType: Type) extends Type() {
   val tyVar = fresh()
 }
 
@@ -29,7 +29,7 @@ case class RecordType(fields: Map[Id, Type] = Map()) extends Type()
 case object NumType extends Type()
 case object IntType extends Type(NumType)
 
-case class LambdaType(tys: List[Type], vars: List[PolomorphicType] = List.empty) extends Type() {
+case class LambdaType(tys: List[Type], vars: List[PolymorphicType] = List.empty) extends Type() {
   def apply(args: Type*): Type =
     apply(args.toList)
 
@@ -80,7 +80,7 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
   def apply(ty: Type): Type =
     ty match {
       case ty @ (UnitType | NumType | IntType | StrType | BoolType | RecordType) => ty
-      case ty : PolomorphicType =>
+      case ty : PolymorphicType =>
         substitutions.getOrElse(ty.tyVar.id, ty)
       case TupleType(fields) =>
         TupleType(fields.map(apply))
@@ -113,7 +113,7 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
       case _ if ty1 == ty2 => Right(this)
       case _ if ty2.contains(ty1) => Right(this)
 
-      case (ty1 @ PolomorphicType(concreteType1), _) =>
+      case (ty1 @ PolymorphicType(concreteType1), _) =>
         substitutions.get(ty1.tyVar.id) match {
           case None =>
             // This polymorphic type has not been unified before, so we ask
