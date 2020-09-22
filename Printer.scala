@@ -129,7 +129,7 @@ def formatted(ty: Type, label: Labeler, nested: Boolean): String =
       else whole
     case TypeVariable(id) => label(id)
     case PolymorphicType(None, tyVar) =>
-      s"${formatted(tyVar, label, false).toUpperCase()}"
+      s"${formatted(tyVar, label, false)}"
     case PolymorphicType(Some(parent), tyVar) =>
-      s"${formatted(tyVar, label, false).toUpperCase()} < ${formatted(parent, label, true)}"
+      s"${formatted(tyVar, label, false)} < ${formatted(parent, label, true)}"
   }
