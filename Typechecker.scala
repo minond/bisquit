@@ -16,9 +16,10 @@ sealed trait Type(containedSets: Type*) {
     ty == this || containedSets.takeWhile(!_.contains(ty)).size != containedSetsSize
 }
 
-case class PolymorphicType(concreteType: Option[Type]) extends Type() {
-  val tyVar = fresh()
-}
+case class PolymorphicType(
+    concreteType: Option[Type],
+    val tyVar: TypeVariable = fresh(),
+) extends Type()
 
 case object UnitType extends Type()
 case object StrType extends Type()
@@ -113,7 +114,7 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
       case _ if ty1 == ty2 => Right(this)
       case _ if ty2.contains(ty1) => Right(this)
 
-      case (ty1 @ PolymorphicType(None), _) =>
+      case (ty1 @ PolymorphicType(None, _), _) =>
         substitutions.get(ty1.tyVar.id) match {
           case None =>
             // This polymorphic type has not been unified before, so we simply
@@ -127,7 +128,7 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
             unify(subbedTy1, ty2)
         }
 
-      case (ty1 @ PolymorphicType(Some(concreteType1)), _) =>
+      case (ty1 @ PolymorphicType(Some(concreteType1), _), _) =>
         substitutions.get(ty1.tyVar.id) match {
           case None =>
             // This polymorphic type has not been unified before, so we ask
