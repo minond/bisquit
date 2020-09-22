@@ -10,10 +10,12 @@ import runtime._
 import utils.{ensure, formap, remap}
 import utils.Implicits.Eithers
 
-sealed trait Type(containedSets: Type*) {
-  private val containedSetsSize = containedSets.size
+sealed trait Type(val containedSets: Type*) {
+  val containedSetsSize = containedSets.size
   def contains(ty: Type): Boolean =
     ty == this || containedSets.takeWhile(!_.contains(ty)).size != containedSetsSize
+  def contained(ty: Type): Boolean =
+    false
 }
 
 case class PolymorphicType(
@@ -24,12 +26,18 @@ case class PolymorphicType(
 case object UnitType extends Type()
 case object StrType extends Type()
 case object BoolType extends Type()
-case class TupleType(fields: List[Type]) extends Type()
 case class RecordType(fields: Map[Id, Type] = Map()) extends Type()
 
 case object IntType extends Type()
 case object RealType extends Type(IntType)
 case object NumType extends Type(RealType)
+
+case class TupleType(fields: List[Type]) extends Type() {
+  override def contained(ty: Type): Boolean =
+    fields.forall(field => ty.contains(field))
+}
+
+case object OrdType extends Type(NumType, StrType, BoolType)
 
 case class LambdaType(tys: List[Type], vars: List[PolymorphicType] = List.empty) extends Type() {
   def apply(args: Type*): Type =
@@ -114,6 +122,7 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
     (ty1, ty2) match {
       case _ if ty1 == ty2 => Right(this)
       case _ if ty1.contains(ty2) => Right(this)
+      case _ if ty2.contained(ty1) => Right(this)
 
       case (TypeVariable(id), TypeVariable(_)) => unifyVar(id, ty1, ty2)
       case (TypeVariable(id), ty) =>

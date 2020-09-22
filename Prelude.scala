@@ -8,6 +8,8 @@ import typechecker._
 import utils.ensure
 
 val polyNum = PolymorphicType(Some(NumType))
+val polyOrd1 = PolymorphicType(Some(OrdType))
+val polyOrd2 = PolymorphicType(Some(OrdType))
 
 def signature(tys: List[Type], vars: List[PolymorphicType] = List.empty) =
   LambdaType(tys, vars)
@@ -77,6 +79,16 @@ val PreludeFunctions = Map(
         eval(arg, scope).flatMap {
           case Int(int) => Right(Real(int.toDouble))
         }
+    }),
+
+  Id("eq") ->
+    Builtin(signature(List(polyOrd1, polyOrd2, BoolType), List(polyOrd1, polyOrd2)), {
+      case (l :: r :: Nil, scope) =>
+        for
+          left <- eval(l, scope)
+          right <- eval(r, scope)
+        yield
+          Bool(left == right)
     })
 )
 

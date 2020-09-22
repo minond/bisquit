@@ -94,6 +94,7 @@ def formatted(ty: Type, label: Labeler, nested: Boolean): String =
     case UnitType => "Unit"
     case IntType => "Int"
     case RealType => "Real"
+    case OrdType => "Ord"
     case NumType => "Num"
     case StrType => "Str"
     case BoolType => "Bool"
