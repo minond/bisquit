@@ -27,9 +27,9 @@ case object BoolType extends Type()
 case class TupleType(fields: List[Type]) extends Type()
 case class RecordType(fields: Map[Id, Type] = Map()) extends Type()
 
-case object NumType extends Type()
-case object IntType extends Type(NumType)
+case object IntType extends Type()
 case object RealType extends Type(IntType)
+case object NumType extends Type(RealType)
 
 case class LambdaType(tys: List[Type], vars: List[PolymorphicType] = List.empty) extends Type() {
   def apply(args: Type*): Type =
@@ -113,7 +113,7 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
   def unify(ty1: Type, ty2: Type): Either[TypingError, Substitution] =
     (ty1, ty2) match {
       case _ if ty1 == ty2 => Right(this)
-      case _ if ty2.contains(ty1) => Right(this)
+      case _ if ty1.contains(ty2) => Right(this)
 
       case (TypeVariable(id), TypeVariable(_)) => unifyVar(id, ty1, ty2)
       case (TypeVariable(id), ty) =>
