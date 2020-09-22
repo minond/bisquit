@@ -16,7 +16,7 @@ sealed trait Type(containedSets: Type*) {
     ty == this || containedSets.takeWhile(!_.contains(ty)).size != containedSetsSize
 }
 
-case class PolymorphicType(concreteType: Type) extends Type() {
+case class PolymorphicType(concreteType: Option[Type]) extends Type() {
   val tyVar = fresh()
 }
 
@@ -113,7 +113,21 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
       case _ if ty1 == ty2 => Right(this)
       case _ if ty2.contains(ty1) => Right(this)
 
-      case (ty1 @ PolymorphicType(concreteType1), _) =>
+      case (ty1 @ PolymorphicType(None), _) =>
+        substitutions.get(ty1.tyVar.id) match {
+          case None =>
+            // This polymorphic type has not been unified before, so we simply
+            // unify its type variable to the second type.
+            unify(ty1.tyVar, ty2)
+
+          case Some(subbedTy1) =>
+            // This polymorphic type has been unified before, so we ask whether
+            // or not the type that it _was_ unified to can be unified to the
+            // type we're being unified to now.
+            unify(subbedTy1, ty2)
+        }
+
+      case (ty1 @ PolymorphicType(Some(concreteType1)), _) =>
         substitutions.get(ty1.tyVar.id) match {
           case None =>
             // This polymorphic type has not been unified before, so we ask

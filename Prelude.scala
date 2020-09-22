@@ -7,7 +7,7 @@ import scope._
 import typechecker._
 import utils.ensure
 
-val polyNum = PolymorphicType(NumType)
+val polyNum = PolymorphicType(Some(NumType))
 
 def signature(tys: List[Type], vars: List[PolymorphicType] = List.empty) =
   LambdaType(tys, vars)

@@ -125,6 +125,8 @@ def formatted(ty: Type, label: Labeler, nested: Boolean): String =
       then s"($whole)"
       else whole
     case TypeVariable(id) => label(id)
-    case ty @ PolymorphicType(parent) =>
+    case ty @ PolymorphicType(None) =>
+      s"${formatted(ty.tyVar, label, false)}"
+    case ty @ PolymorphicType(Some(parent)) =>
       s"${formatted(ty.tyVar, label, false)} < ${formatted(parent, label, true)}"
   }
