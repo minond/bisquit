@@ -387,9 +387,9 @@ def inferLambda(params: List[Id], body: IR, scope: Scope, env: Environment, sub:
     tyArgs = if paramTys.isEmpty
              then List(UnitType)
              else paramTys.map(sub(_))
-    tyVars = tyBody match {
-               case poly : PolymorphicType => List(poly)
-               case _ => List.empty
+    tyVars = sub.substitutions.foldLeft[List[PolymorphicType]](List.empty) {
+               case (acc, (_, ty : PolymorphicType)) => acc :+ ty
+               case (acc, _) => acc
              }
   yield
     LambdaType(tyArgs :+ tyBody, tyVars)
