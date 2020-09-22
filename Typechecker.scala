@@ -114,8 +114,20 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
       case _ if ty1 == ty2 => Right(this)
       case _ if ty2.contains(ty1) => Right(this)
 
-      case (ty1 : PolymorphicType, ty2 : TypeVariable) =>
-        unify(ty2, ty1)
+      case (TypeVariable(id), TypeVariable(_)) => unifyVar(id, ty1, ty2)
+      case (TypeVariable(id), ty) =>
+        substitutions.get(id) match {
+          case None => set(id, ty)
+          case Some(tyVar : TypeVariable) =>
+            set(id, ty)
+            unify(tyVar, ty)
+          case Some(ty2) =>
+            unify(ty, ty2)
+        }
+
+      case (ty, tyVar : TypeVariable) =>
+        unify(tyVar, ty)
+
 
       case (ty1 @ PolymorphicType(None, _), _) =>
         substitutions.get(ty1.tyVar.id) match {
@@ -159,20 +171,6 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
             // type we're being unified to now.
             unify(subbedTy1, ty2)
         }
-
-      case (TypeVariable(id), TypeVariable(_)) => unifyVar(id, ty1, ty2)
-      case (TypeVariable(id), ty) =>
-        substitutions.get(id) match {
-          case None => set(id, ty)
-          case Some(tyVar : TypeVariable) =>
-            set(id, ty)
-            unify(tyVar, ty)
-          case Some(ty2) =>
-            unify(ty, ty2)
-        }
-
-      case (ty, tyVar : TypeVariable) =>
-        unify(tyVar, ty)
 
       case (LambdaType(tys1, _), LambdaType(tys2, _)) => unifyLambda(tys1, tys2)
       case (record: RecordType, recVar: RecordVariable) => unifyRecordToRecVar(record, recVar)
