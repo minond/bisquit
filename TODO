@@ -1,2 +1,14 @@
 - Tests
 - ADTs
+
+- Polymorphic types should grow:
+
+  Currently they can be compared to a smaller type:
+  > :type +(int_to_real(43), 3)
+  : Real
+
+  But until this expression is fully typed, the polymorphic should not be fully
+  bound to Int and should be allowed to grow into a Real (because Real contains
+  Int):
+  > :type +(2, int_to_real(34))
+  type error: UnificationError(IntType,RealType)
