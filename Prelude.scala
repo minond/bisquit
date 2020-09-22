@@ -7,11 +7,13 @@ import scope._
 import typechecker._
 import utils.ensure
 
-def signature(tys: Type*) =
-  LambdaType(tys.toList)
+val polyNum = PolomorphicType(NumType)
+
+def signature(tys: List[Type], vars: List[PolomorphicType] = List.empty) =
+  LambdaType(tys, vars)
 
 def numericBinaryBuiltin(f: (Integer, Integer) => Integer): Builtin =
-  Builtin(signature(IntType, IntType, IntType), {
+  Builtin(signature(List(polyNum, polyNum, polyNum), List(polyNum)), {
     case (l :: r :: Nil, scope) =>
       for
         leftVal <- eval(l, scope)
@@ -22,7 +24,7 @@ def numericBinaryBuiltin(f: (Integer, Integer) => Integer): Builtin =
   })
 
 def numericUnaryBuiltin(f: Integer => Integer): Builtin =
-  Builtin(signature(IntType, IntType), {
+  Builtin(signature(List(polyNum, polyNum)), {
     case (expr :: Nil, scope) =>
       for
         value <- eval(expr, scope)
@@ -30,7 +32,7 @@ def numericUnaryBuiltin(f: Integer => Integer): Builtin =
       yield Int(f(num.value))
   })
 
-val booleanAnd = Builtin(signature(BoolType, BoolType, BoolType), {
+val booleanAnd = Builtin(signature(List(BoolType, BoolType, BoolType)), {
   case (left :: right :: Nil, scope) =>
     eval(left, scope).flatMap {
       case Bool(true) => eval(right, scope)
@@ -39,7 +41,7 @@ val booleanAnd = Builtin(signature(BoolType, BoolType, BoolType), {
     }
 })
 
-val booleanOr = Builtin(signature(BoolType, BoolType, BoolType), {
+val booleanOr = Builtin(signature(List(BoolType, BoolType, BoolType)), {
   case (left :: right :: Nil, scope) =>
     eval(left, scope).flatMap {
       case Bool(true) => Right(Bool(true))

@@ -91,6 +91,7 @@ def formatted(ty: Type, label: Labeler, nested: Boolean): String =
   ty match {
     case UnitType => "Unit"
     case IntType => "Int"
+    case NumType => "Num"
     case StrType => "Str"
     case BoolType => "Bool"
     case TupleType(fields) =>
@@ -108,10 +109,22 @@ def formatted(ty: Type, label: Labeler, nested: Boolean): String =
                       then ", "
                       else "\n  , "
       s"{ ${pairs.mkString(separator)} }"
-    case LambdaType(tys) =>
-      val s = tys.map(formatted(_, label, true)).mkString(" -> ")
+    case LambdaType(tys, vars) =>
+      val subbedTys = tys.map {
+        case ty : PolomorphicType => ty.tyVar
+        case ty => ty
+      }
+      val sig = subbedTys.map(formatted(_, label, true)).mkString(" -> ")
+      val conds = vars.map(formatted(_, label, true)).mkString(", ")
+      val where =
+        if vars.isEmpty
+        then ""
+        else s" : $conds"
+      val whole = s"$sig$where".trim()
       if nested
-      then s"($s)"
-      else s
+      then s"($whole)"
+      else whole
     case TypeVariable(id) => label(id)
+    case ty @ PolomorphicType(parent) =>
+      s"${formatted(ty.tyVar, label, false)} < ${formatted(parent, label, true)}"
   }

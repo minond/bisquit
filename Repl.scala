@@ -34,8 +34,6 @@ class Repl(
   val buff = new StringBuilder
   val fileName = "<repl>"
 
-  val subs = Substitution()
-
   var modules: Modules = Prelude
   var newLine: Boolean = false
 
@@ -150,7 +148,7 @@ class Repl(
 
   def typeIt(expr: Expression)(ok: (Expression, Type) => Unit) = {
     val ir = pass1(expr)
-    infer(ir, scope, subs) match {
+    infer(ir, scope, Substitution()) match {
       case Right(ty) => ok(expr, ty)
 
       case Left(err) =>
