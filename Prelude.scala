@@ -59,6 +59,14 @@ val PreludeFunctions = Map(
   Id("~") -> numericUnaryBuiltin(-_),
   Id("||") -> booleanOr,
   Id("&&") -> booleanAnd,
+
+  Id("int_to_real") ->
+    Builtin(signature(List(IntType, RealType)), {
+      case (arg :: Nil, scope) =>
+        eval(arg, scope).flatMap {
+          case Int(int) => Right(Real(int.toDouble))
+        }
+    })
 )
 
 val Prelude: Modules = Map(

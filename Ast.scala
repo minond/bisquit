@@ -31,6 +31,7 @@ case class App(fn: Expression, args: List[Expression]) extends IR with Expressio
 case class Let(bindings: Map[Id, Expression], body: Expression) extends IR with Expression
 case class Cond(cond: Expression, pass: Expression, fail: Expression) extends IR with Expression
 case class Int(value: Integer) extends IR with Value with Token
+case class Real(value: Double) extends IR with Value with Token
 case class Str(value: String) extends IR with Value with Token
 case class Bool(value: Boolean) extends IR with Value with Token
 case class Tuple(fields: List[Expression]) extends IR with Value

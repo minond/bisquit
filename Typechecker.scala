@@ -29,6 +29,7 @@ case class RecordType(fields: Map[Id, Type] = Map()) extends Type()
 
 case object NumType extends Type()
 case object IntType extends Type(NumType)
+case object RealType extends Type(IntType)
 
 case class LambdaType(tys: List[Type], vars: List[PolymorphicType] = List.empty) extends Type() {
   def apply(args: Type*): Type =
@@ -80,7 +81,7 @@ def freshRecord(fields: (Id, Type)*) =
 case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
   def apply(ty: Type): Type =
     ty match {
-      case ty @ (UnitType | NumType | IntType | StrType | BoolType | RecordType) => ty
+      case ty @ (UnitType | NumType | IntType | RealType | StrType | BoolType | RecordType) => ty
       case ty : PolymorphicType =>
         substitutions.getOrElse(ty.tyVar.id, ty)
       case TupleType(fields) =>
@@ -261,6 +262,7 @@ def infer(expr: IR): Either[TypingError, Type] =
 def infer(expr: IR, env: Environment, sub: Substitution): Either[TypingError, Type] =
   expr match {
     case _: ast.Int => Right(IntType)
+    case _: Real => Right(RealType)
     case _: Str => Right(StrType)
     case _: Bool => Right(BoolType)
     case id : Id => lookup(id, env, sub)

@@ -51,6 +51,8 @@ def formatted(expr: Expression, lvl: Int = 1, nested: Boolean = false, short: Bo
       s"{ ${pairs.mkString(s"\n${indent}, ")} }"
     case ast.Int(num) if num < 0 => s"~${Math.abs(num)}"
     case ast.Int(num) => num.toString
+    case Real(num) if num < 0 => s"~${Math.abs(num)}"
+    case Real(num) => num.toString
     case Str(str) => s""""$str""""
     case Lambda(params, body, _) =>
       if short
@@ -91,6 +93,7 @@ def formatted(ty: Type, label: Labeler, nested: Boolean): String =
   ty match {
     case UnitType => "Unit"
     case IntType => "Int"
+    case RealType => "Real"
     case NumType => "Num"
     case StrType => "Str"
     case BoolType => "Bool"
