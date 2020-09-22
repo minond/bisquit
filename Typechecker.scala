@@ -173,6 +173,9 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
             unify(subbedTy1, ty2)
         }
 
+      case (ty1, polyTy : PolymorphicType) =>
+        unify(polyTy, ty1)
+
       case (LambdaType(tys1, _), LambdaType(tys2, _)) => unifyLambda(tys1, tys2)
       case (record: RecordType, recVar: RecordVariable) => unifyRecordToRecVar(record, recVar)
       case (s1: RecordVariable, s2: RecordVariable) => unifyRecVarToRecVar(s1, s2, None)
