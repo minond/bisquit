@@ -392,7 +392,7 @@ def inferLambda(params: List[Id], body: IR, scope: Scope, env: Environment, sub:
                case (acc, _) => acc
              }
   yield
-    LambdaType(tyArgs :+ tyBody, tyVars)
+    LambdaType(tyArgs :+ tyBody, tyVars.toSet.toList)
 
 
 def lookup[V, L](id: Id, scope: Map[Id, V], left: => L): Either[L, V] =
