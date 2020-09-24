@@ -118,10 +118,14 @@ def formatted(ty: Type, label: Labeler, nested: Boolean): String =
         case PolymorphicType(_, tyVar) => PolymorphicType(None, tyVar)
         case ty => ty
       }
+      val usedPolyVars = tys.foldLeft[List[PolymorphicType]](List.empty) {
+        case (acc, ty : PolymorphicType) => acc :+ ty
+        case (acc, _) => acc
+      }
       val sig = subbedTys.map(formatted(_, label, true)).mkString(" -> ")
-      val conds = vars.map(formatted(_, label, true)).mkString(", ")
+      val conds = vars.filter(v => usedPolyVars.contains(v)).map(formatted(_, label, true)).mkString(", ")
       val where =
-        if vars.isEmpty
+        if conds.isEmpty
         then ""
         else s" where $conds"
       val whole = s"$sig$where".trim()
