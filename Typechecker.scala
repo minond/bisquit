@@ -73,6 +73,8 @@ sealed trait TypingError extends LoadError
 case class LookupError(id: Id) extends TypingError
 case class UnificationError(ty1: Type, ty2: Type) extends TypingError
 case class ExpectedRecordInstead(got: Type) extends TypingError
+case class ExpectedCallableInstead(got: Expression) extends TypingError
+case class TooManyArguments(fnTy: LambdaType, args: List[Expression]) extends TypingError
 case class RecordLookupError(id: Id, record: Type) extends TypingError
 
 
@@ -350,15 +352,36 @@ def inferRecord(fields: Map[Id, Expression], env: Environment, sub: Substitution
   yield ret
 
 def inferApp(fn: Expression, args: List[Expression], env: Environment, sub: Substitution) =
-  for
-    tyArgs <- args.map(pass1).map(infer(_, env, sub)).squished()
-    tyFn <- infer(pass1(fn), env, sub)
-    tyRes = fresh()
-    tySig = if tyArgs.isEmpty
-            then List(UnitType)
-            else tyArgs
-    _ <- sub.unify(tyFn, LambdaType(tySig :+ tyRes))
-  yield sub(tyRes)
+  args.map(pass1).map(infer(_, env, sub)).squished().flatMap { tyArgs =>
+    infer(pass1(fn), env, sub).flatMap { maybeFn =>
+      maybeFn match {
+        case tyFn @ LambdaType(tyFnSig, tyVars) =>
+          if tyArgs.size > tyFnSig.size - 1
+          then Left(TooManyArguments(tyFn, args))
+          else if tyArgs.size == tyFn.tys.size - 1
+          then
+            val tyRes = fresh()
+            val tySig = if tyArgs.isEmpty
+                        then List(UnitType, tyRes)
+                        else tyArgs :+ tyRes
+
+            sub.unify(tyFn, LambdaType(tySig)).map { _ =>
+              sub(tyRes)
+            }
+          else
+            val partialArgs = tyFnSig.take(args.size)
+            val leftoverArgs = tyFnSig.drop(args.size)
+
+            sub.unify(LambdaType(partialArgs), LambdaType(tyArgs)).map { _ =>
+              sub(LambdaType(leftoverArgs, tyVars))
+            }
+
+        case _ =>
+          Left(ExpectedCallableInstead(fn))
+      }
+    }
+  }
+
 
 def inferCond(cond: Cond, env: Environment, sub: Substitution) =
   for
