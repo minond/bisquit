@@ -38,6 +38,7 @@ case class TupleType(fields: List[Type]) extends Type() {
 }
 
 case object OrdType extends Type(NumType, StrType, BoolType)
+case class RefCellType(of: Type) extends Type()
 
 case class LambdaType(tys: List[Type], vars: List[PolymorphicType] = List.empty) extends Type() {
   def apply(args: Type*): Type =
@@ -92,6 +93,8 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
   def apply(ty: Type): Type =
     ty match {
       case ty @ (UnitType | NumType | IntType | RealType | StrType | BoolType | RecordType) => ty
+      case RefCellType(ty) =>
+        RefCellType(apply(ty))
       case ty : PolymorphicType =>
         substitutions.getOrElse(ty.tyVar.id, ty)
       case TupleType(fields) =>
@@ -186,6 +189,9 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
 
       case (ty1, polyTy : PolymorphicType) =>
         unify(polyTy, ty1)
+
+      case (RefCellType(ty1), RefCellType(ty2)) =>
+        unify(ty1, ty2)
 
       case (LambdaType(tys1, _), LambdaType(tys2, _)) => unifyLambda(tys1, tys2)
       case (record: RecordType, recVar: RecordVariable) => unifyRecordToRecVar(record, recVar)
@@ -286,6 +292,7 @@ def infer(expr: IR, env: Environment, sub: Substitution): Either[TypingError, Ty
     case Lambda(params, body, scope) => inferLambda(params, pass1(body), scope.getOrElse(Map()), env, sub)
     case App(fn, args) => inferApp(fn, args, env, sub)
     case Tuple(fields) => inferTuple(fields, env, sub)
+    case RefCell(value) => inferRefCell(value, env, sub)
     case Record(fields) => inferRecord(fields, env, sub)
     case RecordLookup(rec, field) => inferRecordLookup(rec, field, env, sub)
   }
@@ -295,6 +302,12 @@ def inferAll(exprs: List[Expression], env: Environment, sub: Substitution) =
     tyExprs <- exprs.map(pass1).map(infer(_, env, sub)).squished()
   yield
     tyExprs
+
+def inferRefCell(value: Value, env: Environment, sub: Substitution) =
+  for
+    ty <- infer(value.asInstanceOf[IR], env, sub)
+  yield
+    RefCellType(ty)
 
 def inferTuple(fields: List[Expression], env: Environment, sub: Substitution) =
   for

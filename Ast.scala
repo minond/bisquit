@@ -35,6 +35,7 @@ case class Real(value: Double) extends IR with Value with Token
 case class Str(value: String) extends IR with Value with Token
 case class Bool(value: Boolean) extends IR with Value with Token
 case class Tuple(fields: List[Expression]) extends IR with Value
+case class RefCell(var value: Value) extends IR with Value
 case class Record(fields: Map[Id, Expression] = Map()) extends IR with Value
 case class RecordLookup(rec: Expression, field: Id) extends IR with Expression
 

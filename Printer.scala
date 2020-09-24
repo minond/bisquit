@@ -42,11 +42,12 @@ def formatted(expr: Expression, lvl: Int = 1, nested: Boolean = false, short: Bo
       then s"\n${indent}(${body})(${formattedAll(args, argLvl + 3, false, ", ")})"
       else s"(${body})(${formattedAll(args, argLvl + 3, false, ", ")})"
     case Bool(v) => if v then "#t" else "#f"
+    case RefCell(value) => s"ref!(${formatted(value, lvl + 1, true, true)})"
     case Tuple(fields) =>
       s"(${formattedAll(fields, lvl, nested, ", ")})"
     case RecordLookup(rec, field) => s"${formatted(rec, lvl, false)}.${formatted(field, lvl, false)}"
     case Record(fields) =>
-      val pairs = fields.map { (k, v) => s"${formatted(k, lvl, false)} = ${formatted(v, lvl, nested)}" }
+      val pairs = fields.map { (k, v) => s"${formatted(k, lvl, false)} = ${formatted(v, lvl, nested, true)}" }
       val indent = " " * (lvl - 1)
       s"{ ${pairs.mkString(s"\n${indent}, ")} }"
     case ast.Int(num) if num < 0 => s"~${Math.abs(num)}"
@@ -137,4 +138,5 @@ def formatted(ty: Type, label: Labeler, nested: Boolean): String =
       s"${formatted(tyVar, label, false)}"
     case PolymorphicType(Some(parent), tyVar) =>
       s"${formatted(tyVar, label, false)} < ${formatted(parent, label, true)}"
+    case RefCellType(of) => s"Ref(${formatted(of, label, true)})"
   }

@@ -7,6 +7,7 @@ import scope._
 import typechecker._
 import utils.ensure
 
+val tyVar1 = fresh()
 val polyNum = PolymorphicType(Some(NumType))
 val polyOrd1 = PolymorphicType(Some(OrdType))
 val polyOrd2 = PolymorphicType(Some(OrdType))
@@ -89,7 +90,38 @@ val PreludeFunctions = Map(
           right <- eval(r, scope)
         yield
           Bool(left == right)
-    })
+    }),
+
+  Id("ref!") ->
+    Builtin(signature(List(tyVar1, RefCellType(tyVar1))), {
+      case (value :: Nil, scope) =>
+        for
+          evaled <- eval(value, scope)
+        yield
+          RefCell(evaled)
+    }),
+
+  Id("get!") ->
+    Builtin(signature(List(RefCellType(tyVar1), tyVar1)), {
+      case (ref :: Nil, scope) =>
+        for
+          evaled <- eval(ref, scope)
+          refVal <- ensure[RuntimeError, RefCell](evaled, ArgumentTypeError(ref))
+        yield
+          refVal.value
+    }),
+
+  Id("set!") ->
+    Builtin(signature(List(RefCellType(tyVar1), tyVar1, RefCellType(tyVar1))), {
+      case ((ref : Id) :: value :: Nil, scope) =>
+        for
+          maybeRefVal <- eval(ref, scope)
+          refVal <- ensure[RuntimeError, RefCell](maybeRefVal, ArgumentTypeError(ref))
+          evaled <- eval(value, scope)
+        yield
+          refVal.value = evaled
+          RefCell(evaled)
+    }),
 )
 
 val Prelude: Modules = Map(
