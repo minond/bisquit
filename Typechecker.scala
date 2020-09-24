@@ -352,7 +352,11 @@ def inferRecord(fields: Map[Id, Expression], env: Environment, sub: Substitution
   yield ret
 
 def inferApp(fn: Expression, args: List[Expression], env: Environment, sub: Substitution) =
-  args.map(pass1).map(infer(_, env, sub)).squished().flatMap { tyArgs =>
+  args.map(pass1).map(infer(_, env, sub)).squished().flatMap { inferredTys =>
+    val tyArgs = if inferredTys.isEmpty
+                 then List(UnitType)
+                 else inferredTys
+
     infer(pass1(fn), env, sub).flatMap { maybeFn =>
       maybeFn match {
         case tyFn @ LambdaType(tyFnSig, tyVars) =>
