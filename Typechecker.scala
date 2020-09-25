@@ -394,7 +394,15 @@ def inferApp(fn: Expression, args: List[Expression], env: Environment, sub: Subs
             }
 
         case _ =>
-          Left(ExpectedCallableInstead(fn))
+          for
+            tyArgs <- args.map(pass1).map(infer(_, env, sub)).squished()
+            tyFn <- infer(pass1(fn), env, sub)
+            tyRes = fresh()
+            tySig = if tyArgs.isEmpty
+                    then List(UnitType)
+                    else tyArgs
+            _ <- sub.unify(tyFn, LambdaType(tySig :+ tyRes))
+          yield sub(tyRes)
       }
     }
   }
