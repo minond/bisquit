@@ -124,7 +124,7 @@ def formatted(ty: Type, label: Labeler, nested: Boolean): String =
         case (acc, _) => acc
       }
       val sig = subbedTys.map(formatted(_, label, true)).mkString(" -> ")
-      val conds = vars.filter(v => usedPolyVars.contains(v)).map(formatted(_, label, true)).mkString(", ")
+      val conds = vars.filter(v => usedPolyVars.contains(v)).map(formatted(_, label, false)).mkString(", ")
       val where =
         if conds.isEmpty
         then ""
@@ -137,6 +137,8 @@ def formatted(ty: Type, label: Labeler, nested: Boolean): String =
     case PolymorphicType(None, tyVar) =>
       s"${formatted(tyVar, label, false)}"
     case PolymorphicType(Some(parent), tyVar) =>
-      s"${formatted(tyVar, label, false)} < ${formatted(parent, label, true)}"
+      if nested
+      then s"${formatted(tyVar, label, false)}"
+      else s"${formatted(tyVar, label, false)} < ${formatted(parent, label, true)}"
     case RefCellType(of) => s"Ref(${formatted(of, label, true)})"
   }
