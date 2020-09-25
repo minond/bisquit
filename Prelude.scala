@@ -113,7 +113,7 @@ val PreludeFunctions = Map(
 
   Id("set!") ->
     Builtin(signature(List(RefCellType(tyVar1), tyVar1, RefCellType(tyVar1))), {
-      case ((ref : Id) :: value :: Nil, scope) =>
+      case (ref :: value :: Nil, scope) =>
         for
           maybeRefVal <- eval(ref, scope)
           refVal <- ensure[RuntimeError, RefCell](maybeRefVal, ArgumentTypeError(ref))
