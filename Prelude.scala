@@ -2,6 +2,7 @@ package bisquit
 package prelude
 
 import ast._
+import printer._
 import runtime._
 import scope._
 import typechecker._
@@ -121,6 +122,14 @@ val PreludeFunctions = Map(
         yield
           refVal.value = evaled
           RefCell(evaled)
+    }),
+
+  Id("universe") ->
+    Builtin(signature(List(UnitType, UnitType)), { (_, scope) =>
+      scope.map { case ((k, v)) =>
+        println(s"${k.lexeme} : ${infer(pass1(v), scope, Substitution()).map(ty => formatted(ty)).right.get}")
+      }
+      Right(Tuple(List.empty))
     }),
 )
 
