@@ -15,3 +15,22 @@
   Int):
   > :type +(2, int_to_real(34))
   type error: UnificationError(IntType,RealType)
+
+
+- Polymorphic types need proper covariance/contravariance checks:
+
+  > import Prelude exposing (+, ref!, set!, get!, int_to_real)
+  < ok
+
+  > def int_ref = ref!(0)
+  : Ref(Int)
+
+  > def increment_int_ref(r) =
+    set!(r, +(int_to_real(3), get!(r)))
+  : Ref(Real) -> Ref(Real)
+
+  > increment_int_ref(int_ref)
+  = ref!(3.0) : Ref(Real)
+
+  > increment_int_ref(int_ref)
+  = ref!(6.0) : Ref(Real)
