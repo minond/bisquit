@@ -95,7 +95,7 @@ case class Definition(name: Id, value: Expression) extends Statement {
     value
 }
 
-case class Import(name: Id, exposing: List[Id]) extends Statement {
+case class Import(name: Id, exposing: List[Id], all: Boolean = false) extends Statement {
   def asExpression(scope: Scope, modules: Modules) =
     modules.get(name) match {
       case None =>
@@ -120,24 +120,37 @@ case class Module(name: Id, exposes: Set[Id], scope: Scope) extends Statement {
       lexScope: Scope,
       modules: Modules,
       exposing: List[Id],
+      all: Boolean,
   ): Either[RuntimeError, Scope] =
-    if exposing.isEmpty
-    then
-      val fields = scope.filter { (name, _) => exposes.contains(name) }
-      val record = Record(fields)
-      Right(lexScope ++ Map(name -> record))
-    else
-      val dups = exposing.diff(exposing.distinct).distinct
-      val missing = exposing.diff(exposes.toList)
+    (
+      exposing.isEmpty,
+      all,
+      exposing.diff(exposing.distinct).distinct,
+      exposing.diff(exposes.toList),
+    ) match {
+      case (_, true, _, _) =>
+        val fields = scope.filter { (name, _) =>
+          exposes.contains(name)
+        }
 
-      if !dups.isEmpty
-      then Left(DuplicateExposeName(dups.head))
-      else if !missing.isEmpty
-      then Left(ModuleValueNotExposed(missing.head, this))
-      else
+        Right(lexScope ++ fields)
+
+      case (true, false, _, _) =>
+        val fields = scope.filter { (name, _) => exposes.contains(name) }
+        val record = Record(fields)
+        Right(lexScope ++ Map(name -> record))
+
+      case (_, _, Nil, Nil) =>
         val fields = scope.filter { (name, _) =>
           exposing.contains(name) && exposes.contains(name)
         }
 
         Right(lexScope ++ fields)
+
+      case (_, _, Nil, missing) =>
+        Left(ModuleValueNotExposed(missing.head, this))
+
+      case (_, _, dups, _) =>
+        Left(DuplicateExposeName(dups.head))
+    }
 }

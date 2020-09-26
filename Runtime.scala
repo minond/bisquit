@@ -50,19 +50,19 @@ def eval(stmt: Statement, scope: Scope, modules: Modules): Either[LoadError, (Sc
       yield
         (scope ++ Map(name -> evaled), modules)
 
-    case Import(name, exposing) =>
+    case Import(name, exposing, all) =>
       modules.get(name) match {
         case None =>
           for
             ret <- load(fileNameFromModuleName(name.lexeme), modules)
             (module, nextModules) = ret
-            nextScope <- module.expose(scope, nextModules, exposing)
+            nextScope <- module.expose(scope, nextModules, exposing, all)
           yield
             (nextScope, nextModules)
 
         case Some(module) =>
           for
-            nextScope <- module.expose(scope, modules, exposing)
+            nextScope <- module.expose(scope, modules, exposing, all)
           yield
             (nextScope, modules)
       }

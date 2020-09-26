@@ -94,12 +94,24 @@ def parseImport(tokens: Tokens): Either[ParsingError, Import] =
     case (Left(err), _) => Left(err)
 
     case (Right(name), Word.Exposing) =>
-      for
-        _ <- eat[OpenParen](drop1(tokens))
-        maybeExposing <- parseByUntil(tokens, Comma(), CloseParen())
-        exposing <- maybeExposing.ensureItems[ParsingError, Id]({ err => UnexpectedExpression[Id](err) })
-      yield
-        Import(name, exposing)
+      eat[OpenParen](drop1(tokens)).flatMap { _ =>
+        lookahead(tokens) match {
+          case _: Dot =>
+            for
+              _ <- eat[Dot](tokens)
+              _ <- eat[Dot](tokens)
+              _ <- eat[Dot](tokens)
+              _ <- eat[CloseParen](tokens)
+            yield
+              Import(name, List.empty, true)
+
+          case _ =>
+            parseByUntil(tokens, Comma(), CloseParen()).flatMap { maybeExposing =>
+              maybeExposing.ensureItems[ParsingError, Id]({ err => UnexpectedExpression[Id](err) })
+                .map { Import(name, _) }
+            }
+        }
+      }
 
     case (Right(name), _) => Right(Import(name, List.empty))
   }
