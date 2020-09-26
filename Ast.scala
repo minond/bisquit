@@ -20,6 +20,8 @@ case class OpenParen() extends Token
 case class CloseParen() extends Token
 case class OpenCurlyBraket() extends Token
 case class CloseCurlyBraket() extends Token
+case class OpenSquareBraket() extends Token
+case class CloseSquareBraket() extends Token
 case class Colon() extends Token
 case class Equal() extends Token
 case class Dot() extends Token
@@ -35,6 +37,7 @@ case class Real(value: Double) extends IR with Value with Token
 case class Str(value: String) extends IR with Value with Token
 case class Bool(value: Boolean) extends IR with Value with Token
 case class Tuple(fields: List[Expression]) extends IR with Value
+case class Lista(items: List[Expression]) extends IR with Value
 case class RefCell(var value: Value) extends IR with Value
 case class Record(fields: Map[Id, Expression] = Map()) extends IR with Value
 case class RecordLookup(rec: Expression, field: Id) extends IR with Expression

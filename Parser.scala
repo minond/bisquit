@@ -150,6 +150,7 @@ def parseExpression(token: Token, tokens: Tokens): Either[ParsingError, Expressi
     case Word.If => parseCond(tokens)
     case OpenParen() => parseExpressionContinuation(parseTuple(tokens), tokens)
     case OpenCurlyBraket() => parseExpressionContinuation(parseRecord(tokens), tokens)
+    case OpenSquareBraket() => parseLista(tokens)
     case scalar: (Str | ast.Int) => Right(scalar)
     case id: Id => parseExpressionContinuation(id, tokens)
     case unexpected => Left(UnexpectedToken[Token](unexpected))
@@ -169,6 +170,12 @@ def parseRecordLookup(rec: Expression, tokens: Tokens): Either[ParsingError, Rec
     field <- eat[Id](tokens)
   yield
     RecordLookup(rec, field)
+
+def parseLista(tokens: Tokens): Either[ParsingError, Expression] =
+  for
+    items <- parseByUntil(tokens, Comma(), CloseSquareBraket())
+  yield
+    Lista(items)
 
 def parseTuple(tokens: Tokens): Either[ParsingError, Expression] =
   for
@@ -335,6 +342,8 @@ def nextToken(
     case ')' => ok(CloseParen())
     case '{' => ok(OpenCurlyBraket())
     case '}' => ok(CloseCurlyBraket())
+    case '[' => ok(OpenSquareBraket())
+    case ']' => ok(CloseSquareBraket())
     case ',' => ok(Comma())
     case ':' => ok(Colon())
     case '=' => ok(Equal())
@@ -394,6 +403,8 @@ val isIdentifierTail = and(not(isWhitespace),
                            not(is(')')),
                            not(is('{')),
                            not(is('}')),
+                           not(is('[')),
+                           not(is(']')),
                            not(is(',')),
                            not(is('.')),
                            not(is('=')),

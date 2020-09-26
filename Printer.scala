@@ -43,6 +43,10 @@ def formatted(expr: Expression, lvl: Int = 1, nested: Boolean = false, short: Bo
       else s"(${body})(${formattedAll(args, argLvl + 3, false, ", ")})"
     case Bool(v) => if v then "#t" else "#f"
     case RefCell(value) => s"ref!(${formatted(value, lvl + 1, true, true)})"
+    case Lista(Nil) =>
+      s"[]"
+    case Lista(items) =>
+      s"[${formattedAll(items, lvl, true, ", ")}]"
     case Tuple(fields) =>
       s"(${formattedAll(fields, lvl, nested, ", ")})"
     case RecordLookup(rec, field) => s"${formatted(rec, lvl, false)}.${formatted(field, lvl, false)}"
@@ -99,6 +103,7 @@ def formatted(ty: Type, label: Labeler, nested: Boolean): String =
     case NumType => "Num"
     case StrType => "Str"
     case BoolType => "Bool"
+    case ListaType(of) => s"List[${formatted(of, label, true)}]"
     case TupleType(fields) =>
       val tys = fields.map{ field => formatted(field, label, nested) }
       s"(${tys.mkString(" * ")})"
@@ -140,5 +145,5 @@ def formatted(ty: Type, label: Labeler, nested: Boolean): String =
       if nested
       then s"${formatted(tyVar, label, false)}"
       else s"${formatted(tyVar, label, false)} < ${formatted(parent, label, true)}"
-    case RefCellType(of) => s"Ref(${formatted(of, label, true)})"
+    case RefCellType(of) => s"Ref[${formatted(of, label, true)}]"
   }

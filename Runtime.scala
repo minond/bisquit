@@ -21,6 +21,7 @@ case class FileNotFound(name: String) extends LoadError
 sealed trait RuntimeError extends LoadError
 case class LookupError(id: Id) extends RuntimeError
 case class ArgumentTypeError(arg: IR) extends RuntimeError
+case class CannotGetCarOfEmptyList(list: IR) extends RuntimeError
 case class ConditionError(cond: IR) extends RuntimeError
 case class RecordLookupError(id: Id, record: Record) extends RuntimeError
 case class ExpectedRecordInstead(got: Value) extends RuntimeError
@@ -87,6 +88,7 @@ def eval(expr: IR, scope: Scope): Either[RuntimeError, Value] =
   expr match {
     case Lambda(args, body, None) => Right(Lambda(args, body, Some(scope)))
     case Lambda(args, body, Some(scope)) => Right(Lambda(args, body, Some(scope)))
+    case Lista(fields) => evalLista(fields, scope)
     case Tuple(fields) => evalTuple(fields, scope)
     case Record(fields) => evalRecord(fields, scope)
     case RecordLookup(rec, field) => evalRecordLookup(rec, field, scope)
@@ -96,6 +98,11 @@ def eval(expr: IR, scope: Scope): Either[RuntimeError, Value] =
     case Let(bindings, body) => evalLet(bindings, body, scope)
     case Cond(cond, pass, fail) => evalCond(cond, pass, fail, scope)
   }
+
+def evalLista(items: List[Expression], scope: Scope) =
+  for
+    inners <- items.map { v => eval(pass1(v), scope) }.squished()
+  yield Lista(inners)
 
 def evalTuple(fields: List[Expression], scope: Scope) =
   for

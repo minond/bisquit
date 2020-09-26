@@ -131,6 +131,55 @@ val PreludeFunctions = Map(
       }
       Right(Tuple(List.empty))
     }),
+
+  Id("cons") ->
+    Builtin(signature(List(tyVar1, ListaType(tyVar1), ListaType(tyVar1))), {
+      case (headExpr :: tailExpr :: Nil, scope) =>
+        for
+          head <- eval(headExpr, scope)
+          tailMaybe <- eval(tailExpr, scope)
+          tail <- ensure[RuntimeError, Lista](tailMaybe, ArgumentTypeError(tailExpr))
+        yield
+          Lista(head +: tail.items)
+    }),
+
+  Id("car") ->
+    Builtin(signature(List(ListaType(tyVar1), tyVar1)), {
+      case (listExpr :: Nil, scope) =>
+        for
+          listMaybe <- eval(listExpr, scope)
+          list <- ensure[RuntimeError, Lista](listMaybe, ArgumentTypeError(listExpr))
+          headExpr <- if list.items.isEmpty
+                      then Left(CannotGetCarOfEmptyList(listExpr))
+                      else Right(list.items.head)
+          head <- eval(pass1(headExpr), scope)
+        yield
+          head
+    }),
+
+  Id("cdr") ->
+    Builtin(signature(List(ListaType(tyVar1), ListaType(tyVar1))), {
+      case (listExpr :: Nil, scope) =>
+        for
+          listMaybe <- eval(listExpr, scope)
+          list <- ensure[RuntimeError, Lista](listMaybe, ArgumentTypeError(listExpr))
+          tailExpr = if list.items.isEmpty
+                     then List.empty
+                     else list.items.tail
+          tail <- eval(tailExpr.map(pass1), scope)
+        yield
+          Lista(tail)
+    }),
+
+  Id("nil?") ->
+    Builtin(signature(List(ListaType(tyVar1), BoolType)), {
+      case (listExpr :: Nil, scope) =>
+        for
+          listMaybe <- eval(listExpr, scope)
+          list <- ensure[RuntimeError, Lista](listMaybe, ArgumentTypeError(listExpr))
+        yield
+          Bool(list.items.isEmpty)
+    }),
 )
 
 val Prelude: Modules = Map(

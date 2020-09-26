@@ -32,6 +32,11 @@ case object IntType extends Type()
 case object RealType extends Type(IntType)
 case object NumType extends Type(RealType)
 
+case class ListaType(of: Type) extends Type() {
+  override def contained(ty: Type): Boolean =
+    ty.contains(of)
+}
+
 case class TupleType(fields: List[Type]) extends Type() {
   override def contained(ty: Type): Boolean =
     fields.forall(field => ty.contains(field))
@@ -97,6 +102,8 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
         RefCellType(apply(ty))
       case ty : PolymorphicType =>
         substitutions.getOrElse(ty.tyVar.id, ty)
+      case ListaType(of) =>
+        ListaType(apply(of))
       case TupleType(fields) =>
         TupleType(fields.map(apply))
       case rec: RecordVariable =>
@@ -142,6 +149,10 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
 
       case (ty, tyVar : TypeVariable) =>
         unify(tyVar, ty)
+
+
+      case (ListaType(tyVar : TypeVariable), ListaType(ty2)) =>
+        unify(tyVar, ty2)
 
 
       case (ty1 @ PolymorphicType(None, _), _) =>
@@ -291,6 +302,7 @@ def infer(expr: IR, env: Environment, sub: Substitution): Either[TypingError, Ty
     case Let(bindings, body) => inferLet(bindings, body, env, sub)
     case Lambda(params, body, scope) => inferLambda(params, pass1(body), scope.getOrElse(Map()), env, sub)
     case App(fn, args) => inferApp(fn, args, env, sub)
+    case Lista(items) => inferLista(items, env, sub)
     case Tuple(fields) => inferTuple(fields, env, sub)
     case RefCell(value) => inferRefCell(value, env, sub)
     case Record(fields) => inferRecord(fields, env, sub)
@@ -308,6 +320,15 @@ def inferRefCell(value: Value, env: Environment, sub: Substitution) =
     ty <- infer(value.asInstanceOf[IR], env, sub)
   yield
     RefCellType(ty)
+
+def inferLista(items: List[Expression], env: Environment, sub: Substitution) =
+  for
+    tys <- inferAll(items, env, sub)
+    /* TODO Ensure all types are equal */
+  yield
+    if tys.size == 0
+    then ListaType(fresh())
+    else ListaType(tys.head)
 
 def inferTuple(fields: List[Expression], env: Environment, sub: Substitution) =
   for
