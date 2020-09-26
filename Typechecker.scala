@@ -154,6 +154,8 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
       case (ListaType(tyVar : TypeVariable), ListaType(ty2)) =>
         unify(tyVar, ty2)
 
+      case (ListaType(ty1), ListaType(tyVar : TypeVariable)) =>
+        unify(ty1, tyVar)
 
       case (ty1 @ PolymorphicType(None, _), _) =>
         substitutions.get(ty1.tyVar.id) match {
