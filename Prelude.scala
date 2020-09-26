@@ -36,7 +36,7 @@ def numericBinaryBuiltin(f: (Double, Double) => Double): Builtin =
 // TODO Add ArgumentTypeError back:
 // num <- ensure[RuntimeError, Int](value, ArgumentTypeError(expr))
 def numericUnaryBuiltin(f: Double => Double): Builtin =
-  Builtin(signature(List(polyNum, polyNum)), {
+  Builtin(signature(List(polyNum, polyNum), List(polyNum)), {
     case (expr :: Nil, scope) =>
       for
         value <- eval(expr, scope)
