@@ -12,7 +12,7 @@ sealed trait Token extends Positioned
 sealed trait Expression extends Positioned with Typing
 sealed trait IR extends Typing
 sealed trait Value extends Expression
-sealed trait Statement { def asExpression(scope: Scope, modules: Modules): Expression }
+sealed trait Statement
 
 case class Eof() extends Token
 case class Comma() extends Token
@@ -93,32 +93,9 @@ trait Calling(fn: Callable.Func) {
 }
 
 
-case class Definition(name: Id, value: Expression) extends Statement {
-  def asExpression(scope: Scope, modules: Modules) =
-    value
-}
-
-case class Import(name: Id, exposing: List[Id], all: Boolean = false) extends Statement {
-  def asExpression(scope: Scope, modules: Modules) =
-    modules.get(name) match {
-      case None =>
-        Bool(true)
-
-      case Some(module) =>
-        val fields = module.scope.foldLeft[Map[Id, Expression]](Map()) {
-          case (acc, (name, value)) if exposing.isEmpty || exposing.contains(name) =>
-            acc ++ Map(name -> value)
-          case (acc, _) => acc
-        }
-
-        Record(fields)
-    }
-}
-
+case class Definition(name: Id, value: Expression) extends Statement
+case class Import(name: Id, exposing: List[Id], all: Boolean = false) extends Statement
 case class Module(name: Id, exposes: Set[Id], scope: Scope) extends Statement {
-  def asExpression(scope: Scope, modules: Modules) =
-    Bool(true)
-
   def expose(
       lexScope: Scope,
       modules: Modules,

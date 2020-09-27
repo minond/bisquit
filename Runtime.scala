@@ -211,17 +211,15 @@ def load(fileName: String, currModules: Modules = Prelude): Either[LoadError, (M
                 return Left(IncorrectModuleName(badName, name))
 
               case _ =>
-            }
-
-            val ir = pass1(stmt.asExpression(scope, modules))
-            infer(ir, scope, Substitution()) match {
-              case Left(err) => return Left(err)
-              case Right(_) =>
-                eval(stmt, scope, modules) match {
+                infer(stmt, scope, Substitution()) match {
                   case Left(err) => return Left(err)
-                  case Right((newScope, newModules)) =>
-                    scope = newScope
-                    modules = newModules
+                  case Right(ty) =>
+                    eval(stmt, scope, modules) match {
+                      case Left(err) => return Left(err)
+                      case Right((newScope, newModules)) =>
+                        scope = newScope
+                        modules = newModules
+                    }
                 }
             }
         }

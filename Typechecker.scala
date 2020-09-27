@@ -292,6 +292,16 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
 def infer(expr: IR): Either[TypingError, Type] =
   infer(expr, Map(), Substitution())
 
+def infer(stmt: Statement, env: Environment, sub: Substitution): Either[TypingError, Type] =
+  stmt match {
+    case Definition(id, value) =>
+      val rec = env ++ Map(id -> Id(id.lexeme).typeTag(fresh()))
+      infer(pass1(value), rec, sub)
+
+    case _: (Import | Module) =>
+      Right(BoolType)
+  }
+
 def infer(expr: IR, env: Environment, sub: Substitution): Either[TypingError, Type] =
   expr match {
     case _: ast.Int => Right(IntType)
