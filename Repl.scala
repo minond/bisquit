@@ -119,7 +119,7 @@ class Repl(
                 }
 
               case stmt =>
-                typeIt(stmt.asExpression(scope, modules)) { (_, ty) =>
+                typeIt(stmt) { (_, ty) =>
                   doIt(stmt) {
                     out.println(s": ${formatted(ty)}")
                     newLine = true
@@ -144,6 +144,16 @@ class Repl(
       }
 
     true
+  }
+
+  def typeIt(stmt: Statement)(ok: (Expression, Type) => Unit) = {
+    infer(stmt, scope, Substitution()) match {
+      case Right(ty) => ok(stmt.asExpression(scope, modules), ty)
+
+      case Left(err) =>
+        out.println(s"type error: $err")
+        newLine = true
+    }
   }
 
   def typeIt(expr: Expression)(ok: (Expression, Type) => Unit) = {
