@@ -93,7 +93,7 @@ class Repl(
         parseIt(code) {
           case expr: Expression =>
             typeIt(expr, code) { (_, ty) =>
-              evalIt(expr) { value =>
+              evalIt(expr, code) { value =>
                 out.println(s"= ${formatted(value, lvl = 3, short = true)} : ${formatted(ty)}")
                 newLine = true
               }
@@ -101,26 +101,26 @@ class Repl(
           case stmt: Statement =>
             stmt match {
               case module: Module =>
-                doIt(module) {
+                doIt(module, code) {
                   out.println("< ok")
                   newLine = true
                 }
 
               case ymport @ Import(name, _, _) if name == InternalModuleName =>
-                doIt(ymport) {
+                doIt(ymport, code) {
                   out.println("< ok")
                   newLine = true
                 }
 
               case ymport @ Import(name, _, _) =>
-                doIt(ymport, modules.removed(name)) {
+                doIt(ymport, code, modules.removed(name)) {
                   out.println("< ok")
                   newLine = true
                 }
 
               case stmt =>
                 typeIt(stmt, code) { (_, ty) =>
-                  doIt(stmt) {
+                  doIt(stmt, code) {
                     out.println(s": ${formatted(ty)}")
                     newLine = true
                   }
@@ -138,7 +138,7 @@ class Repl(
           return false
 
         case Left(err) =>
-          out.println(s"parse error: $err")
+          out.println(s"${errorType(err)}: ${formatted(err, code)}")
           newLine = true
           return true
       }
@@ -155,7 +155,7 @@ class Repl(
         }
 
       case Left(err) =>
-        out.println(s"type error: ${formattedTypingError(err, code)}")
+        out.println(s"${errorType(err)}: ${formatted(err, code)}")
         newLine = true
     }
   }
@@ -166,29 +166,29 @@ class Repl(
       case Right(ty) => ok(expr, ty)
 
       case Left(err) =>
-        out.println(s"type error: ${formattedTypingError(err, code)}")
+        out.println(s"${errorType(err)}: ${formatted(err, code)}")
         newLine = true
     }
   }
 
-  def evalIt(expr: Expression)(ok: Value => Unit) =
+  def evalIt(expr: Expression, code: String)(ok: Value => Unit) =
     val ir = pass1(expr)
     eval(ir, scope) match {
       case Right(value) => ok(value)
 
       case Left(err) =>
-        out.println(s"runtime error: $err")
+        out.println(s"${errorType(err)}: ${formatted(err, code)}")
         newLine = true
     }
 
-  def doIt(stmt: Statement, currModules: Modules = modules)(ok: => Unit) =
+  def doIt(stmt: Statement, code: String, currModules: Modules = modules)(ok: => Unit) =
     eval(stmt, scope, currModules) match {
       case Right((newScope, newModules)) =>
         scope = newScope
         modules = newModules
         ok
       case Left(err) =>
-        out.println(s"runtime error: $err")
+        out.println(s"${errorType(err)}: ${formatted(err, code)}")
         newLine = true
     }
 

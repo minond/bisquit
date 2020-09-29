@@ -5,6 +5,8 @@ import scala.collection.mutable.{Map => MMap}
 
 import ast.{Int => _, _}
 import input._
+import parser._
+import runtime._
 import typechecker._
 
 
@@ -152,10 +154,12 @@ def formatted(ty: Type, label: Labeler, nested: Boolean): String =
     case RefCellType(of) => s"Ref[${formatted(of, label, true)}]"
   }
 
-def formattedTypingError(err: TypingError, source: String): String =
+def formatted(err: LoadError, source: String): String =
   err match {
     case UnificationError(ty1, ty2) =>
       ty2.tok match {
+        case None =>
+          s"given a value of type ${formatted(ty2, true)} where a value of ${formatted(ty1, true)} was expected"
         case Some(tok) =>
           tok.position match {
             case None =>
@@ -177,9 +181,15 @@ def formattedTypingError(err: TypingError, source: String): String =
                   buff.toString
               }
           }
-        case None =>
-          s"given a value of type ${formatted(ty2, true)} where a value of ${formatted(ty1, true)} was expected"
       }
 
     case _ => err.toString
+  }
+
+def errorType(err: LoadError): String =
+  err match {
+    case _: TypingError => "type error"
+    case _: RuntimeError => "runtime error"
+    case _: ParsingError => "parse error"
+    case _ => "error"
   }
