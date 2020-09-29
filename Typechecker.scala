@@ -18,8 +18,9 @@ sealed trait Type(val containedSets: Type*) {
     false
 
   var tok: Option[IR | Expression | Token] = None
-  def setToken(token: IR | Expression | Token) =
+  def setToken(token: IR | Expression | Token): Type =
     this.tok = Some(token)
+    this
 }
 
 case class PolymorphicType(
@@ -282,6 +283,9 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
             if id3 == id
             then Right(this)
             else unify(apply(tyVar), ty, id)
+
+          case Some(ty) =>
+            unify(apply(tyVar), ty, id)
         }
 
       case Some(next) => unify(next, ty, id)
@@ -308,11 +312,11 @@ def infer(stmt: Statement, env: Environment, sub: Substitution): Either[TypingEr
 
 def infer(expr: IR, env: Environment, sub: Substitution): Either[TypingError, Type] =
   expr match {
-    case _: ast.Int => Right(IntType())
-    case _: Real => Right(RealType())
-    case _: Str => Right(StrType())
-    case _: Bool => Right(BoolType())
-    case id : Id => lookup(id, env, sub)
+    case _: ast.Int => Right(IntType().setToken(expr))
+    case _: Real => Right(RealType().setToken(expr))
+    case _: Str => Right(StrType().setToken(expr))
+    case _: Bool => Right(BoolType().setToken(expr))
+    case id : Id => lookup(id, env, sub).map(_.setToken(expr))
     case Builtin(sig, _) => Right(sig)
     case cond : Cond => inferCond(cond, env, sub)
     case Let(bindings, body) => inferLet(bindings, body, env, sub)

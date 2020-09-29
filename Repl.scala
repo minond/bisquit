@@ -78,12 +78,12 @@ class Repl(
       case (Mode.Type, code) =>
         parseIt(code) {
           case expr: Expression =>
-            typeIt(expr) { (_, ty) =>
+            typeIt(expr, code) { (_, ty) =>
               out.println(s": ${formatted(ty)}")
               newLine = true
             }
           case stmt: Statement =>
-            typeIt(stmt) { (_, ty) =>
+            typeIt(stmt, code) { (_, ty) =>
               out.println(s": ${formatted(ty)}")
               newLine = true
             }
@@ -92,7 +92,7 @@ class Repl(
       case (Mode.Eval, code) =>
         parseIt(code) {
           case expr: Expression =>
-            typeIt(expr) { (_, ty) =>
+            typeIt(expr, code) { (_, ty) =>
               evalIt(expr) { value =>
                 out.println(s"= ${formatted(value, lvl = 3, short = true)} : ${formatted(ty)}")
                 newLine = true
@@ -119,7 +119,7 @@ class Repl(
                 }
 
               case stmt =>
-                typeIt(stmt) { (_, ty) =>
+                typeIt(stmt, code) { (_, ty) =>
                   doIt(stmt) {
                     out.println(s": ${formatted(ty)}")
                     newLine = true
@@ -146,7 +146,7 @@ class Repl(
     true
   }
 
-  def typeIt(stmt: Statement)(ok: (Expression, Type) => Unit) = {
+  def typeIt(stmt: Statement, code: String)(ok: (Expression, Type) => Unit) = {
     infer(stmt, scope, Substitution()) match {
       case Right(ty) =>
         stmt match {
@@ -155,18 +155,18 @@ class Repl(
         }
 
       case Left(err) =>
-        out.println(s"type error: $err")
+        out.println(s"type error: ${formattedTypingError(err, code)}")
         newLine = true
     }
   }
 
-  def typeIt(expr: Expression)(ok: (Expression, Type) => Unit) = {
+  def typeIt(expr: Expression, code: String)(ok: (Expression, Type) => Unit) = {
     val ir = pass1(expr)
     infer(ir, scope, Substitution()) match {
       case Right(ty) => ok(expr, ty)
 
       case Left(err) =>
-        out.println(s"type error: $err")
+        out.println(s"type error: ${formattedTypingError(err, code)}")
         newLine = true
     }
   }

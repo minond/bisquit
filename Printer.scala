@@ -4,6 +4,7 @@ package printer
 import scala.collection.mutable.{Map => MMap}
 
 import ast.{Int => _, _}
+import input._
 import typechecker._
 
 
@@ -94,6 +95,9 @@ def formatted(expr: Expression, lvl: Int = 1, nested: Boolean = false, short: Bo
 def formatted(ty: Type): String =
   formatted(ty, Labeler(), false)
 
+def formatted(ty: Type, nested: Boolean): String =
+  formatted(ty, Labeler(), nested)
+
 def formatted(ty: Type, label: Labeler, nested: Boolean): String =
   ty match {
     case _: UnitType => "Unit"
@@ -146,4 +150,36 @@ def formatted(ty: Type, label: Labeler, nested: Boolean): String =
       then s"${formatted(tyVar, label, false)}"
       else s"${formatted(tyVar, label, false)} < ${formatted(parent, label, true)}"
     case RefCellType(of) => s"Ref[${formatted(of, label, true)}]"
+  }
+
+def formattedTypingError(err: TypingError, source: String): String =
+  err match {
+    case UnificationError(ty1, ty2) =>
+      ty2.tok match {
+        case Some(tok) =>
+          tok.position match {
+            case None =>
+              s"given a value of type ${formatted(ty2, true)} where a value of ${formatted(ty1, true)} was expected"
+            case Some(pos) =>
+              getSurroundingLines(pos.offset, source, 5) match {
+                case None =>
+                  s"given a value of type ${formatted(ty2, true)} where a value of ${formatted(ty1, true)} was expected"
+                case Some((lines, lineNumbers, row, col)) =>
+                  val buff = StringBuilder()
+                  buff.append(s"given a value of type ${formatted(ty2, true)} where a value of ${formatted(ty1, true)} was expected:\n")
+                  for (line, num) <- lines.zip(lineNumbers) do
+                    val header = s"\n  ${pos.file}:${num + 1} | "
+                    if num == row
+                    then
+                      buff.append(s"$header$line\n")
+                      buff.append((" " * (col + header.size - 1)) + "^")
+                    else buff.append(s"$header$line")
+                  buff.toString
+              }
+          }
+        case None =>
+          s"given a value of type ${formatted(ty2, true)} where a value of ${formatted(ty1, true)} was expected"
+      }
+
+    case _ => err.toString
   }

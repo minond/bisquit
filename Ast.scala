@@ -10,7 +10,7 @@ trait LoadError
 
 sealed trait Token extends Positioned
 sealed trait Expression extends Positioned with Typing
-sealed trait IR extends Typing
+sealed trait IR extends Typing with Positioned
 sealed trait Value extends Expression
 sealed trait Statement
 
