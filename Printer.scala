@@ -96,13 +96,13 @@ def formatted(ty: Type): String =
 
 def formatted(ty: Type, label: Labeler, nested: Boolean): String =
   ty match {
-    case UnitType => "Unit"
-    case IntType => "Int"
-    case RealType => "Real"
-    case OrdType => "Ord"
-    case NumType => "Num"
-    case StrType => "Str"
-    case BoolType => "Bool"
+    case _: UnitType => "Unit"
+    case _: IntType => "Int"
+    case _: RealType => "Real"
+    case _: OrdType => "Ord"
+    case _: NumType => "Num"
+    case _: StrType => "Str"
+    case _: BoolType => "Bool"
     case ListaType(of) => s"List[${formatted(of, label, true)}]"
     case TupleType(fields) =>
       val tys = fields.map{ field => formatted(field, label, nested) }

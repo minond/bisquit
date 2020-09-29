@@ -151,7 +151,7 @@ class Repl(
       case Right(ty) =>
         stmt match {
           case Definition(_, value) => ok(value, ty)
-          case _ => ok(Bool(true), BoolType)
+          case _ => ok(Bool(true), BoolType())
         }
 
       case Left(err) =>

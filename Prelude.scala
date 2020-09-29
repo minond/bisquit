@@ -9,9 +9,9 @@ import typechecker._
 import utils.ensure
 
 val tyVar1 = fresh()
-val polyNum = PolymorphicType(Some(NumType))
-val polyOrd1 = PolymorphicType(Some(OrdType))
-val polyOrd2 = PolymorphicType(Some(OrdType))
+val polyNum = PolymorphicType(Some(NumType()))
+val polyOrd1 = PolymorphicType(Some(OrdType()))
+val polyOrd2 = PolymorphicType(Some(OrdType()))
 
 def signature(tys: List[Type], vars: List[PolymorphicType] = List.empty) =
   LambdaType(tys, vars)
@@ -47,7 +47,7 @@ def numericUnaryBuiltin(f: Double => Double): Builtin =
         }
   })
 
-val booleanAnd = Builtin(signature(List(BoolType, BoolType, BoolType)), {
+val booleanAnd = Builtin(signature(List(BoolType(), BoolType(), BoolType())), {
   case (left :: right :: Nil, scope) =>
     eval(left, scope).flatMap {
       case Bool(true) => eval(right, scope)
@@ -56,7 +56,7 @@ val booleanAnd = Builtin(signature(List(BoolType, BoolType, BoolType)), {
     }
 })
 
-val booleanOr = Builtin(signature(List(BoolType, BoolType, BoolType)), {
+val booleanOr = Builtin(signature(List(BoolType(), BoolType(), BoolType())), {
   case (left :: right :: Nil, scope) =>
     eval(left, scope).flatMap {
       case Bool(true) => Right(Bool(true))
@@ -76,7 +76,7 @@ val InternalFunctions = Map(
   Id("~and-bin-bool") -> booleanAnd,
 
   Id("~eq-bin-ord") ->
-    Builtin(signature(List(polyOrd1, polyOrd2, BoolType), List(polyOrd1, polyOrd2)), {
+    Builtin(signature(List(polyOrd1, polyOrd2, BoolType()), List(polyOrd1, polyOrd2)), {
       case (l :: r :: Nil, scope) =>
         for
           left <- eval(l, scope)
@@ -156,7 +156,7 @@ val InternalFunctions = Map(
     }),
 
   Id("~list-nil") ->
-    Builtin(signature(List(ListaType(tyVar1), BoolType)), {
+    Builtin(signature(List(ListaType(tyVar1), BoolType())), {
       case (listExpr :: Nil, scope) =>
         for
           listMaybe <- eval(listExpr, scope)
@@ -166,7 +166,7 @@ val InternalFunctions = Map(
     }),
 
   Id("int_to_real") ->
-    Builtin(signature(List(IntType, RealType)), {
+    Builtin(signature(List(IntType(), RealType())), {
       case (arg :: Nil, scope) =>
         eval(arg, scope).flatMap {
           case Int(int) => Right(Real(int.toDouble))
@@ -174,7 +174,7 @@ val InternalFunctions = Map(
     }),
 
   Id("universe") ->
-    Builtin(signature(List(UnitType, UnitType)), { (_, scope) =>
+    Builtin(signature(List(UnitType(), UnitType())), { (_, scope) =>
       scope.map { case ((k, v)) =>
         println(s"${k.lexeme} : ${infer(pass1(v), scope, Substitution()).map(ty => formatted(ty)).right.get}")
       }

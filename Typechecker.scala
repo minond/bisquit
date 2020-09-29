@@ -16,6 +16,10 @@ sealed trait Type(val containedSets: Type*) {
     ty == this || containedSets.takeWhile(!_.contains(ty)).size != containedSetsSize
   def contained(ty: Type): Boolean =
     false
+
+  var tok: Option[IR | Expression | Token] = None
+  def setToken(token: IR | Expression | Token) =
+    this.tok = Some(token)
 }
 
 case class PolymorphicType(
@@ -23,14 +27,14 @@ case class PolymorphicType(
     val tyVar: TypeVariable = fresh(),
 ) extends Type()
 
-case object UnitType extends Type()
-case object StrType extends Type()
-case object BoolType extends Type()
+case class UnitType() extends Type()
+case class StrType() extends Type()
+case class BoolType() extends Type()
 case class RecordType(fields: Map[Id, Type] = Map()) extends Type()
 
-case object IntType extends Type()
-case object RealType extends Type(IntType)
-case object NumType extends Type(RealType)
+case class IntType() extends Type()
+case class RealType() extends Type(IntType())
+case class NumType() extends Type(RealType())
 
 case class ListaType(of: Type) extends Type() {
   override def contained(ty: Type): Boolean =
@@ -42,7 +46,7 @@ case class TupleType(fields: List[Type]) extends Type() {
     fields.forall(field => ty.contains(field))
 }
 
-case object OrdType extends Type(NumType, StrType, BoolType)
+case class OrdType() extends Type(NumType(), StrType(), BoolType())
 case class RefCellType(of: Type) extends Type()
 
 case class LambdaType(tys: List[Type], vars: List[PolymorphicType] = List.empty) extends Type() {
@@ -97,7 +101,7 @@ def freshRecord(fields: (Id, Type)*) =
 case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
   def apply(ty: Type): Type =
     ty match {
-      case ty @ (UnitType | NumType | IntType | RealType | StrType | BoolType | RecordType) => ty
+      case ty : (UnitType | NumType | IntType | RealType | StrType | BoolType) => ty
       case RefCellType(ty) =>
         RefCellType(apply(ty))
       case ty : PolymorphicType =>
@@ -299,15 +303,15 @@ def infer(stmt: Statement, env: Environment, sub: Substitution): Either[TypingEr
       infer(pass1(value), rec, sub)
 
     case _: (Import | Module) =>
-      Right(BoolType)
+      Right(BoolType())
   }
 
 def infer(expr: IR, env: Environment, sub: Substitution): Either[TypingError, Type] =
   expr match {
-    case _: ast.Int => Right(IntType)
-    case _: Real => Right(RealType)
-    case _: Str => Right(StrType)
-    case _: Bool => Right(BoolType)
+    case _: ast.Int => Right(IntType())
+    case _: Real => Right(RealType())
+    case _: Str => Right(StrType())
+    case _: Bool => Right(BoolType())
     case id : Id => lookup(id, env, sub)
     case Builtin(sig, _) => Right(sig)
     case cond : Cond => inferCond(cond, env, sub)
@@ -347,7 +351,7 @@ def inferTuple(fields: List[Expression], env: Environment, sub: Substitution) =
     tys <- inferAll(fields, env, sub)
   yield
     if tys.size == 0
-    then UnitType
+    then UnitType()
     else TupleType(tys)
 
 def inferLet(bindings: Map[Id, Expression], body: Expression, env: Environment, sub: Substitution) =
@@ -402,7 +406,7 @@ def inferRecord(fields: Map[Id, Expression], env: Environment, sub: Substitution
 def inferApp(fn: Expression, args: List[Expression], env: Environment, sub: Substitution) =
   args.map(pass1).map(infer(_, env, sub)).squished().flatMap { inferredTys =>
     val tyArgs = if inferredTys.isEmpty
-                 then List(UnitType)
+                 then List(UnitType())
                  else inferredTys
 
     infer(pass1(fn), env, sub).flatMap { maybeFn =>
@@ -414,7 +418,7 @@ def inferApp(fn: Expression, args: List[Expression], env: Environment, sub: Subs
           then
             val tyRes = fresh()
             val tySig = if tyArgs.isEmpty
-                        then List(UnitType, tyRes)
+                        then List(UnitType(), tyRes)
                         else tyArgs :+ tyRes
 
             sub.unify(tyFn, LambdaType(tySig)).map { _ =>
@@ -434,7 +438,7 @@ def inferApp(fn: Expression, args: List[Expression], env: Environment, sub: Subs
             tyFn <- infer(pass1(fn), env, sub)
             tyRes = fresh()
             tySig = if tyArgs.isEmpty
-                    then List(UnitType)
+                    then List(UnitType())
                     else tyArgs
             _ <- sub.unify(tyFn, LambdaType(tySig :+ tyRes))
           yield sub(tyRes)
@@ -446,7 +450,7 @@ def inferApp(fn: Expression, args: List[Expression], env: Environment, sub: Subs
 def inferCond(cond: Cond, env: Environment, sub: Substitution) =
   for
     condTy <- infer(pass1(cond.cond), env, sub)
-    _ <- sub.unify(condTy, BoolType)
+    _ <- sub.unify(condTy, BoolType())
     passTy <- infer(pass1(cond.pass), env, sub)
     failTy <- infer(pass1(cond.fail), env, sub)
     _ <- sub.unify(passTy, failTy)
@@ -468,7 +472,7 @@ def inferLambda(params: List[Id], body: IR, scope: Scope, env: Environment, sub:
   for
     tyBody <- infer(body, lexScope, sub)
     tyArgs = if paramTys.isEmpty
-             then List(UnitType)
+             then List(UnitType())
              else paramTys.map(sub(_))
     tyVars = sub.substitutions.foldLeft[List[PolymorphicType]](List.empty) {
                case (acc, (_, ty : PolymorphicType)) => acc :+ ty
