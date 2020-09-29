@@ -1,4 +1,4 @@
-module Prelude exposing (+, -, *, /, %, ~, ||, &&, cons, car, cdr, nil?, ref!, get!, set!, eq)
+module Prelude exposing (+, -, *, /, %, ~, ||, &&, cons, car, cdr, nil?, ref!, get!, set!, map!, eq)
 
 import Internal exposing (...)
 
@@ -18,8 +18,10 @@ def car(xs) = ~list-car(xs)
 def cdr(xs) = ~list-cdr(xs)
 def nil?(xs) = ~list-nil(xs)
 
-def ref!(val) = ~ref-cell-make!(val)
-def get!(ref) = ~ref-cell-get!(ref)
-def set!(ref, val) = ~ref-cell-set!(ref, val)
+def ref! = ~ref-cell-ref!
+def get! = ~ref-cell-get!
+def set! = ~ref-cell-set!
+def map!(r, f) =
+  get!(set!(r, f(get!(r))))
 
 def eq(a, b) = ~eq-bin-ord(a, b)

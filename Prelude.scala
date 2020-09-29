@@ -85,7 +85,7 @@ val InternalFunctions = Map(
           Bool(left == right)
     }),
 
-  Id("~ref-cell-make!") ->
+  Id("~ref-cell-ref!") ->
     Builtin(signature(List(tyVar1, RefCellType(tyVar1))), {
       case (value :: Nil, scope) =>
         for
