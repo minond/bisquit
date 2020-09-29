@@ -16,7 +16,10 @@ import utils.Implicits.Eithers
 import java.io.File
 import java.util.Scanner
 
-case class FileNotFound(name: String) extends LoadError
+
+val DefaultLoadPath = List("lib", ".")
+
+case class FileNotFound(name: String, loadPaths: List[String]) extends LoadError
 
 sealed trait RuntimeError extends LoadError
 case class LookupError(id: Id) extends RuntimeError
@@ -55,7 +58,8 @@ def eval(stmt: Statement, scope: Scope, modules: Modules): Either[LoadError, (Sc
       modules.get(name) match {
         case None =>
           for
-            ret <- load(fileNameFromModuleName(name.lexeme), modules)
+            file <- findModuleFile(name.lexeme, DefaultLoadPath)
+            ret <- load(file, modules)
             (module, nextModules) = ret
             nextScope <- module.expose(scope, nextModules, exposing, all)
           yield
@@ -169,67 +173,69 @@ def lookup(id: Id, scope: Scope): Either[LookupError, Value] =
   }
 
 
-def load(fileName: String, currModules: Modules = Prelude): Either[LoadError, (Module, Modules)] =
-  File(fileName) match {
-    case handle if !handle.isFile =>
-      Left(FileNotFound(fileName))
-
-    case handle =>
-      val scanner = Scanner(handle)
-      val buffer = StringBuilder()
-      val name = Id(moduleNameFromFileName(fileName))
-
-      var scope: Scope = Map()
-      var modules: Modules = currModules
-      var exposing: Set[Id] = Set.empty
-
-      while (scanner.hasNextLine()) {
-        buffer.append(s"${scanner.nextLine()}\n")
-      }
-
-      for res <- parse(buffer.mkString, fileName) do
-        res match {
-          case Left(err) => return Left(err)
-
-          case Right(expr: Expression) =>
-            val ir = pass1(expr)
-            infer(ir, scope, Substitution()) match {
-              case Left(err) => return Left(err)
-              case Right(_) =>
-                eval(ir, scope) match {
-                  case Left(err) => return Left(err)
-                  case Right(_) =>
-                }
-            }
-
-          case Right(stmt: Statement) =>
-            stmt match {
-              case Module(_name, _exposing, _) if name == _name =>
-                exposing = _exposing
-
-              case Module(badName, _, _) =>
-                return Left(IncorrectModuleName(badName, name))
-
-              case _ =>
-                infer(stmt, scope, Substitution()) match {
-                  case Left(err) => return Left(err)
-                  case Right(ty) =>
-                    eval(stmt, scope, modules) match {
-                      case Left(err) => return Left(err)
-                      case Right((newScope, newModules)) =>
-                        scope = newScope
-                        modules = newModules
-                    }
-                }
-            }
-        }
-
-      val module = Module(name, exposing, scope)
-      Right((module, modules ++ Map(name -> module)))
-  }
-
 def moduleNameFromFileName(fileName: String): String =
   fileName.split("/").last.split("\\.").head
 
 def fileNameFromModuleName(moduleName: String): String =
   moduleName.replaceAll("\\.", "/") + ".bisquit"
+
+def findModuleFile(moduleName: String, loadPaths: List[String]): Either[LoadError, File] =
+  val name = fileNameFromModuleName(moduleName)
+  for path <- loadPaths do
+    val file = File(path, name)
+    if file.isFile
+    then return Right(file)
+  Left(FileNotFound(name, loadPaths))
+
+def load(file: File, currModules: Modules = Prelude): Either[LoadError, (Module, Modules)] =
+  val scanner = Scanner(file)
+  val buffer = StringBuilder()
+  val name = Id(moduleNameFromFileName(file.getName()))
+
+  var scope: Scope = Map()
+  var modules: Modules = currModules
+  var exposing: Set[Id] = Set.empty
+
+  while (scanner.hasNextLine()) {
+    buffer.append(s"${scanner.nextLine()}\n")
+  }
+
+  for res <- parse(buffer.mkString, file.getName()) do
+    res match {
+      case Left(err) => return Left(err)
+
+      case Right(expr: Expression) =>
+        val ir = pass1(expr)
+        infer(ir, scope, Substitution()) match {
+          case Left(err) => return Left(err)
+          case Right(_) =>
+            eval(ir, scope) match {
+              case Left(err) => return Left(err)
+              case Right(_) =>
+            }
+        }
+
+      case Right(stmt: Statement) =>
+        stmt match {
+          case Module(_name, _exposing, _) if name == _name =>
+            exposing = _exposing
+
+          case Module(badName, _, _) =>
+            return Left(IncorrectModuleName(badName, name))
+
+          case _ =>
+            infer(stmt, scope, Substitution()) match {
+              case Left(err) => return Left(err)
+              case Right(ty) =>
+                eval(stmt, scope, modules) match {
+                  case Left(err) => return Left(err)
+                  case Right((newScope, newModules)) =>
+                    scope = newScope
+                    modules = newModules
+                }
+            }
+        }
+    }
+
+  val module = Module(name, exposing, scope)
+  Right((module, modules ++ Map(name -> module)))
