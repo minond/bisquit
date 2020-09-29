@@ -1,0 +1,25 @@
+module Prelude exposing (+, -, *, /, %, -, ||, &&, cons, car, cdr, nil?, ref!, get!, set!, eq)
+
+import Internal exposing (...)
+
+
+def +(a, b) = ~sum-bin-num(a, b)
+def -(a, b) = ~sub-bin-num(a, b)
+def *(a, b) = ~mul-bin-num(a, b)
+def /(a, b) = ~div-bin-num(a, b)
+def %(a, b) = ~mod-bin-num(a, b)
+def -(a) = ~neg-uni-num(a)
+
+def ||(a, b) = ~or-bin-bool(a, b)
+def &&(a, b) = ~and-bin-bool(a, b)
+
+def cons(x, xs) = ~list-cons(x, xs)
+def car(xs) = ~list-car(xs)
+def cdr(xs) = ~list-cdr(xs)
+def nil?(xs) = ~list-nil(xs)
+
+def ref!(val) = ~ref-cell-make!(val)
+def get!(ref) = ~ref-cell-get!(ref)
+def set!(ref, val) = ~ref-cell-set!(ref, val)
+
+def eq(a, b) = ~eq-bin-ord(a, b)

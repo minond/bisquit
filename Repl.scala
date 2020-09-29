@@ -106,7 +106,7 @@ class Repl(
                   newLine = true
                 }
 
-              case ymport @ Import(name, _, _) if name == PreludeModuleName =>
+              case ymport @ Import(name, _, _) if name == InternalModuleName =>
                 doIt(ymport) {
                   out.println("< ok")
                   newLine = true

@@ -64,26 +64,18 @@ val booleanOr = Builtin(signature(List(BoolType, BoolType, BoolType)), {
     }
 })
 
-val PreludeModuleName = Id("Prelude")
-val PreludeFunctions = Map(
-  Id("+") -> numericBinaryBuiltin(_ + _),
-  Id("-") -> numericBinaryBuiltin(_ - _),
-  Id("*") -> numericBinaryBuiltin(_ * _),
-  Id("/") -> numericBinaryBuiltin(_ / _),
-  Id("%") -> numericBinaryBuiltin(_ % _),
-  Id("~") -> numericUnaryBuiltin(-_),
-  Id("||") -> booleanOr,
-  Id("&&") -> booleanAnd,
+val InternalModuleName = Id("Internal")
+val InternalFunctions = Map(
+  Id("~sum-bin-num") -> numericBinaryBuiltin(_ + _),
+  Id("~sub-bin-num") -> numericBinaryBuiltin(_ - _),
+  Id("~mul-bin-num") -> numericBinaryBuiltin(_ * _),
+  Id("~div-bin-num") -> numericBinaryBuiltin(_ / _),
+  Id("~mod-bin-num") -> numericBinaryBuiltin(_ % _),
+  Id("~neg-uni-num") -> numericUnaryBuiltin(-_),
+  Id("~or-bin-bool") -> booleanOr,
+  Id("~and-bin-bool") -> booleanAnd,
 
-  Id("int_to_real") ->
-    Builtin(signature(List(IntType, RealType)), {
-      case (arg :: Nil, scope) =>
-        eval(arg, scope).flatMap {
-          case Int(int) => Right(Real(int.toDouble))
-        }
-    }),
-
-  Id("eq") ->
+  Id("~eq-bin-ord") ->
     Builtin(signature(List(polyOrd1, polyOrd2, BoolType), List(polyOrd1, polyOrd2)), {
       case (l :: r :: Nil, scope) =>
         for
@@ -93,7 +85,7 @@ val PreludeFunctions = Map(
           Bool(left == right)
     }),
 
-  Id("ref!") ->
+  Id("~ref-cell-make!") ->
     Builtin(signature(List(tyVar1, RefCellType(tyVar1))), {
       case (value :: Nil, scope) =>
         for
@@ -102,7 +94,7 @@ val PreludeFunctions = Map(
           RefCell(evaled)
     }),
 
-  Id("get!") ->
+  Id("~ref-cell-get!") ->
     Builtin(signature(List(RefCellType(tyVar1), tyVar1)), {
       case (ref :: Nil, scope) =>
         for
@@ -112,7 +104,7 @@ val PreludeFunctions = Map(
           refVal.value
     }),
 
-  Id("set!") ->
+  Id("~ref-cell-set!") ->
     Builtin(signature(List(RefCellType(tyVar1), tyVar1, RefCellType(tyVar1))), {
       case (ref :: value :: Nil, scope) =>
         for
@@ -124,15 +116,7 @@ val PreludeFunctions = Map(
           RefCell(evaled)
     }),
 
-  Id("universe") ->
-    Builtin(signature(List(UnitType, UnitType)), { (_, scope) =>
-      scope.map { case ((k, v)) =>
-        println(s"${k.lexeme} : ${infer(pass1(v), scope, Substitution()).map(ty => formatted(ty)).right.get}")
-      }
-      Right(Tuple(List.empty))
-    }),
-
-  Id("cons") ->
+  Id("~list-cons") ->
     Builtin(signature(List(tyVar1, ListaType(tyVar1), ListaType(tyVar1))), {
       case (headExpr :: tailExpr :: Nil, scope) =>
         for
@@ -143,7 +127,7 @@ val PreludeFunctions = Map(
           Lista(head +: tail.items)
     }),
 
-  Id("car") ->
+  Id("~list-car") ->
     Builtin(signature(List(ListaType(tyVar1), tyVar1)), {
       case (listExpr :: Nil, scope) =>
         for
@@ -157,7 +141,7 @@ val PreludeFunctions = Map(
           head
     }),
 
-  Id("cdr") ->
+  Id("~list-cdr") ->
     Builtin(signature(List(ListaType(tyVar1), ListaType(tyVar1))), {
       case (listExpr :: Nil, scope) =>
         for
@@ -171,7 +155,7 @@ val PreludeFunctions = Map(
           Lista(tail)
     }),
 
-  Id("nil?") ->
+  Id("~list-nil") ->
     Builtin(signature(List(ListaType(tyVar1), BoolType)), {
       case (listExpr :: Nil, scope) =>
         for
@@ -180,10 +164,26 @@ val PreludeFunctions = Map(
         yield
           Bool(list.items.isEmpty)
     }),
+
+  Id("int_to_real") ->
+    Builtin(signature(List(IntType, RealType)), {
+      case (arg :: Nil, scope) =>
+        eval(arg, scope).flatMap {
+          case Int(int) => Right(Real(int.toDouble))
+        }
+    }),
+
+  Id("universe") ->
+    Builtin(signature(List(UnitType, UnitType)), { (_, scope) =>
+      scope.map { case ((k, v)) =>
+        println(s"${k.lexeme} : ${infer(pass1(v), scope, Substitution()).map(ty => formatted(ty)).right.get}")
+      }
+      Right(Tuple(List.empty))
+    }),
 )
 
 val Prelude: Modules = Map(
-  PreludeModuleName -> Module(PreludeModuleName,
-                              PreludeFunctions.keys.toSet,
-                              PreludeFunctions),
+  InternalModuleName -> Module(InternalModuleName,
+                               InternalFunctions.keys.toSet,
+                               InternalFunctions),
 )
