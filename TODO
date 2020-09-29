@@ -7,6 +7,18 @@
 - Parse type tags
 - Parse type vars
 
+- Record type checking got messed up along with way:
+
+  > def x(x) = x.x
+  : { x : a } -> a
+
+  > x({x = 1})
+  = 1 : Int
+
+  > x({y = 3})
+  runtime error: RecordLookupError(Id(x),Record(Map(Id(y) -> Int(3))))
+
+
 - Polymorphic types should grow:
 
   Currently they can be compared to a smaller type:
