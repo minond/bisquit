@@ -11,6 +11,7 @@ import scope._
 import utils.Implicits.Eithers
 import utils.{ensure, formap, remap}
 
+
 sealed trait Type(val containedSets: Type*) {
   val containedSetsSize = containedSets.size
   def contains(ty: Type): Boolean =

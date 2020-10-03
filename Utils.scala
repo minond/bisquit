@@ -3,6 +3,7 @@ package utils
 
 import scala.reflect.ClassTag
 
+
 /** Rebuilds a map by passing each key though a function.
  *
  *  {{{

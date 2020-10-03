@@ -3,6 +3,7 @@ package input
 
 import nodes.Token
 
+
 case class Position(file: String, offset: Int) {
   override def toString =
     s"$file:$offset"

@@ -9,6 +9,7 @@ import scope._
 import typechecker._
 import utils.ensure
 
+
 val tyVar1 = fresh()
 val polyNum = PolymorphicType(Some(NumType()))
 val polyOrd1 = PolymorphicType(Some(OrdType()))
