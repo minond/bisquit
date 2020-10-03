@@ -1,5 +1,5 @@
 package bisquit
-package ast
+package nodes
 
 import errors._
 import input._

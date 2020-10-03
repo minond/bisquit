@@ -4,8 +4,8 @@ package runtime
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
-import ast._
 import errors._
+import nodes._
 import parser._
 import prelude._
 import scope._

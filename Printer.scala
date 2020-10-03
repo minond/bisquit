@@ -3,9 +3,9 @@ package printer
 
 import scala.collection.mutable.{Map => MMap}
 
-import ast.{Int => _, _}
 import errors._
 import input._
+import nodes.{Int => _, _}
 import parser._
 import runtime._
 import typechecker._
@@ -58,8 +58,8 @@ def formatted(expr: Expression, lvl: Int = 1, nested: Boolean = false, short: Bo
       val pairs = fields.map { (k, v) => s"${formatted(k, lvl, false)} = ${formatted(v, lvl, nested, true)}" }
       val indent = " " * (lvl - 1)
       s"{ ${pairs.mkString(s"\n${indent}, ")} }"
-    case ast.Int(num) if num < 0 => s"~${Math.abs(num)}"
-    case ast.Int(num) => num.toString
+    case nodes.Int(num) if num < 0 => s"~${Math.abs(num)}"
+    case nodes.Int(num) => num.toString
     case Real(num) if num < 0 => s"~${Math.abs(num)}"
     case Real(num) => num.toString
     case Str(str) => s""""$str""""

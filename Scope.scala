@@ -1,7 +1,7 @@
 package bisquit
 package scope
 
-import ast._
+import nodes._
 import typechecker.Type
 
 type Modules = Map[Id, Module]

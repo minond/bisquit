@@ -1,7 +1,7 @@
 package bisquit
 package input
 
-import ast.Token
+import nodes.Token
 
 case class Position(file: String, offset: Int) {
   override def toString =

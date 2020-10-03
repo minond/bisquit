@@ -1,7 +1,7 @@
 package bisquit
 package parser
 
-import ast.{Int => _, _}
+import nodes.{Int => _, _}
 import errors._
 import input.{Position, Positioned, Positioner}
 import utils.Implicits.{Lists, Iterators}
@@ -143,7 +143,7 @@ def parseExpression(token: Token, tokens: Tokens): Either[ParsingError, Expressi
     case OpenParen() => parseExpressionContinuation(parseTuple(tokens), tokens)
     case OpenCurlyBraket() => parseExpressionContinuation(parseRecord(tokens), tokens)
     case OpenSquareBraket() => parseLista(tokens)
-    case scalar: (Str | ast.Int) => Right(scalar)
+    case scalar: (Str | nodes.Int) => Right(scalar)
     case id: Id => parseExpressionContinuation(id, tokens)
     case unexpected => Left(UnexpectedToken[Token](unexpected))
   }
@@ -351,7 +351,7 @@ def nextToken(
       val str = (n +: takeWhile(source, isDigit)).mkString
       Try { str.toInt } match {
         case Failure(_) => err(InvalidInteger(str))
-        case Success(i) => ok(ast.Int(i))
+        case Success(i) => ok(nodes.Int(i))
       }
 
     case x if isIdentifierHead(x) =>

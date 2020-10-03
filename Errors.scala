@@ -1,8 +1,8 @@
 package bisquit
 package errors
 
-import ast._
 import input._
+import nodes._
 import typechecker._
 
 import scala.reflect.ClassTag

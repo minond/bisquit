@@ -4,8 +4,8 @@ package typechecker
 import scala.collection.mutable.{Map => MMap}
 import scala.language.implicitConversions
 
-import ast.{Int => _, _}
 import errors._
+import nodes.{Int => _, _}
 import runtime._
 import scope._
 import utils.Implicits.Eithers
@@ -304,7 +304,7 @@ def infer(stmt: Statement, env: Environment, sub: Substitution): Either[TypingEr
 
 def infer(expr: IR, env: Environment, sub: Substitution): Either[TypingError, Type] =
   expr match {
-    case _: ast.Int => Right(IntType().setToken(expr))
+    case _: nodes.Int => Right(IntType().setToken(expr))
     case _: Real => Right(RealType().setToken(expr))
     case _: Str => Right(StrType().setToken(expr))
     case _: Bool => Right(BoolType().setToken(expr))
