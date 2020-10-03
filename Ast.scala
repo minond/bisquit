@@ -6,7 +6,7 @@ import input._
 import typechecker._
 import runtime._
 
-trait LoadError
+trait BisquitError
 
 sealed trait Token extends Positioned
 sealed trait Expression extends Positioned with Typing

@@ -19,9 +19,9 @@ import java.util.Scanner
 
 val DefaultLoadPath = List("lib", ".")
 
-case class FileNotFound(name: String, loadPaths: List[String]) extends LoadError
+case class FileNotFound(name: String, loadPaths: List[String]) extends BisquitError
 
-sealed trait RuntimeError extends LoadError
+sealed trait RuntimeError extends BisquitError
 case class LookupError(id: Id) extends RuntimeError
 case class ArgumentTypeError(arg: IR) extends RuntimeError
 case class CannotGetCarOfEmptyList(list: IR) extends RuntimeError
@@ -46,7 +46,7 @@ def pass1(expr: Expression): IR with Expression =
   }
 
 
-def eval(stmt: Statement, scope: Scope, modules: Modules): Either[LoadError, (Scope, Modules)] =
+def eval(stmt: Statement, scope: Scope, modules: Modules): Either[BisquitError, (Scope, Modules)] =
   stmt match {
     case Definition(name, value) =>
       for
@@ -179,7 +179,7 @@ def moduleNameFromFileName(fileName: String): String =
 def fileNameFromModuleName(moduleName: String): String =
   moduleName.replaceAll("\\.", "/") + ".bisquit"
 
-def findModuleFile(moduleName: String, loadPaths: List[String]): Either[LoadError, File] =
+def findModuleFile(moduleName: String, loadPaths: List[String]): Either[BisquitError, File] =
   val name = fileNameFromModuleName(moduleName)
   for path <- loadPaths do
     val file = File(path, name)
@@ -187,7 +187,7 @@ def findModuleFile(moduleName: String, loadPaths: List[String]): Either[LoadErro
     then return Right(file)
   Left(FileNotFound(name, loadPaths))
 
-def load(file: File, currModules: Modules = Prelude): Either[LoadError, (Module, Modules)] =
+def load(file: File, currModules: Modules = Prelude): Either[BisquitError, (Module, Modules)] =
   val scanner = Scanner(file)
   val buffer = StringBuilder()
   val name = Id(moduleNameFromFileName(file.getName()))

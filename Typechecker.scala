@@ -80,7 +80,7 @@ trait Typed(ty: Type) extends Typing {
 }
 
 
-sealed trait TypingError extends LoadError
+sealed trait TypingError extends BisquitError
 case class LookupError(id: Id) extends TypingError
 case class UnificationError(ty1: Type, ty2: Type) extends TypingError
 case class ExpectedRecordInstead(got: Type) extends TypingError

@@ -154,7 +154,7 @@ def formatted(ty: Type, label: Labeler, nested: Boolean): String =
     case RefCellType(of) => s"Ref[${formatted(of, label, true)}]"
   }
 
-def formatted(err: LoadError, source: String): String =
+def formatted(err: BisquitError, source: String): String =
   err match {
     case UnificationError(ty1, ty2) =>
       ty2.tok match {
@@ -186,7 +186,7 @@ def formatted(err: LoadError, source: String): String =
     case _ => err.toString
   }
 
-def errorType(err: LoadError): String =
+def errorType(err: BisquitError): String =
   err match {
     case _: TypingError => "type error"
     case _: RuntimeError => "runtime error"
