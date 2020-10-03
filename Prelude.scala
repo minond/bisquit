@@ -2,6 +2,7 @@ package bisquit
 package prelude
 
 import ast._
+import errors._
 import printer._
 import runtime._
 import scope._

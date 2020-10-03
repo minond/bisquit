@@ -5,10 +5,11 @@ import scala.collection.mutable.{Map => MMap}
 import scala.language.implicitConversions
 
 import ast.{Int => _, _}
-import scope._
+import errors._
 import runtime._
-import utils.{ensure, formap, remap}
+import scope._
 import utils.Implicits.Eithers
+import utils.{ensure, formap, remap}
 
 sealed trait Type(val containedSets: Type*) {
   val containedSetsSize = containedSets.size
@@ -78,15 +79,6 @@ trait Typing { self =>
 trait Typed(ty: Type) extends Typing {
   typeTag(ty)
 }
-
-
-sealed trait TypingError extends BisquitError
-case class LookupError(id: Id) extends TypingError
-case class UnificationError(ty1: Type, ty2: Type) extends TypingError
-case class ExpectedRecordInstead(got: Type) extends TypingError
-case class ExpectedCallableInstead(got: Expression) extends TypingError
-case class TooManyArguments(fnTy: LambdaType, args: List[Expression]) extends TypingError
-case class RecordLookupError(id: Id, record: Type) extends TypingError
 
 
 val freshIds = LazyList.from(1).sliding(1)

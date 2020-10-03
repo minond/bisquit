@@ -4,6 +4,7 @@ package printer
 import scala.collection.mutable.{Map => MMap}
 
 import ast.{Int => _, _}
+import errors._
 import input._
 import parser._
 import runtime._

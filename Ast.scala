@@ -1,12 +1,11 @@
 package bisquit
 package ast
 
-import scope._
+import errors._
 import input._
-import typechecker._
 import runtime._
-
-trait BisquitError
+import scope._
+import typechecker._
 
 sealed trait Token extends Positioned
 sealed trait Expression extends Positioned with Typing

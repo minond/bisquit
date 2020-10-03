@@ -5,6 +5,7 @@ import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 import ast._
+import errors._
 import parser._
 import prelude._
 import scope._
@@ -18,19 +19,6 @@ import java.util.Scanner
 
 
 val DefaultLoadPath = List("lib", ".")
-
-case class FileNotFound(name: String, loadPaths: List[String]) extends BisquitError
-
-sealed trait RuntimeError extends BisquitError
-case class LookupError(id: Id) extends RuntimeError
-case class ArgumentTypeError(arg: IR) extends RuntimeError
-case class CannotGetCarOfEmptyList(list: IR) extends RuntimeError
-case class ConditionError(cond: IR) extends RuntimeError
-case class RecordLookupError(id: Id, record: Record) extends RuntimeError
-case class ExpectedRecordInstead(got: Value) extends RuntimeError
-case class ModuleValueNotExposed(id: Id, module: Module) extends RuntimeError
-case class DuplicateExposeName(id: Id) extends RuntimeError
-case class IncorrectModuleName(found: Id, expected: Id) extends RuntimeError
 
 
 def pass1(expr: Expression): IR with Expression =
@@ -116,8 +104,8 @@ def evalTuple(fields: List[Expression], scope: Scope) =
 def evalRecordLookup(rec: Expression, field: Id, scope: Scope) =
   for
     maybeRecord <- eval(pass1(rec), scope)
-    record <- ensure[RuntimeError, Record](maybeRecord, ExpectedRecordInstead(maybeRecord))
-    expr <- lookup(field, record.fields, RecordLookupError(field, record))
+    record <- ensure[RuntimeError, Record](maybeRecord, RuntimeExpectedRecordInstead(maybeRecord))
+    expr <- lookup(field, record.fields, RuntimeRecordLookupError(field, record))
     value <- eval(pass1(expr), scope)
   yield value
 
@@ -166,9 +154,9 @@ def lookup[V, L](id: Id, scope: Map[Id, V], left: => L): Either[L, V] =
     case Some(value) => Right(value)
   }
 
-def lookup(id: Id, scope: Scope): Either[LookupError, Value] =
+def lookup(id: Id, scope: Scope): Either[RuntimeLookupError, Value] =
   scope.get(id) match {
-    case None => Left(LookupError(id))
+    case None => Left(RuntimeLookupError(id))
     case Some(value) => Right(value)
   }
 
