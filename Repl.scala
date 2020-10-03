@@ -10,6 +10,9 @@ import scope._
 import typechecker._
 
 import java.io._
+import scala.sys.process._
+import scala.language.postfixOps
+import scala.language.implicitConversions
 
 
 enum Mode {
@@ -37,7 +40,15 @@ class Repl(
   var modules: Modules = Prelude
   var newLine: Boolean = false
 
+  val version = ("git log -1 --format='%H'" !!).trim()
+  val initCommand = "import Prelude exposing (...)"
+
   def run(): Unit =
+    out.println(s"Bisquit version $version")
+    out.println("Run 'exit' to exit.")
+    out.println(s"\n$promptStart$initCommand")
+    process(initCommand)
+
     while (true) {
       if newLine
       then out.print("\n")
