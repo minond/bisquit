@@ -119,6 +119,7 @@ case class Substitution(substitutions: MMap[Int, Type] = MMap()) {
                 substitutions.get(id2) match {
                   case Some(TypeVariable(id3)) if id3 == id => ty
                   case Some(ty2: TypeVariable) => apply(ty2)
+                  case Some(ListaType(ty2)) if ty2 == ty => ty
                   case Some(ty2) => apply(ty2)
                   case None => apply(next)
                 }
