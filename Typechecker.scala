@@ -396,7 +396,7 @@ def inferRecordLookup(rec: Expression, field: Id, env: Environment, sub: Substit
 def inferRecord(fields: Map[Id, Expression], env: Environment, sub: Substitution) =
   for
     inners <- formap(fields){ (k, v) =>
-      infer(pass1(v), env ++ Map(k -> Id(k.lexeme).typeTag(fresh())), sub)
+      infer(pass1(v), env, sub)
     }
     ret = RecordVariable(MMap(inners.toList:_*))
   yield ret
